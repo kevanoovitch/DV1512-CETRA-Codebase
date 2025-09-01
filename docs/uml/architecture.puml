@@ -1,0 +1,43 @@
+@startuml
+title System Architecture
+
+ 
+
+' Define components
+package "Frontend" #LightBlue {
+    [Web App] as frontend
+    note right of frontend
+    Frontend should handle:
+    - Extension input
+    - Verdict output
+    - Visualization (score, heatmap, tables)
+    end note
+
+}
+
+package "Backend" #LightCoral {
+    [API Service] as backend
+    note right of backend
+    Backend should handle:
+    - Fetching data 
+    - Parsing/Normalizing
+    - Risk Scoring
+    - ATT&CK mapping
+    - etc
+    end note
+}
+
+database "Database" as db
+
+rectangle "External Services"  as external #CornflowerBlue 
+note top of external
+Such as Virus Total 
+    or CRXcavator
+end note
+
+' Relations
+frontend --> backend : Upload Extension / Request Score
+backend --> db : Stores Analysis Results
+backend --> external : API Queries
+
+@enduml
