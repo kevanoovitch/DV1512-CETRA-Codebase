@@ -5,12 +5,11 @@ from django.core.files.storage import FileSystemStorage
 def home(request):
     uploaded_file_url = None
     
-    
-    if request.method == "POST" and request.FILES.get("myZip"):
-        myzip = request.FILES["myZip"]
+    if request.method == "POST" and request.FILES.get("myUploadedFile"):
+        myuploadedfile = request.FILES["myUploadedFile"]
         
         fs = FileSystemStorage()
-        filename = fs.save(myzip.name, myzip)
+        filename = fs.save(myuploadedfile.name, myuploadedfile)
         uploaded_file_url = fs.url(filename)
         return render(request, "home.html") #, {"uploaded_file_url": uploaded_file_url})
     
