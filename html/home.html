@@ -1,0 +1,24 @@
+
+<body>
+<h2>Upload a Zip File</h2>
+<form action="{% url 'upload_file_zip' %}" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="myfile" required>
+  <button type="submit">Upload</button>
+</form>
+
+<h2>Upload a Crx File</h2>
+<form action="{% url 'upload_file_crx' %}" method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <input type="file" name="myfile" required>
+  <button type="submit">Upload</button>
+</form>
+
+<h2>Submit an Extention ID</h2>
+<form action="{% url 'upload_text' %}" method="post">
+  {% csrf_token %}
+  <label for="mytext">Enter some text:</label>
+  <input type="text" id="mytext" name="mytext" required>
+  <button type="submit">Submit</button>
+</form>
+</body>
