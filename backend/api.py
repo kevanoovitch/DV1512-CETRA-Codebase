@@ -59,5 +59,3 @@ def pretty_print_json(data):
 def extension_converter():
     # TODO: implement a input converter i.e zip->webID & crx -> webID 
     pass 
-
-
