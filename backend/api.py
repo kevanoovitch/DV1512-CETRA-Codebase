@@ -1,21 +1,27 @@
 import json
 from backend.API_interfaces.SA_interface import ISecureAnnex
-
+from backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 import constants
+from pathlib import Path
+
+from backend.API_interfaces.printer import pretty_print_sa_result
 
 def preform_secure_annex_scan(extension):
 
     #Helper function to query SA and build json file
 
     client = ISecureAnnex(None,None)
+    interpreter = SecureAnnex_interpretator()
 
-    path = constants.SA_OUTPUT_FILE 
+    path = Path(constants.SA_OUTPUT_FILE) 
     
 
-    client.preform_scan(extension,path)
+    client.perform_scan(extension,path)
 
-    #TODO: Call parser
+    #Parse the output
+    parsed = interpreter.interpret_output()
 
+    pretty_print_sa_result(parsed)
     #TODO: Deliver verdict from SA
 
 

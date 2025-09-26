@@ -39,58 +39,58 @@ class ISecureAnnex:
         self.cache_path = Path(default_cache)
         self.fixture_path = self.cache_path
 
-    # <--- Exposed helpers --->
+    # <--- Exposed functions --->
 
-    def preform_scan(
-        self,
-        extension: str,
-        output_path: Optional[Path | str] = None,
-    ) -> Dict[str, Any]:
-        """Query Secure Annex (or fixture in dev mode) and return a combined report."""
+    def perform_scan(self, extension: str, path: Path) -> None:
+        """
+        Fetch Secure Annex sections (or load cached in dev mode) and write to `path`.
+        Does not parse.
+        """
+        path.parent.mkdir(parents=True, exist_ok=True)
 
         if self.dev_mode:
-            return self.load_cached_report(output_path)
+            raw_report = self._load_cached_report(path)
+        else:
+            # build fetcher map
+            fetchers: Dict[str, Callable[[str], Any]] = {
+                key: getattr(self, f"fetch_{key}") for key in self.SECTION_MAP
+            }
 
-        fetchers: Dict[str, Callable[[str], Any]] = {
-            key: getattr(self, f"fetch_{key}") for key in self.SECTION_MAP
-        }
+            raw_report: Dict[str, Any] = {}
+            for section, fetcher in fetchers.items():
+                try:
+                    raw_report[section] = fetcher(extension)
+                except Exception as exc:
+                    raw_report[section] = {"error": str(exc)}
 
-        report: Dict[str, Any] = {}
-        for section, fetcher in fetchers.items():
-            try:
-                payload = fetcher(extension)
-            except Exception as exc:  # pragma: no cover - network/runtime safeguard
-                payload = {"error": str(exc)}
-            report[section] = payload
+        # Always write the report out
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_text(json.dumps(raw_report, indent=2), encoding="utf-8")
+        tmp.replace(path)
 
-        path = Path(output_path) if output_path else self.cache_path
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(report, indent=2), encoding="utf-8")
-
-        return report
-
-    def load_cached_report(self, path: Optional[Path | str] = None) -> Dict[str, Any]:
-        cache = Path(path) if path else self.cache_path
-        if not cache.exists():
-            raise FileNotFoundError(f"Cached Secure Annex report not found: {cache}")
-        return json.loads(cache.read_text(encoding="utf-8"))
 
     def print_analysis(
-        self,
-        report: Optional[Dict[str, Any]] = None,
-        *,
-        path: Optional[Path | str] = None,
-    ) -> None:
-        data = report if report is not None else self.load_cached_report(path)
-        console = Console()
+            self,
+            report: Optional[Dict[str, Any]] = None,
+            *,
+            path: Optional[Path | str] = None,) -> None:
+            data = report if report is not None else self._load_cached_report(Path(constants.SA_OUTPUT_FILE))
+            console = Console()
 
-        for section_key, title in self.SECTION_TITLES.items():
-            console.rule(f"[bold cyan]{title}[/bold cyan]")
-            payload = data.get(section_key, {"warning": "section missing"})
-            self.pretty_print_json(payload)
+            for section_key, title in self.SECTION_TITLES.items():
+                console.rule(f"[bold cyan]{title}[/bold cyan]")
+                payload = data.get(section_key, {"warning": "section missing"})
+                self.pretty_print_json(payload)
 
-        if self.dev_mode == True:
-            console.rule(f"[bold red]DEV MODE IS ON[/bold red]")
+            if self.dev_mode == True:
+                console.rule(f"[bold red]DEV MODE IS ON[/bold red]")
+
+    # < --- private functions -- > 
+
+    def _load_cached_report(self, path: Path) -> Dict[str, Any]:
+        if not path.exists():
+            raise FileNotFoundError(f"No cached SA report at {path}")
+        return json.loads(path.read_text(encoding="utf-8"))
 
 
     @staticmethod
