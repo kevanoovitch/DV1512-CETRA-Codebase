@@ -1,5 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Home – CETRA{% endblock %}
+{% block content %}
+  <h1>Home</h1>
+  <p>Välkommen till CETRA. Här kommer startsidans innehåll.</p>
 
-<body>
+  <body>
 <h2>Upload a Zip/Crx File</h2>
 <form action="{% url 'home' %}" method="post" enctype="multipart/form-data">
   {% csrf_token %}
@@ -15,3 +20,5 @@
   <button type="submit">Submit</button>
 </form>
 </body>
+
+{% endblock %}

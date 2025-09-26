@@ -19,4 +19,10 @@ def report(request):
     return HttpResponse("This is the Report page")
 
 def history(request):
-    return HttpResponse("This is the History page")
+    return render(request, "history.html")
+
+def results(request):
+    return render(request, "results.html")
+
+def settings(request):
+    return render(request, "settings.html")
