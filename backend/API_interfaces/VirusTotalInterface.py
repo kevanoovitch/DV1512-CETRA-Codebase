@@ -1,8 +1,8 @@
-##Imports
 import requests
-import os
 import time
+import json
 from dotenv import load_dotenv
+import os
 
 ##start of code
 
@@ -17,51 +17,40 @@ base_url = "https://www.virustotal.com/api/v3/files/upload_url"
 
 HEADERS = { "x-apikey": ApiKey}
 
-file_path = "root/uploaded"
+file_path = "../uploaded/"
 
 
-def scan_file(file_path: str) -> dict:
-    
-    # Uploads a file to VirusTotal for scanning.
-    # Returns the API response JSON (contains analysis_id).
-    
-    url = f"{base_url}/files"
+def scan_file(file_name: str):
+    headers = {"x-apikey": ApiKey}
 
     with open(file_path, "rb") as f:
-        files = {"file": (os.path.basename(file_path), f)}
-        response = requests.post(url, headers=HEADERS, files=files)
-    
+        files = {"file": (file_path+file_name, f)}
+        response = requests.post(
+            "https://www.virustotal.com/api/v3/files",
+            headers=headers,
+            files=files
+        )
     response.raise_for_status()
-    return response.json()
+    analysis_id = response.json()["data"]["id"]
 
-
-def get_scan_result(analysis_id: str, interval: int = 5) -> dict:
-
-    # Polls virus total for scan result until analysis is complete
-    # Returns final report for JSON
-
-    url = f"{base_url}/analyses/{analysis_id}"
+    analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
 
     while True:
-        response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
-        result = response.json()
+        res = requests.get(analysis_url, headers=headers)
+        res.raise_for_status()
+        data = res.json()
+        status = data["data"]["attributes"]["status"]
 
-        status = result["data"]["attributes"]["status"]
         if status == "completed":
-            return result
-        
-        print(f"Analysis in progress... (status: {status})")
-        time.sleep(interval)
+            return analyse_data(data["data"])
 
-
-if __name__ == "__main__":
-    file_path = "root/uploaded"
-    uploaded_response = scan_file(file_path)
+def analyse_data(result):
+    data = {}
+    detectedby = []
+    data = {"stats":result["attributes"]["status"],}
+    for engine,details in result["attributes"]["results"].items():
+        if(details["category"] != "undetected" and details["category"] != "type-unsupported"):
+            detectedby.add(details)
+    stats = result["attributes"]["stats"]
     
-    analysis_id = uploaded_response["data"]["id"]
-    print(f"Uploaded. Analysis ID: {analysis_id}")
-
-    report = get_scan_result
-    print(f"Final report: {report}")
-    
+    return  {"stats":stats, "detectedby":detectedby}
