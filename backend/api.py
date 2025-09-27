@@ -1,5 +1,5 @@
 import json
-from backend.API_interfaces.SA_interface import ISecureAnnex
+from backend.API_interfaces.SA_interface import Interface_Secure_Annex
 from backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 import constants
 from pathlib import Path
@@ -10,7 +10,7 @@ def preform_secure_annex_scan(extension):
 
     #Helper function to query SA and build json file
 
-    client = ISecureAnnex(None,None)
+    client = Interface_Secure_Annex()
     interpreter = SecureAnnex_interpretator()
 
     path = Path(constants.SA_OUTPUT_FILE) 

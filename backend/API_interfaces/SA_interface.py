@@ -12,7 +12,7 @@ import config
 import constants
 
 
-class ISecureAnnex:
+class Interface_Secure_Annex:
     SECTION_MAP = {
         "manifest": "/manifest",
         "vulnerabilities": "/vulnerabilities",
@@ -29,7 +29,7 @@ class ISecureAnnex:
         "analysis": "AI-Analysis",
     }
 
-    def __init__(self, api_key, api_endpoint):
+    def __init__(self):
         load_dotenv()
         self.ApiKey = os.getenv("SA_API_KEY")
         self.ApiEndpoint = os.getenv("SA_API_ENDPOINT")
@@ -116,6 +116,7 @@ class ISecureAnnex:
                 headers=self.HEADERS,
                 params={"extension_id": extension},
             )
+            response.raise_for_status()
             try:
                 return response.json()
             except ValueError:
