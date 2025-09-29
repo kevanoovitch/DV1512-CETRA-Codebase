@@ -26,10 +26,10 @@ def preform_secure_annex_scan(extension):
 
 
 def print_secure_annex_scan(extension):
-    #FIXME: and just call the SA function
+    
 
-    client = ISecureAnnex(None,None)
-    path = constants.SA_OUTPUT_FILE 
+    client = Interface_Secure_Annex()
+    
 
     client.print_analysis()
    

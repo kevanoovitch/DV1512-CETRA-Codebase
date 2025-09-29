@@ -5,7 +5,7 @@ PYTEST ?= pytest
 .PHONY: run install test test-unit test-integration clean
 
 run:
-	$(PYTHON) main.py
+	PYTHONPATH=$(CURDIR) $(PYTHON) main.py
 
 install:
 	$(PIP) install -r requirements.txt

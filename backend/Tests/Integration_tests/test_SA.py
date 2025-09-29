@@ -1,23 +1,19 @@
-import pytest
-import json
+import unittest
 from backend.API_interfaces.SA_interface import Interface_Secure_Annex
 
-#TODO: convert from pytest to use standard unitests 
 
-#Test that it can query SA
-def test_SA_connection():
-    """
-    This test will use a non authentication requried endpoint to health check Secure Annex
-    """
+class TestSAConnection(unittest.TestCase):
+    """Integration-style health check for the /updates endpoint."""
 
+    def setUp(self):
+        self.client = Interface_Secure_Annex()
 
-    client = Interface_Secure_Annex()
+    def test_sa_connection_updates(self):
+        # This hits the real endpoint (non-auth). Keep it in an "integration" group if needed.
+        response = self.client.fetch_resource(None, "/updates")
 
-    response = client.fetch_resource(None,"/updates")
-
-    assert response is not None, "No response from Secure annex update endpoint"
-    if isinstance(response,dict):
-        assert "error" not in response, f"Secure Annex error: {response}"
-
+        self.assertIsNotNone(response, "No response from Secure Annex /updates endpoint")
+        if isinstance(response, dict):
+            self.assertNotIn("error", response, f"Secure Annex error: {response}")
 
 

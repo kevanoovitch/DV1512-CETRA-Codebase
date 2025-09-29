@@ -116,6 +116,3 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
         # sev => 10 10*factor(5) = 50 pts per finding, but capped at 60 for manifest
         self.assertEqual(res["score"], 60)
 
-#FIXME: remove and run
-if __name__ == "__main__":
-    unittest.main()
