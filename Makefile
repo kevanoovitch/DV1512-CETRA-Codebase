@@ -12,7 +12,7 @@ install:
 	$(PIP) install pytest
 
 test:
-	$(PYTEST) backend/Tests
+	PYTHONPATH=$(CURDIR) $(PYTEST) backend/Tests
 
 test-unit:
 	PYTHONPATH=$(CURDIR) PYTHONPATH=. $(PYTEST) backend/Tests/Unit_tests 

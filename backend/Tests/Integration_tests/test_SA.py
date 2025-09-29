@@ -2,7 +2,7 @@ import pytest
 import json
 from backend.API_interfaces.SA_interface import Interface_Secure_Annex
 
-#TODO: Implement theese:
+#TODO: convert from pytest to use standard unitests 
 
 #Test that it can query SA
 def test_SA_connection():
