@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+#sudo #apt
+/sudo/
+/apt/
+/bin/
+
+# Output files
+app/backend/sa_output.json
