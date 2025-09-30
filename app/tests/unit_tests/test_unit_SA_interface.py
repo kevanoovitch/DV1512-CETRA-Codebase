@@ -5,8 +5,8 @@ import json, tempfile
 from types import SimpleNamespace
 from requests import RequestException
 
-from backend.API_interfaces.SA_interface import Interface_Secure_Annex
-import backend.API_interfaces.SA_interface as mod_iface
+from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex 
+import app.backend.API_interfaces.SA_interface as mod_iface
 
 #Testing perform_scan()
 class TestPerformScan(TestCase):

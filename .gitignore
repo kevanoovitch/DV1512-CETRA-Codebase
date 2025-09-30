@@ -210,3 +210,6 @@ __marimo__/
 /sudo/
 /apt/
 /bin/
+
+# Output files
+app/backend/sa_output.json

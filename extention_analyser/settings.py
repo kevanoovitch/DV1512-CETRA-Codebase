@@ -122,3 +122,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# To get colour in test output
+TEST_RUNNER = "redgreenunittest.django.runner.RedGreenDiscoverRunner"

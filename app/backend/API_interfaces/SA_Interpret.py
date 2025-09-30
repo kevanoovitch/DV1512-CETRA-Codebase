@@ -1,5 +1,6 @@
-import constants
-import config
+from app import config
+from app import constants
+
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from pathlib import Path

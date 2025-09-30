@@ -1,3 +1,7 @@
+from app import config
+from app import constants
+
+
 import json
 import os
 from pathlib import Path
@@ -8,8 +12,6 @@ from dotenv import load_dotenv
 from rich import print_json
 from rich.console import Console
 
-import config
-import constants
 
 
 class Interface_Secure_Annex:

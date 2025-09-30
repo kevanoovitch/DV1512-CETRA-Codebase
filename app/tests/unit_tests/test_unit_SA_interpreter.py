@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
-import backend.API_interfaces.SA_Interpret as mod_interp
+from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
+import app.backend.API_interfaces.SA_Interpret as mod_interp
 
 def sample_payload():
     return {
