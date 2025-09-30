@@ -28,7 +28,7 @@ python manage.py createsuperuser --username=joe --email=joe@example.com
 ```
 
 - Follow the cli instruction
-- Bypass password strenth validation
+- Bypass password strength validation
 - Log in with that user (duh)
 
 
