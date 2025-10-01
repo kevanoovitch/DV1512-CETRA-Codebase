@@ -13,7 +13,6 @@ def home(request):
     if request.method == "POST" and request.FILES.get("myUploadedFile"):
         myuploadedfile = request.FILES["myUploadedFile"]
         
-        uploaded_file_url = None
         error = None
         
         # Validate file type
@@ -26,7 +25,6 @@ def home(request):
         uploaded_file_url = fs.url(filename)
         
         return render(request, "home.html",  {"uploaded_file_url": uploaded_file_url, "error": error, })
-        #return render(request, "home.html")
     
     return render(request, 'home.html')
 
