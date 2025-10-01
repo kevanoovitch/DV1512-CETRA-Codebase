@@ -10,6 +10,7 @@ urlpatterns = [
     path('history/', views.history, name='history'),
     path('result/', views.results, name='results'),
     path('settings/', views.settings, name='settings'),
+    path('login/', views.login, name='login'),
 ]
 
 

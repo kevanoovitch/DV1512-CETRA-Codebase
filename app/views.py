@@ -11,7 +11,7 @@ def home(request):
         fs = FileSystemStorage()
         filename = fs.save(myuploadedfile.name, myuploadedfile)
         uploaded_file_url = fs.url(filename)
-        return render(request, "home.html") #, {"uploaded_file_url": uploaded_file_url})
+        return render(request, "home.html")
     
     return render(request, 'home.html')
 
@@ -26,3 +26,6 @@ def results(request):
 
 def settings(request):
     return render(request, "settings.html")
+
+def login(request):
+    return render(request, "login.html")
