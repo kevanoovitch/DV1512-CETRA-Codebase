@@ -10,3 +10,10 @@ nav { display:flex; gap:16px; align-items:center; height:56px; }
 .tab.active { color:var(--fg); background:#0b1224; outline:1px solid #273147; }
 main { padding:24px 0; }
 h1 { margin:0 0 16px; }
+
+button[name="logout_button"] {
+  color: white;
+  background-color: transparent;
+  border: none;
+  float: right;
+}

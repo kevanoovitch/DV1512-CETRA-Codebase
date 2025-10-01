@@ -16,6 +16,10 @@
       <a class="tab {% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'history' %}">History</a>
       <a class="tab {% if request.resolver_match.url_name == 'results' %}active{% endif %}" href="{% url 'results' %}">Results</a>
       <a class="tab {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">Settings</a>
+      <form action="{% url 'logout' %}" method="post">
+      {% csrf_token %}
+      <button type="submit" name="logout_button">Logout</button>
+      </form>
       
       <!-- lägg fler flikar här senare -->
     </nav>
