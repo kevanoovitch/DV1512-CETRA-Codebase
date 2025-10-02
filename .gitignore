@@ -143,6 +143,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+mitre-attack-mappar/venv/
 
 # Spyder project settings
 .spyderproject
