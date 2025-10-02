@@ -6,8 +6,6 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 
-#index behövs inte då home finns?
-#html accept only crx and zip.?
 
 @login_required
 def home(request):
