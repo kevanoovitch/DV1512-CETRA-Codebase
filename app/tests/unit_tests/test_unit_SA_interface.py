@@ -36,7 +36,7 @@ class TestPerformScan(TestCase):
         }         
 
 
-# Testomg fetch_resource()
+# Test fetch_resource()
 class TestFetchResources(TestCase):
     def test_json_path(self):
         sa = Interface_Secure_Annex()
