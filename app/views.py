@@ -59,6 +59,10 @@ def results(request):
 def settings(request):
     return render(request, "settings.html")
 
+@login_required
+def mitre_attack(request):
+    return render(request, "mitre_attack.html")
+
 def login_view(request):
     error = ""
     if request.user.is_authenticated:

@@ -10,6 +10,7 @@ urlpatterns = [
     path('history/', views.history, name='history'),
     path('result/', views.results, name='results'),
     path('settings/', views.settings, name='settings'),
+    path('mitre_attack/', views.mitre_attack, name='mitre_attack'),
     path('accounts/login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
 ]
