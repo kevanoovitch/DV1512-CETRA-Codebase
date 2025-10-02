@@ -14,6 +14,11 @@ def home(request):
 
     if request.method == "POST" and request.FILES.get("myUploadedFile"):
         myuploadedfile = request.FILES["myUploadedFile"]
+        
+        name = myuploadedfile.name.lower()
+        if not (name.endswith(".zip") or name.endswith(".crx")):
+            error = "Please upload a valid .zip or .crx file."
+            return render(request, "home.html", {"uploaded_file_url": uploaded_file_url, "error": error})
 
         fs = FileSystemStorage()
         filename = fs.save(myuploadedfile.name, myuploadedfile)
