@@ -10,3 +10,25 @@ High-level view of the system components and their interactions:
 ![System Architecture](docs/diagrams/architecture.svg)
 
 
+### Django instructions 
+
+#### To run the program 
+```
+python manage.py 
+```
+
+#### To run the tests 
+``` bash
+pyton manage.py test
+```
+
+#### To create a a user run 
+``` bash
+python manage.py createsuperuser --username=joe --email=joe@example.com
+```
+
+- Follow the cli instruction
+- Bypass password strength validation
+- Log in with that user (duh)
+
+
