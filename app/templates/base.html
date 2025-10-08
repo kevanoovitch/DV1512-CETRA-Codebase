@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <title>{% block title %}CETRA{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a class="brand" href="{% url 'home' %}">CETRA</a>
+      <a class="tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Home</a>
+      <a class="tab {% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'history' %}">History</a>
+      <a class="tab {% if request.resolver_match.url_name == 'results' %}active{% endif %}" href="{% url 'results' %}">Results</a>
+      <a class="tab {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">Settings</a>
+      <a class="tab {% if request.resolver_match.url_name == 'mitre_attack' %}active{% endif %}" href="{% url 'mitre_attack' %}">MITRE ATT&CK</a>
+      <form action="{% url 'logout' %}" method="post">
+      {% csrf_token %}
+      <button type="submit" name="logout_button">Logout</button>
+      </form>
+      
+      <!-- lägg fler flikar här senare -->
+    </nav>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

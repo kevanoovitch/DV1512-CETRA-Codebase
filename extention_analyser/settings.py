@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -36,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',   
+    'django.contrib.staticfiles',
     'app',
 ]
 
@@ -123,5 +125,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# To get colour in test output
-TEST_RUNNER = "redgreenunittest.django.runner.RedGreenDiscoverRunner"
+
+# Media files settings
+
+cwd = os.getcwd()
+
+MEDIA_URL = "/uploaded/"
+MEDIA_ROOT = os.path.join(cwd, "uploaded")
