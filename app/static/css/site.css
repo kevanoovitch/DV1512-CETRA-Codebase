@@ -265,3 +265,44 @@ input[type="text"]:focus {
   .report-score { flex-direction: row; gap: 12px; }
 }
 
+/* ===== Navbar layout fix ===== */
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-right {
+  margin-left: auto;
+}
+
+/* ===== Logout button styling ===== */
+.logout-btn {
+  background: #6366f1;            /* samma accent som submit */
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 9999px;          /* rund */
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(99,102,241,0.25);
+  transition: background .15s, transform .1s, box-shadow .15s;
+}
+
+.logout-btn:hover {
+  background: #4f46e5;
+  box-shadow: 0 0 12px rgba(99,102,241,0.4);
+  transform: translateY(-1px);
+}
+
+.logout-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 6px rgba(99,102,241,0.2);
+}
