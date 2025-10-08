@@ -12,35 +12,56 @@ def home(request):
     uploaded_file_url = None
     error = None
 
-    if request.method == "POST" and request.FILES.get("myUploadedFile"):
-        myuploadedfile = request.FILES["myUploadedFile"]
-        
-        name = myuploadedfile.name.lower()
-        if not (name.endswith(".zip") or name.endswith(".crx")):
-            error = "Please upload a valid .zip or .crx file."
-            return render(request, "home.html", {"uploaded_file_url": uploaded_file_url, "error": error})
-
-        fs = FileSystemStorage()
-        filename = fs.save(myuploadedfile.name, myuploadedfile)
-        uploaded_file_url = fs.url(filename)
-
-        return render(request, "home.html", {"uploaded_file_url": uploaded_file_url, "error": None})
-
     if request.method == "POST":
-        webstore_id = (request.POST.get("mytext") or request.POST.get("webstore_id") or "").strip()
-        if webstore_id:
+        submit_type = request.POST.get("submit_type")
+        fs = FileSystemStorage()
+
+        # --- 🔹 Case 1: ZIP eller CRX uppladdning ---
+        if submit_type in ["zip", "crx"]:
+            upload = request.FILES.get("submission_file")
+            if not upload:
+                error = f"Please select a valid .{submit_type} file."
+                return render(request, "home.html", {"error": error})
+
+            name = upload.name.lower()
+            if submit_type == "zip" and not name.endswith(".zip"):
+                error = "Uploaded file must be a .zip file."
+                return render(request, "home.html", {"error": error})
+            if submit_type == "crx" and not name.endswith(".crx"):
+                error = "Uploaded file must be a .crx file."
+                return render(request, "home.html", {"error": error})
+
+            filename = fs.save(upload.name, upload)
+            uploaded_file_url = fs.url(filename)
+            return render(request, "home.html", {
+                "uploaded_file_url": uploaded_file_url,
+                "error": None
+            })
+
+        # --- 🔹 Case 2: Webstore ID ---
+        elif submit_type == "id":
+            webstore_id = (request.POST.get("submission_value") or "").strip()
+            if not webstore_id:
+                error = "Please enter an Extension ID."
+                return render(request, "home.html", {"error": error})
+
             if not (len(webstore_id) == 32 and webstore_id.isalpha() and webstore_id.islower()):
                 error = "Webstore ID must be 32 lowercase letters (a–z)."
-                return render(request, "home.html", {"uploaded_file_url": None, "error": error})
+                return render(request, "home.html", {"error": error})
 
-            fs = FileSystemStorage()
             txt_name = "webstore_id.txt"
             if fs.exists(txt_name):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
-            return render(request, "home.html", {"uploaded_file_url": None, "error": None})
+            return render(request, "home.html", {"error": None})
 
+        # --- 🔹 Case 3: okänd typ ---
+        else:
+            error = "Invalid submission type."
+            return render(request, "home.html", {"error": error})
+
+    # GET-förfrågan: bara visa sidan
     return render(request, "home.html")
 
 @login_required
