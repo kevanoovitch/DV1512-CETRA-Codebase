@@ -1,0 +1,244 @@
+{
+    "last_sandbox_id": [],
+    "last_start_time": "2025-10-08T10:15:14.508Z",
+    "scan_result_history_length": 9,
+    "votes": {
+        "down": 0,
+        "up": 0
+    },
+    "sandbox": false,
+    "file_id": "bzI1MTAwOGNpQTY4RVd1YWs",
+    "data_id": "bzI1MTAwOGNpQTY4RVd1YWt5dzNNdV9kcUNC_mdaas",
+    "process_info": {
+        "progress_percentage": 100,
+        "result": "Allowed",
+        "post_processing": {
+            "actions_failed": "",
+            "actions_ran": "",
+            "converted_destination": "",
+            "converted_to": "",
+            "copy_move_destination": ""
+        },
+        "verdicts": [
+            "No Threat Detected"
+        ],
+        "profile": "multiscan",
+        "blocked_reason": "",
+        "blocked_reasons": []
+    },
+    "scan_results": {
+        "scan_details": {
+            "AhnLab": {
+                "scan_result_i": 3,
+                "def_time": "2025-10-07T00:00:00.000Z",
+                "scan_time": 0,
+                "threat_found": ""
+            },
+            "Avira": {
+                "scan_time": 6,
+                "def_time": "2025-10-08T01:26:25.510Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Bitdefender": {
+                "scan_result_i": 3,
+                "def_time": "2025-10-06T08:52:06.000Z",
+                "scan_time": 0,
+                "threat_found": ""
+            },
+            "Bkav Pro": {
+                "scan_time": 209,
+                "def_time": "2025-10-08T01:27:09.587Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "ClamAV": {
+                "scan_time": 4,
+                "def_time": "2025-10-08T01:49:25.407Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "CMC": {
+                "scan_time": 3,
+                "def_time": "2025-10-08T01:24:36.491Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Emsisoft": {
+                "scan_time": 8,
+                "def_time": "2025-10-08T01:36:19.154Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "IKARUS": {
+                "scan_time": 31,
+                "def_time": "2025-10-08T01:25:26.010Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "K7": {
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:25:21.402Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Lionic": {
+                "scan_time": 19,
+                "def_time": "2025-10-08T08:55:38.267Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Trellix": {
+                "scan_time": 14,
+                "def_time": "2025-10-08T01:26:50.665Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "NANOAV": {
+                "scan_time": 7,
+                "def_time": "2025-10-08T01:52:54.215Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Quick Heal": {
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:49:23.094Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "RocketCyber": {
+                "scan_result_i": 23,
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:25:52.541Z",
+                "threat_found": ""
+            },
+            "TACHYON": {
+                "scan_time": 9,
+                "def_time": "2025-10-08T01:25:26.307Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Varist": {
+                "scan_time": 22,
+                "def_time": "2025-10-08T01:25:33.169Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Webroot SMD": {
+                "scan_result_i": 23,
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:26:51.788Z",
+                "threat_found": ""
+            },
+            "Xvirus Anti-Malware": {
+                "scan_time": 67,
+                "def_time": "2025-10-08T01:36:09.629Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Zillya!": {
+                "scan_time": 4,
+                "def_time": "2025-10-08T01:50:05.833Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Agatha Anderton": {
+                "scan_result_i": 23,
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:24:15.555Z",
+                "threat_found": ""
+            },
+            "Vir.IT eXplorer": {
+                "scan_time": 3,
+                "def_time": "2025-10-08T01:52:25.751Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Vir.IT ML": {
+                "scan_time": 3,
+                "def_time": "2025-10-08T01:36:12.385Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            }
+        },
+        "scan_all_result_i": 0,
+        "current_av_result_i": 0,
+        "start_time": "2025-10-08T10:15:14.207Z",
+        "total_time": 209,
+        "total_avs": 22,
+        "total_detected_avs": 0,
+        "progress_percentage": 100,
+        "scan_all_result_a": "No Threat Detected",
+        "current_av_result_a": "No Threat Detected"
+    },
+    "filetype_info": {
+        "file_info": {
+            "description": "ZIP Archive",
+            "encrypted": false,
+            "extensions": "zip,zipx",
+            "groupID": "A",
+            "groupIDs": [
+                "A"
+            ],
+            "group_description": "Archive Files",
+            "likely_type_ids": [
+                {
+                    "score": 1,
+                    "typeID": "ZIP"
+                },
+                {
+                    "score": 0,
+                    "typeID": "TXT"
+                }
+            ],
+            "type": "application/zip",
+            "typeID": "ZIP",
+            "type_ids": [
+                "ZIP"
+            ]
+        },
+        "final_verdict": {
+            "verdict": "allowed"
+        },
+        "other_detections": [
+            {
+                "description": "XPI",
+                "detector": "Magika",
+                "score": 0.9900000095367432
+            },
+            {
+                "description": "ZIP compressed archive",
+                "detector": "TrID",
+                "score": 1
+            },
+            {
+                "description": "Zip archive data, at least v2.0 to extract, compression method=deflate",
+                "detector": "libmagic",
+                "score": 1
+            }
+        ],
+        "result_template_hash": "42468dd269e2b201d64253bdba80ce2f77cc99694f627a7e6e319cf41b09b87a",
+        "spoofing_info": {
+            "detection_result": "Not Configured",
+            "result_explanation": "",
+            "result_overview": "Spoofing Detection Was Not Configured"
+        },
+        "version": 2
+    },
+    "file_info": {
+        "file_size": 780012,
+        "upload_timestamp": "2025-10-08T10:15:14.196Z",
+        "md5": "04D2399345DA3AB6548F397D7B66AEE9",
+        "sha1": "7371DA4A2616505306A64DA1D72FA751847A987B",
+        "sha256": "A88D3FA02F0546576EA35DC6D126E6EAE13B35F3E4F499550B260D4CA61E4CDA",
+        "file_type_category": "A",
+        "file_type_description": "ZIP Archive",
+        "file_type_extension": "zip",
+        "display_name": "Unknown Filename"
+    },
+    "share_file": 1,
+    "private_processing": 0,
+    "rest_version": "4",
+    "additional_info": [],
+    "stored": true
+}
