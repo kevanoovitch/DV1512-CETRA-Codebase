@@ -5,16 +5,26 @@
 <h1>Home</h1>
 
 <div class="card home-card">
-  <p>Välkommen till CETRA — analysera en Chrome-extension genom att ladda upp en fil eller ange ett ID.</p>
+  <p>Welcome to CETRA — analyze a Chrome extension by uploading a file or entering an ID.</p>
 
-  <!-- 🔹 Upload section -->
-  <div class="upload-section">
-    <h2>Upload a Zip/Crx File</h2>
-    <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="upload-form">
+  <div class="submit-section">
+    <h2>Submit an Extension</h2>
+    <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="submit-form">
       {% csrf_token %}
-      <div class="upload-row">
-        <input type="file" name="myUploadedFile" accept=".zip,.crx" required>
-        <button type="submit" class="btn-pill">Upload</button>
+      <div class="submit-row">
+
+        <!-- dropdown med ID som standard -->
+        <select name="submit_type" class="select-input" required>
+          <option value="id" selected>Extension ID</option>
+          <option value="zip">ZIP File</option>
+          <option value="crx">CRX File</option>
+        </select>
+
+        <!-- textfält + filfält (växlar med JS) -->
+        <input type="text" name="submission_value" placeholder="Enter Chrome Web Store ID" required>
+        <input type="file" name="submission_file" accept=".zip,.crx" class="file-input">
+
+        <button type="submit" class="btn-pill btn-accent">Submit</button>
       </div>
     </form>
 
@@ -29,20 +39,28 @@
       <p class="error">{{ error }}</p>
     {% endif %}
   </div>
-
-  <hr>
-
-  <!-- 🔹 Extension ID section -->
-  <div class="id-section">
-    <h2>Submit an Extension ID</h2>
-    <form action="{% url 'home' %}" method="post" class="id-form">
-      {% csrf_token %}
-      <label for="mytext">Submit your Extension ID:</label>
-      <div class="upload-row">
-        <input type="text" id="mytext" name="mytext" placeholder="Enter Chrome Web Store ID" required>
-        <button type="submit" class="btn-pill">Submit</button>
-      </div>
-    </form>
-  </div>
 </div>
+
+<script>
+  const select = document.querySelector('.select-input');
+  const textField = document.querySelector('input[name="submission_value"]');
+  const fileField = document.querySelector('input[name="submission_file"]');
+
+  function toggleInputs() {
+    if (select.value === 'id') {
+      textField.style.display = 'block';
+      fileField.style.display = 'none';
+      textField.required = true;
+      fileField.required = false;
+    } else {
+      textField.style.display = 'none';
+      fileField.style.display = 'block';
+      textField.required = false;
+      fileField.required = true;
+    }
+  }
+
+  toggleInputs();
+  select.addEventListener('change', toggleInputs);
+</script>
 {% endblock %}
