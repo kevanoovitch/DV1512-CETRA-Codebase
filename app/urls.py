@@ -13,6 +13,9 @@ urlpatterns = [
     path('mitre_attack/', views.mitre_attack, name='mitre_attack'),
     path('accounts/login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path("report/<str:sha256>/", views.report_view, name="results"),
+    #path("report/<str:sha256>/json/", views.report_json, name="report_json"),
+    #path("report/<str:sha256>/pdf/", views.report_pdf, name="report_pdf"),
 ]
 
 

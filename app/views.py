@@ -82,3 +82,21 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect("login") 
+
+def report_view(request, sha256=None):
+    dummy = {
+        "name": "Example Ad Blocker",
+        "extension_id": "abcd1234efgh5678",
+        "created_at": "2025-10-08 15:00",
+        "score": 82,
+        "verdict": "Malicious",
+        "summary": "This extension collects browsing data and injects ads.",
+        "permissions": ["tabs", "storage", "https://*/*"],
+        "findings": [
+            {"category": "Privacy", "description": "Tracks URLs visited", "severity": "High"},
+            {"category": "Injection", "description": "Injects remote JS", "severity": "Critical"},
+        ],
+        "iocs": ["malicious.example.com", "198.51.100.22"],
+        "sha256": sha256 or "dummyhash1234567890",
+    }
+    return render(request, "result.html", {"report": dummy})
