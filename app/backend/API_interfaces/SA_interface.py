@@ -11,6 +11,7 @@ import requests
 from dotenv import load_dotenv
 from rich import print_json
 from rich.console import Console
+from app.backend.API_interfaces.ExtensionIDConverter import ExtensionIDConverter
 
 
 
@@ -40,6 +41,7 @@ class Interface_Secure_Annex:
         default_cache = getattr(constants, "SA_OUTPUT_FILE", "backend/output.json")
         self.cache_path = Path(default_cache)
         self.fixture_path = self.cache_path
+        self.conveter = ExtensionIDConverter()
 
     # <--- Exposed functions --->
 
@@ -49,6 +51,11 @@ class Interface_Secure_Annex:
         Does not parse.
         """
         path.parent.mkdir(parents=True, exist_ok=True)
+
+        #verify that input is an extensionID
+        if (self._is_extension_id(extension) != True):
+            print("Input was not an ID calling conveter")
+            extension = self.conveter.convert_file_to_id(extension)
 
         if self.dev_mode:
             raw_report = self._load_cached_report(path)
@@ -88,6 +95,11 @@ class Interface_Secure_Annex:
                 console.rule(f"[bold red]DEV MODE IS ON[/bold red]")
 
     # < --- private functions -- > 
+
+    def _is_extension_id(self, input):
+        # Chrome extension IDs are 32 lowercase letters
+        return isinstance(self.input, str) and len(self.input) == 32 and self.input.islower()
+
 
     def _load_cached_report(self, path: Path) -> Dict[str, Any]:
         if not path.exists():
