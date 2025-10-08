@@ -1,42 +1,48 @@
 {% extends "base.html" %}
 {% block title %}Home – CETRA{% endblock %}
+
 {% block content %}
-  <h1>Home</h1>
-  <p>Välkommen till CETRA. Här kommer startsidans innehåll.</p>
+<h1>Home</h1>
 
-  <body>
-<h2>Upload a Zip/Crx File</h2>
-<form action="{% url 'home' %}" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <input type="file" name="myUploadedFile" required accept=".zip,.crx">
-  <button type="submit">Upload</button>
-</form>
+<div class="card home-card">
+  <p>Välkommen till CETRA — analysera en Chrome-extension genom att ladda upp en fil eller ange ett ID.</p>
 
-{% if uploaded_file_url %}
-  <p style="color: green;">File uploaded successfully: 
-     <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a>
-  </p>
-{% endif %}
+  <!-- 🔹 Upload section -->
+  <div class="upload-section">
+    <h2>Upload a Zip/Crx File</h2>
+    <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="upload-form">
+      {% csrf_token %}
+      <div class="upload-row">
+        <input type="file" name="myUploadedFile" accept=".zip,.crx" required>
+        <button type="submit" class="btn-pill">Upload</button>
+      </div>
+    </form>
 
-<!-- Error -->
-{% if error %}
-  <p style="color: red;">{{ error }}</p>
-{% endif %}
+    {% if uploaded_file_url %}
+      <p class="success">
+        File uploaded successfully:
+        <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a>
+      </p>
+    {% endif %}
 
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+  </div>
 
-<h2>Submit an Extention ID</h2>
-<form action="{% url 'home' %}" method="post">
-  {% csrf_token %}
-  <label for="mytext">Submit Your Extentions ID:</label>
-  <input type="text" id="mytext" name="mytext" required>
-  <button type="submit">Submit</button>
-</form>
+  <hr>
 
-</body>
-
+  <!-- 🔹 Extension ID section -->
+  <div class="id-section">
+    <h2>Submit an Extension ID</h2>
+    <form action="{% url 'home' %}" method="post" class="id-form">
+      {% csrf_token %}
+      <label for="mytext">Submit your Extension ID:</label>
+      <div class="upload-row">
+        <input type="text" id="mytext" name="mytext" placeholder="Enter Chrome Web Store ID" required>
+        <button type="submit" class="btn-pill">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
-
-
-
-#FILL OUT HOMEPAGE??
-#Scoreboard 

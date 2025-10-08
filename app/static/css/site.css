@@ -166,3 +166,68 @@ button[name="logout_button"] {
   .report-header { flex-direction:column; align-items:flex-start; }
   .report-score { flex-direction:row; gap:12px; }
 }
+
+/* ===== Home page styling (matchar History & Report) ===== */
+.home-card {
+  padding: 24px 20px;
+}
+
+.upload-section, .id-section {
+  margin-top: 16px;
+}
+
+.upload-section h2, .id-section h2 {
+  margin-bottom: 8px;
+  color: var(--fg);
+}
+
+.upload-form, .id-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.upload-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.upload-row input[type="file"],
+.upload-row input[type="text"] {
+  flex: 1;
+  color: var(--fg);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #273147;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.upload-row input[type="file"]::-webkit-file-upload-button {
+  color: var(--fg);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid #273147;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background .15s;
+}
+.upload-row input[type="file"]::-webkit-file-upload-button:hover {
+  background: #0b1224;
+}
+
+.success {
+  color: #4ade80;
+  margin-top: 8px;
+}
+.error {
+  color: #f87171;
+  margin-top: 8px;
+}
+
+.home-card hr {
+  margin: 24px 0;
+  border-color: #1e293b;
+}
