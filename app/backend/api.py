@@ -22,7 +22,12 @@ def preform_secure_annex_scan(extension):
     parsed = interpreter.interpret_output()
 
     pretty_print_sa_result(parsed)
-    #TODO: Deliver verdict from SA
+    
+    #Deliver verdict from SA also returns findings for later use
+    sa_verdict_int = parsed["score"]
+    
+    return sa_verdict_int
+    
 
 
 def print_secure_annex_scan(extension):
