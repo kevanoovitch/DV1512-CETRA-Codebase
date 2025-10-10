@@ -25,6 +25,9 @@ nav { display: flex; gap: 16px; align-items: center; height: 56px; }
 button[name="logout_button"] { color: var(--muted); background: transparent; border: none; margin-left: auto; }
 
 main { padding: 24px 0; }
+main.container {
+  padding-top: 32px;
+}
 h1 { margin: 0 0 16px; }
 
 /* ===== Generic card ===== */
@@ -37,6 +40,12 @@ h1 { margin: 0 0 16px; }
 
 /* ===== History table (full version) ===== */
 .table-wrap { overflow-x: auto; }
+
+/* ===== Home page spacing ===== */
+.home-card {
+  margin-bottom: 28px; /* mellanrum till top-list */
+}
+
 
 .table {
   width: 100%;
