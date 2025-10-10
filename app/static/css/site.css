@@ -22,7 +22,7 @@ nav { display: flex; gap: 16px; align-items: center; height: 56px; }
 .tab { text-decoration: none; color: var(--muted); padding: 8px 10px; border-radius: 8px; }
 .tab:hover { color: var(--fg); background: #0b1224; }
 .tab.active { color: var(--fg); background: #0b1224; outline: 1px solid #273147; }
-button[name="logout_button"] { color: white; background: transparent; border: none; margin-left: auto; }
+button[name="logout_button"] { color: var(--muted); background: transparent; border: none; margin-left: auto; }
 
 main { padding: 24px 0; }
 h1 { margin: 0 0 16px; }
