@@ -306,3 +306,47 @@ input[type="text"]:focus {
   transform: translateY(1px);
   box-shadow: 0 0 6px rgba(99,102,241,0.2);
 }
+
+/* === LIGHT MODE THEME === */
+[data-theme="light"] {
+  --bg: #f8fafc;        /* ljus bakgrund */
+  --fg: #0f172a;        /* mörk text */
+  --muted: #475569;     /* grå text */
+  --accent: #4f46e5;    /* behåll blå accent */
+
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* Extra – för element som behöver kontrast */
+[data-theme="light"] .card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .navbar {
+  background: #ffffff;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] .tab.active {
+  background: #e2e8f0;
+  outline: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] .file-input {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .btn-accent {
+  background: #4f46e5;
+  color: #fff;
+}
+
+[data-theme="light"] body {
+  background: var(--bg);
+}

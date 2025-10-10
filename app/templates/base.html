@@ -31,10 +31,28 @@
 </header>
 
 
-  <main class="container">
+   <main class="container">
     {% block content %}{% endblock %}
   </main>
 
   {% block scripts %}{% endblock %}
+
+  <script>
+    // Load saved theme (default = dark)
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!toggleBtn) return;
+
+      toggleBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+      });
+    });
+  </script>
 </body>
 </html>
