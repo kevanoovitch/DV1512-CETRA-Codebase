@@ -1,6 +1,6 @@
 {
-    "total_avs": 22,
-    "detected_avs": 5,
-    "score_percentage": 22.727272727272727,
-    "verdict": "Suspicious"
+    "score": 19.0,
+    "malware_type": [
+        "trojan"
+    ]
 }

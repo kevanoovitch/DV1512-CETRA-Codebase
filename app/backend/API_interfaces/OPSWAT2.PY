@@ -6,7 +6,7 @@ import os
 API_KEY = "d63269307d19d62ed65499ca90b16846"
 SCAN_RESULT_JSON = "scan_result.json"
 SUMMARY_JSON = "scan_summary.json"
-file_path = "mil.crx"
+file_path = "app/mil.crx"
 
 def scan_file(file_path):
     """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
