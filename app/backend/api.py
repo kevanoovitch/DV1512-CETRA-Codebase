@@ -4,7 +4,7 @@ from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 from app import constants
 from pathlib import Path
 
-from app.backend.API_interfaces.printer import pretty_print_sa_result
+from app.backend.utils.printer import pretty_print_sa_result
 from app.backend.API_interfaces.VirusTotalInterface import scan_file
 
 

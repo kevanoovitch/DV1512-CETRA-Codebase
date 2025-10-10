@@ -11,7 +11,7 @@ import requests
 from dotenv import load_dotenv
 from rich import print_json
 from rich.console import Console
-from app.backend.API_interfaces.ExtensionIDConverter import ExtensionIDConverter
+from app.backend.utils.ExtensionIDConverter import ExtensionIDConverter
 
 
 
