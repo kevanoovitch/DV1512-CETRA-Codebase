@@ -87,7 +87,24 @@ def settings(request):
 
 @login_required
 def mitre_attack(request):
-    return render(request, "mitre_attack.html")
+    error = None
+
+    if request.method == "POST":
+        extension_id = (request.POST.get("extension_id") or "").strip()
+
+        if not (len(extension_id) == 32 and extension_id.isalpha() and extension_id.islower()):
+            error = "Extension ID must be 32 lowercase letters (a–z)."
+            return render(request, "mitre_attack.html", {"error": error})
+
+        #report = Report.objects.filter(extension_id=extension_id).first()
+        #if not report:
+        #    error = "Extension not found in database."
+        #    return render(request, "mitre_attack.html", {"error": error})
+
+        # Finns -> redirect till rapport-sida
+        return redirect("mitre_report", extension_id=extension_id)
+
+    return render(request, "mitre_attack.html", {"error": error})
 
 def login_view(request):
     error = ""
