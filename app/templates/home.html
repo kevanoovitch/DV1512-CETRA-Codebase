@@ -40,6 +40,50 @@
     {% endif %}
   </div>
 </div>
+<!-- ===== Scoreboard Section ===== -->
+<div class="card top-list">
+  <h2>Top 5 Highest Scores</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Name</th>
+          <th>Extension ID</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if top_reports %}
+          {% for r in top_reports %}
+          <tr>
+            <td>
+              <div class="score">
+                <span class="score-dot" style="--score: {{ r.score|default:0 }};"></span>
+                <span class="score-text">{{ r.score|default:"–" }}</span>
+              </div>
+            </td>
+            <td class="name">
+              <div class="name-main">{{ r.name|default:"Unknown" }}</div>
+            </td>
+            <td class="mono">{{ r.extension_id|default:"—" }}</td>
+            <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          {% for _ in "12345" %}
+          <tr class="skeleton">
+            <td><div class="skeleton-bar w-15"></div></td>
+            <td><div class="skeleton-bar w-60"></div></td>
+            <td class="mono"><div class="skeleton-bar w-40"></div></td>
+            <td><div class="skeleton-bar w-30"></div></td>
+          </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
 <script>
   const select = document.querySelector('.select-input');

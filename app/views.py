@@ -12,6 +12,11 @@ def home(request):
     uploaded_file_url = None
     error = None
 
+    #top_reports = Report.objects.order_by('-score')[:5]
+    #change when DB is ready
+    top_reports = []
+
+
     if request.method == "POST":
         submit_type = request.POST.get("submit_type")
         fs = FileSystemStorage()

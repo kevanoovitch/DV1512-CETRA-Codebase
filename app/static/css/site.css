@@ -350,3 +350,15 @@ input[type="text"]:focus {
 [data-theme="light"] body {
   background: var(--bg);
 }
+
+.top-list h2 {
+  margin-bottom: 12px;
+  color: var(--fg);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.top-list .score-dot {
+  background: radial-gradient(circle at 30% 30%, #f87171, #b91c1c);
+  box-shadow: 0 0 0 2px #273147 inset, 0 0 10px rgba(239,68,68,0.35);
+}
