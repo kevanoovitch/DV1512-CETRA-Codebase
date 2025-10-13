@@ -1,0 +1,73 @@
+import requests
+import json
+import time
+import os
+
+API_KEY = "d63269307d19d62ed65499ca90b16846"
+SCAN_RESULT_JSON = "scan_result.json"
+SUMMARY_JSON = "scan_summary.json"
+file_path = "app/mil.crx"
+
+def scan_file(file_path):
+    """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
+    
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"Filen '{file_path}' hittades inte.")
+
+    
+    url_upload = "https://api.metadefender.com/v4/file"
+    headers_upload = {
+        "apikey": API_KEY,
+        "Content-Type": "application/octet-stream"
+    }
+
+    with open(file_path, "rb") as f:
+        payload = f.read()
+
+    response = requests.post(url_upload, headers=headers_upload, data=payload)
+    response_data = response.json()
+
+    file_id = response_data.get("data_id") or response_data.get("file_id")
+    if not file_id:
+        raise Exception("Kunde inte hämta file_id från MetaDefender-responsen")
+
+    
+    url_result = f"https://api.metadefender.com/v4/file/{file_id}"
+    headers_result = {"apikey": API_KEY}
+
+    while True:
+        response = requests.get(url_result, headers=headers_result)
+        data = response.json()
+        progress = data.get("scan_results", {}).get("progress_percentage", 0)
+        
+        if progress == 100:
+            break
+        time.sleep(3)
+
+
+    with open(SCAN_RESULT_JSON, "w") as f:
+        json.dump(data, f, indent=4)
+
+    
+    scan_details = data["scan_results"]["scan_details"]
+    total_avs = len(scan_details)
+    detected_count = sum(1 for av in scan_details.values() if av.get("scan_result_i", 0) > 0)
+    score = round(detected_count / total_avs * 100, 1)
+
+    malware_type = data.get("malware_type", [])
+    if isinstance(malware_type, str):
+        malware_type = [malware_type]
+
+    
+    summary = {
+        "score": score,
+        "malware_type": malware_type
+    }
+
+    with open(SUMMARY_JSON, "w") as f:
+        json.dump(summary, f, indent=4)
+
+    return summary
+
+#print(scan_file(file_path))
+#scan_file(file_path)
