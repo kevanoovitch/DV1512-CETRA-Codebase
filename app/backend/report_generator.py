@@ -10,11 +10,6 @@ import re
 from typing import Tuple, Union
 
 
-class InputKind(Enum):
-    ID = auto()
-    ZIP = auto()
-    CRX = auto()
-
 EXTENSION_ID_RE = re.compile(r"^[a-z]{32}$")
 
 class ReportGenerator:
@@ -26,26 +21,20 @@ class ReportGenerator:
         SA_score = 0
         # Take input
 
-        determined_input = self._classify_input(input)
-
-        print(determined_input)
-
-        if determined_input == InputKind.CRX or determined_input == InputKind.ZIP: 
+        if self._isFile(input) == True:
             
             # pass the file to each API_int 
 
-            SA_score = preform_secure_annex_scan(determined_input)
-            VT_score = prefrom_virus_total_scan(determined_input)
+            SA_score = preform_secure_annex_scan(input)
+            VT_score = prefrom_virus_total_scan(input)
             #TODO: Call Opswat
 
-        elif determined_input == InputKind.ID: 
-            SA_score = preform_secure_annex_scan(determined_input)
+        elif self._isFile(input) == False: 
+            SA_score = preform_secure_annex_scan(input)
             
             # Download 
-            rel_path_to_download = constants.UPLOADED_PATH + extensionGetter.download_crx(determined_input)
+            rel_path_to_download = constants.UPLOADED_PATH + extensionGetter.download_crx(input)
             
-
-
             VT_score = prefrom_virus_total_scan(rel_path_to_download)
  
             #TODO: Call Opswat
@@ -59,13 +48,14 @@ class ReportGenerator:
     def _calculate_final_score(self, VT, SA, OP = 0):
         return (VT + SA + OP) / 3
 
-    def _classify_input(self, value: str):            
+    def _isFile(self, value: str) -> bool:            
         
         
         s = value.strip()
         if not s: 
             raise ValueError("input is empty.")
 
+    
         # Expand ~ and resolve relative bits (without requiring existence first)
         p = Path(value).expanduser()
 
@@ -73,14 +63,14 @@ class ReportGenerator:
         if p.exists() and p.is_file():
             suf = p.suffix.lower()
             if suf == ".zip":
-                return (InputKind.ZIP, p.resolve())
+                return True
             if suf == ".crx":
-                return (InputKind.CRX, p.resolve())
+                return True
             raise ValueError(f"Unsupported file type: {p.name} (expected .zip or .crx)")
 
         #If not a valid file or path try it as an extension ID
         if EXTENSION_ID_RE.fullmatch(s):
-            return (InputKind.ID,s)
+            return False
         
         # Did not match a file or ID
         raise ValueError("Input must be an exisiting .zip/.crx file path or a 32-letter lower ID")
