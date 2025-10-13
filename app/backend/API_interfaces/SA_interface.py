@@ -59,6 +59,10 @@ class Interface_Secure_Annex:
             print("Input was not an ID calling conveter")
             extension = self.conveter.convert_file_to_id(extension)
 
+            if extension == None :
+                "print missing ID"
+            return None
+
         if self.dev_mode:
             raw_report = self._load_cached_report(path)
         else:
