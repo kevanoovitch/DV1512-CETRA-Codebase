@@ -18,7 +18,6 @@ def preform_secure_annex_scan(input):
 
     client = Interface_Secure_Annex()
     interpreter = SecureAnnex_interpretator()
-
     path = Path(constants.SA_OUTPUT_FILE) 
     
 
@@ -26,16 +25,14 @@ def preform_secure_annex_scan(input):
 
     #Parse the output
     parsed = interpreter.interpret_output()
-
-    pretty_print_sa_result(parsed)
-    
+  
     #Deliver verdict from SA also returns findings for later use
     sa_verdict_int = parsed["score"]
-    
+   
     return sa_verdict_int
     
 
-
+#TODO: bloat code
 def print_secure_annex_scan(extension):
     
 

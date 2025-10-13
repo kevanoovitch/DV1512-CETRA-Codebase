@@ -52,6 +52,8 @@ class Interface_Secure_Annex:
         """
         path.parent.mkdir(parents=True, exist_ok=True)
 
+        
+
         #verify that input is an extensionID
         if (self._is_extension_id(extension) != True):
             print("Input was not an ID calling conveter")
@@ -96,9 +98,15 @@ class Interface_Secure_Annex:
 
     # < --- private functions -- > 
 
-    def _is_extension_id(self, input):
-        # Chrome extension IDs are 32 lowercase letters
-        return isinstance(self.input, str) and len(self.input) == 32 and self.input.islower()
+    def _is_extension_id(self, value) -> bool:
+        # Chrome extension IDs are 32 lowercase letters (a–z). 
+        return (
+            isinstance(value, str)
+            and len(value) == 32
+            and value.islower()
+            and value.isalpha()
+        )
+
 
 
     def _load_cached_report(self, path: Path) -> Dict[str, Any]:

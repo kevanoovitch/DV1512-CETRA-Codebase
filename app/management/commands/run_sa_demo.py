@@ -13,3 +13,5 @@ if __name__ == "__main__":
     path = "app/uploaded/mil.crx"
     print(f"Running Secure Annex scan for {path}")
     prefrom_virus_total_scan(path)
+
+    
