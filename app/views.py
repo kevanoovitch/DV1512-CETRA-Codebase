@@ -6,7 +6,6 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 
-
 @login_required
 def home(request):
     uploaded_file_url = None
@@ -66,7 +65,6 @@ def home(request):
             error = "Invalid submission type."
             return render(request, "home.html", {"error": error})
 
-    # GET-förfrågan: bara visa sidan
     return render(request, "home.html")
 
 @login_required
