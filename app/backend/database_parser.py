@@ -1,8 +1,32 @@
 import json
+import sqlite3
 import datetime
 
-def ParseReport(report :dict):
-    
+delete_reports_table = """
+DROP TABLE IF EXISTS reports;
+"""
+
+create_reports_table = """
+CREATE TABLE IF NOT EXISTS reports (
+    file_hash varchar(50) NOT NULL PRIMARY KEY, 
+    score INTEGER,
+    verdict varcar(20), 
+    description TEXT,
+    permissions TEXT,
+    risks TEXT,
+    malware_types TEXT,
+    extention_id varchar(32),
+    date varchar(20)
+);
+    """
+def add_report(conn, report):
+    # insert table statement
+    insert = f"""
+    INSERT INTO reports
+    (file_hash, score, verdict, description, permissions, risks, malware_types, extention_id, date)
+    VALUES
+    (?,?,?,?,?,?,?,?,?);
+    """
     report_hash = report.get("file_hash")
     report_score = report.get("score")
     report_verdict = report.get("verdict")
@@ -13,22 +37,36 @@ def ParseReport(report :dict):
     report_ExtentionID = report.get("extention_id")
     report_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
+    # Create  a cursor
+    cur = conn.cursor()
+
+    # execute the INSERT statement
+    cur.execute(insert, (report_hash, report_score, report_verdict, json.dumps(report_description), json.dumps(report_permissions), json.dumps(report_risks), json.dumps(report_malware_types), report_ExtentionID, report_date))
+
+    # commit the changes
+    conn.commit()
+
+    # get the id of the last inserted row
+    return True
+
+def ParseReport(report :dict):
+    print("\n Storing in Database...\n")
     
-    
-    print("Hash: ", report_hash)
-    print("Score: ", report_score)
-    print("Verdict: ", report_verdict)
-    print("Description: ", report_description)
-    print("Permissions: ", report_permissions)
-    print("Risks: ", report_risks)
-    print("Malware Types: ", report_malware_types)
-    print("Extention ID: ", report_ExtentionID)
-    print("Datetime: ", report_date)
-    
+    try:
+        with sqlite3.connect('db.sqlite3') as conn:  
+            cursor = conn.cursor()
+            # create reports table
+            cursor.execute(delete_reports_table)
+            cursor.execute(create_reports_table)
+                  
+            success = add_report(conn, report)
+            if success:
+                print("Report added successfully.")
+    except sqlite3.Error as e:
+        print(e)
 
 
-if __name__ == "__main__":
-    dummyreport = {
+dummyreport = {
         "score": 85,
         "verdict": "malicious",
         "description": ["Blabla", "Albalb", "hhhhhhh"],
@@ -39,4 +77,7 @@ if __name__ == "__main__":
         "file_hash": "abc123",
         }
 
+
+if __name__ == "__main__":
+    
     ParseReport(dummyreport)
