@@ -9,10 +9,11 @@ def generate_report(result) -> dict:
     permissions = result["permissions"]
     risks = result["SA"]["risk_types"]
     malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
-    file_hash = print(hashlib.file_digest(open(result[file_path],'rb'),'sha256').hexdigest())
+    file_hash = print(hashlib.file_digest(open(result["file_path"],'rb'),'sha256').hexdigest())
     extension_id = result["extension_id"]
     verdict = label_from_score(score)
-    return {
+    
+    report = {
         "score": score,
         "verdict": verdict,
         "description": description,
@@ -23,6 +24,10 @@ def generate_report(result) -> dict:
         "file_hash": file_hash
     }
 
+    print(report)
+
+    return report
+
 
 def label_from_score(s):
     if s<=25: return "OK / Clean"
@@ -32,7 +37,19 @@ def label_from_score(s):
     return "Highly malicious"
 
 def calculate_final_score(scores: list[int]) -> int:
-    total = sum(scores)
-    average = total / len(scores)
-    return round(average)
+    total = 0
+    count = 0
 
+    for s in scores:
+        if s is None:
+            s = 0
+        elif not isinstance(s, (int, float)):
+            s = 0
+        total += s
+        count += 1
+
+    if count == 0:
+        return 0
+
+    average = total / count
+    return round(average)

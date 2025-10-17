@@ -54,6 +54,7 @@ def apiCaller(value):
     result["extension_id"] = fileFormat.ID
     result["file_path"] = fileFormat.filePath
 
+    
 
     report = generate_report(result)
     
