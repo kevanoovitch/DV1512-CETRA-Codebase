@@ -2,6 +2,7 @@ import json
 from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex
 from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 import app.backend.API_interface.VirusTotalInterface as vt
+from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
 import app.backend.utils as utils
 
 from app import constants
@@ -19,37 +20,33 @@ class FileFormat:
 def apiCaller(value):
     result={}
 
-    #Step 1, create an object that contain both the ID and the file path    
+    #Step 1, create an object that contain both the ID and the file path
     fileType = check_valid_input(value)
-    
+
     #return -1 if file is invalid, let the frontend know that the inputted value is invalid
     if fileType == -1:
         return -1
 
     #instanstiate a FileFormat object to store both path and ID
     fileFormat = FileFormat()
-   
 
-    if filetype == 0:
+
+    if fileType == 0:
         fileFormat.ID = utils.getExtensionID(value)
         fileFormat.filePath = value
-    if filetype == 1:
+    if fileType == 1:
         fileFormat.ID = value
         fileFormat.filePath = utils.get_Exstension_from_ID(value)
 
-def apiCaller(value):
-    """
-    Takes in user input called value, returns result dict
-    """
-    result={}
 
     if(fileFormat.ID is not None):
         SA = preform_secure_annex_scan(fileFormat.ID)
         if SA is not None :
             result["SA"] = SA
-    
+
     result["VT"] = vt.scan_file(fileFormat.filePath)
-    result["OWASP"]=owasp.function(fileFormat.filePath)
+    result["OWASP"]=opswat_scan_file(fileFormat.filePath)
+
 
 #function checks wether the input is either a file or a chrome extension
 #return 0 if file, 1 if chrome ID, -1 if neither.
