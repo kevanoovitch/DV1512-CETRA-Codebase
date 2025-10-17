@@ -1,0 +1,239 @@
+{
+    "last_sandbox_id": [],
+    "last_start_time": "2025-10-08T11:54:14.471Z",
+    "malware_family": "script",
+    "malware_type": [
+        "trojan"
+    ],
+    "scan_result_history_length": 10,
+    "votes": {
+        "down": 0,
+        "up": 0
+    },
+    "threat_name": "Trojan/Script!lHLZM036",
+    "sandbox": false,
+    "file_id": "bzI1MTAwODR3LV9CcThEaTk",
+    "data_id": "bzI1MTAwODR3LV9CcThEaTlibFdmSXRiRVRW_mdaas",
+    "process_info": {
+        "progress_percentage": 100,
+        "blocked_reasons": [
+            "HEUR_Trojan_Script_Generic"
+        ],
+        "result": "Blocked",
+        "post_processing": {
+            "actions_failed": "",
+            "actions_ran": "",
+            "converted_destination": "",
+            "converted_to": "",
+            "copy_move_destination": ""
+        },
+        "verdicts": [
+            "Infected"
+        ],
+        "profile": "multiscan",
+        "blocked_reason": "Infected"
+    },
+    "scan_results": {
+        "scan_details": {
+            "AhnLab": {
+                "scan_result_i": 3,
+                "def_time": "2025-10-07T00:00:00.000Z",
+                "scan_time": 0,
+                "threat_found": ""
+            },
+            "Avira": {
+                "scan_time": 6,
+                "def_time": "2025-10-08T11:04:19.403Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Bkav Pro": {
+                "scan_time": 204,
+                "def_time": "2025-10-08T01:24:49.509Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "ClamAV": {
+                "scan_time": 3,
+                "def_time": "2025-10-08T01:49:25.407Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "CMC": {
+                "scan_result_i": 1,
+                "scan_time": 2,
+                "threat_found": "HEUR_Trojan_Script_Generic",
+                "def_time": "2025-10-08T01:24:36.491Z"
+            },
+            "Emsisoft": {
+                "scan_time": 10,
+                "def_time": "2025-10-08T01:24:22.131Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "IKARUS": {
+                "scan_time": 26,
+                "def_time": "2025-10-08T01:25:26.010Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "K7": {
+                "scan_time": 2,
+                "def_time": "2025-10-08T01:25:21.402Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Lionic": {
+                "scan_time": 12,
+                "def_time": "2025-10-08T08:55:38.267Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Trellix": {
+                "scan_time": 14,
+                "def_time": "2025-10-08T01:26:50.665Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "NANOAV": {
+                "scan_time": 5,
+                "def_time": "2025-10-08T01:50:31.439Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Quick Heal": {
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:49:23.094Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "RocketCyber": {
+                "scan_result_i": 23,
+                "scan_time": 1,
+                "def_time": "2025-10-08T01:25:52.541Z",
+                "threat_found": ""
+            },
+            "TACHYON": {
+                "scan_time": 2,
+                "def_time": "2025-10-08T01:25:26.307Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Webroot SMD": {
+                "scan_result_i": 23,
+                "def_time": "2025-10-08T01:26:51.788Z",
+                "scan_time": 0,
+                "threat_found": ""
+            },
+            "Xvirus Anti-Malware": {
+                "scan_time": 35,
+                "def_time": "2025-10-08T01:36:09.629Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Zillya!": {
+                "scan_time": 32,
+                "def_time": "2025-10-08T01:36:17.316Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Agatha Anderton": {
+                "scan_result_i": 23,
+                "scan_time": 2,
+                "def_time": "2025-10-08T01:24:15.555Z",
+                "threat_found": ""
+            },
+            "Vir.IT eXplorer": {
+                "scan_time": 3,
+                "def_time": "2025-10-08T01:52:25.751Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            },
+            "Vir.IT ML": {
+                "scan_time": 2,
+                "def_time": "2025-10-08T01:50:05.548Z",
+                "scan_result_i": 0,
+                "threat_found": ""
+            }
+        },
+        "scan_all_result_i": 1,
+        "current_av_result_i": 1,
+        "start_time": "2025-10-08T11:54:14.280Z",
+        "total_time": 204,
+        "total_avs": 20,
+        "total_detected_avs": 1,
+        "progress_percentage": 100,
+        "scan_all_result_a": "Infected",
+        "current_av_result_a": "Infected"
+    },
+    "filetype_info": {
+        "file_info": {
+            "description": "Google Chrome Extensions",
+            "encrypted": false,
+            "extensions": "crx",
+            "groupID": "A",
+            "groupIDs": [
+                "A"
+            ],
+            "group_description": "Archive Files",
+            "likely_type_ids": [
+                {
+                    "score": 1,
+                    "typeID": "CRX"
+                },
+                {
+                    "score": 0,
+                    "typeID": "TXT"
+                }
+            ],
+            "type": "application/x-chrome-extension",
+            "typeID": "CRX",
+            "type_ids": [
+                "CRX"
+            ]
+        },
+        "final_verdict": {
+            "verdict": "allowed"
+        },
+        "other_detections": [
+            {
+                "description": "CRX",
+                "detector": "Magika",
+                "score": 1
+            },
+            {
+                "description": "",
+                "detector": "TrID",
+                "score": 1
+            },
+            {
+                "description": "Google Chrome extension, version 3",
+                "detector": "libmagic",
+                "score": 1
+            }
+        ],
+        "result_template_hash": "42468dd269e2b201d64253bdba80ce2f77cc99694f627a7e6e319cf41b09b87a",
+        "spoofing_info": {
+            "detection_result": "Not Configured",
+            "result_explanation": "",
+            "result_overview": "Spoofing Detection Was Not Configured"
+        },
+        "version": 2
+    },
+    "file_info": {
+        "file_size": 417979,
+        "upload_timestamp": "2025-10-08T11:54:14.271Z",
+        "md5": "999B3EA5F75BA4BF705A1AE104744CCC",
+        "sha1": "F5537AF06074E874DC459094616684369181C35A",
+        "sha256": "0EFC314B1B7F6C74E772EB1F8F207ED50C2E702AED5E565081CBCF8F28F0FE26",
+        "file_type_category": "A",
+        "file_type_description": "Google Chrome Extensions",
+        "file_type_extension": "crx",
+        "display_name": "Unknown Filename"
+    },
+    "share_file": 1,
+    "private_processing": 0,
+    "rest_version": "4",
+    "additional_info": [],
+    "stored": true
+}
