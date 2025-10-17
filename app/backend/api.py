@@ -2,7 +2,7 @@ import json
 from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex
 from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 import app.backend.API_interface.VirusTotalInterface as vt
-import app.backend.utils as ut
+import app.backend.utils as utils
 
 from app import constants
 from pathlib import Path
@@ -12,9 +12,9 @@ import os
 from app.backend.API_interfaces.printer import pretty_print_sa_result
 #function that gather both inputs ID and filepath in one object
 class FileFormat:
-    def __init__(self)
-    filePath = None
-    ID = None
+    def __init__(self):
+        filePath = None
+        ID = None
 
 def apiCaller(value):
     result={}
@@ -37,6 +37,11 @@ def apiCaller(value):
         fileFormat.ID = value
         fileFormat.filePath = utils.get_Exstension_from_ID(value)
 
+def apiCaller(value):
+    """
+    Takes in user input called value, returns result dict
+    """
+    result={}
 
     if(fileFormat.ID is not None):
         SA = preform_secure_annex_scan(fileFormat.ID)
@@ -45,7 +50,6 @@ def apiCaller(value):
     
     result["VT"] = vt.scan_file(fileFormat.filePath)
     result["OWASP"]=owasp.function(fileFormat.filePath)
-
 
 #function checks wether the input is either a file or a chrome extension
 #return 0 if file, 1 if chrome ID, -1 if neither.
