@@ -44,8 +44,8 @@ def scan_file(file_path):
         time.sleep(3)
 
 
-    with open(constants.SCAN_RESULT_JSON, "w") as f:
-        json.dump(data, f, indent=4)
+    #with open(SCAN_RESULT_JSON, "w") as f:
+        #json.dump(data, f, indent=4)
 
 
     scan_details = data["scan_results"]["scan_details"]
@@ -63,8 +63,8 @@ def scan_file(file_path):
         "malware_type": malware_type
     }
 
-    with open(constants.SUMMARY_JSON, "w") as f:
-        json.dump(summary, f, indent=4)
+    #with open(SUMMARY_JSON, "w") as f:
+        #json.dump(summary, f, indent=4)
 
     return summary
 
