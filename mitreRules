@@ -1,0 +1,9 @@
+if owasp or VT or SA  innehåller "script" och "trojan:
+    technique = "T1059.007"
+    tactics = ["Execution"]
+
+if owasp or VT or SA innehålller "observe" "script" och "webRequest":
+    technique = "T1056"
+    tactics = ["Credential Access"]
+
+
