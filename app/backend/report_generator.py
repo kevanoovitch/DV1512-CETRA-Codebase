@@ -1,59 +1,38 @@
 import os
 import re
 from typing import  Any
+import hashlib
 
-
-#FIXME: Don't use hardcoded scores
-dummy_dict: dict[str, Any] = {
-"SecureAnnex": {"score": 40},
-"VirusTotal": {"score": 30},
-"OPSWAT": {"score": 20}
-}
-
-        
 def generate_report(result) -> dict: 
-    """arg a dictionary returns parsed and normalize dict based on all API's output"""
-
-    final_report: dict[str, Any] = {
-    "score": 0,
-    "verdict": "",
-    "description": "",
-    "permissions": [],
-    "risks": [],
-    "malware_types": [],
-    "extension_id": None,
-    "file_hash": ""
-    }   
-
-
-    # 1. parse the opswat dict and put in final_report
-    
-
-    # 2. parse the vt dict and put in final report
-
-    # 3. parse SA dict and put in final report
+    score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]]) 
+    description = result["SA"]["descriptions"]
+    permissions = result["permissions"]
+    risks = result["SA"]["risk_types"]
+    malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
+    file_hash = print(hashlib.file_digest(open(result[file_path],'rb'),'sha256').hexdigest())
+    extension_id = result["extension_id"]
+    verdict = label_from_score(score)
+    return {
+        "score": score,
+        "verdict": verdict,
+        "description": description,
+        "permissions": permissions,
+        "risks": risks,
+        "malware_types": malware_types,
+        "extension_id": extension_id,
+        "file_hash": file_hash
+    }
 
 
-    return final_report
+def label_from_score(s):
+    if s<=25: return "OK / Clean"
+    if s<=40: return "Low suspicion"
+    if s<=55: return "Suspicious"
+    if s<=80: return "Malicious"
+    return "Highly malicious"
 
+def calculate_final_score(scores: list[int]) -> int:
+    total = sum(scores)
+    average = total / len(scores)
+    return round(average)
 
-    
-def calculate_final_score(result) -> int:
-    
-    valid_scores = []
-
-
-    for data in result:
-        score = data.get("score")
-        if isinstance(score, (int, float)):
-            valid_scores.append(float(score))
-    
-    if not valid_scores:
-        return 0
-    
-    total = 0.0
-    for s in valid_scores:
-        total += s
-
-    avg = total / 3.0
-    return round(avg)
