@@ -12,16 +12,10 @@ ApiKey = os.getenv("VT_API_KEY")
 if not ApiKey:
     raise ValueError
 
-base_url = "https://www.virustotal.com/api/v3/files/upload_url"
 
-HEADERS = { "x-apikey": ApiKey}
-
-# directory_path = "../uploaded/"
-
-
-def scan_file(file_name: str, testing_mode):
+def scan_file(file_name: str):
     try:
-        file_path = file_name if testing_mode else file_name
+        file_path = file_name
         
         headers = {"x-apikey": ApiKey}
 
@@ -37,7 +31,7 @@ def scan_file(file_name: str, testing_mode):
 
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
         
-        timeout = 30
+        timeout = 20
         print("loading data from Virus total")
         while timeout > 0:
             res = requests.get(analysis_url, headers=headers)
@@ -58,13 +52,14 @@ def scan_file(file_name: str, testing_mode):
 
 def _analyse_data(result):
     data = {}
-    detectedby = []
+    malware_types = []
     data = {"stats":result["attributes"]["status"],}
     for engine,details in result["attributes"]["results"].items():
-        if(details["category"] != "undetected" and details["category"] != "type-unsupported"):
-            detectedby.append(details)
+        if(details["category"] != "undetected" and details["category"] != "type-unsupported" and  details["method"] != "timeout") and details["result"] != None:
+            malware_types.append(details["result"])
     stats = result["attributes"]["stats"]
-    return  {"stats":stats, "detectedby":detectedby,"score":_calculate_malicious_score(stats)}
+
+    return  {"malware_types":malware_types,"score":_calculate_malicious_score(stats),"raw":result}
 
 def _calculate_malicious_score(stats: dict) -> int:
     malicious = stats.get("malicious", 0)
