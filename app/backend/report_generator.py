@@ -12,9 +12,29 @@ dummy_dict: dict[str, Any] = {
 
         
 def generate_report(result) -> dict: 
-    """arg a dictionary returns a dict"""
+    """arg a dictionary returns parsed and normalize dict based on all API's output"""
 
-    pass 
+    final_report: dict[str, Any] = {
+    "score": 0,
+    "verdict": "",
+    "description": "",
+    "permissions": [],
+    "risks": [],
+    "malware_types": [],
+    "extension_id": None,
+    "file_hash": ""
+    }   
+
+
+    # 1. parse the opswat dict and put in final_report
+    
+
+    # 2. parse the vt dict and put in final report
+
+    # 3. parse SA dict and put in final report
+
+
+    return final_report
 
 
     

@@ -1,16 +1,17 @@
 import json
 from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex
 from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
-import app.backend.API_interface.VirusTotalInterface as vt
+import app.backend.API_interfaces.VirusTotalInterface as vt
 from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
-import app.backend.utils as utils
+from app.backend.utils import ExtensionIDConverter, extension_retriver, download_crx
+from app.backend.report_generator import generate_report
 
 from app import constants
 from pathlib import Path
 import re
 import os
 
-from app.backend.API_interfaces.printer import pretty_print_sa_result
+
 #function that gather both inputs ID and filepath in one object
 class FileFormat:
     def __init__(self):
@@ -19,6 +20,8 @@ class FileFormat:
 
 def apiCaller(value):
     result={}
+
+    Id_to_file_converter = ExtensionIDConverter()
 
     #Step 1, create an object that contain both the ID and the file path
     fileType = check_valid_input(value)
@@ -32,25 +35,37 @@ def apiCaller(value):
 
 
     if fileType == 0:
-        fileFormat.ID = utils.getExtensionID(value)
+        fileFormat.ID = Id_to_file_converter.convert_file_to_id(value)
         fileFormat.filePath = value
     if fileType == 1:
         fileFormat.ID = value
-        fileFormat.filePath = utils.get_Exstension_from_ID(value)
+        fileFormat.filePath = download_crx(value)
 
 
     if(fileFormat.ID is not None):
         SA = preform_secure_annex_scan(fileFormat.ID)
         if SA is not None :
             result["SA"] = SA
-
+    #VT returns {"malware_types:[], score:int,"raw":{}"}
     result["VT"] = vt.scan_file(fileFormat.filePath)
     result["OWASP"]=opswat_scan_file(fileFormat.filePath)
+
+    result["permissions"] = extension_retriver(fileFormat.filePath)
+    result["extension_id"] = fileFormat.ID
+    result["file_path"] = fileFormat.filePath
+
+
+    report = generate_report(result)
+    
+    #TODO: implement this
+    # write_to_db(report)
+    
+    
 
 
 #function checks wether the input is either a file or a chrome extension
 #return 0 if file, 1 if chrome ID, -1 if neither.
-def check_valid_input(valueself):
+def check_valid_input(value):
     # Chrome extension IDs are usually 32 lowercase letters (a–p)
     chrome_ext_pattern = re.compile(r'^[a-p]{32}$')
 
