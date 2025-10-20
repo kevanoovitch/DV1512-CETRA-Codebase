@@ -4,6 +4,9 @@ from typing import  Any
 import hashlib
 
 def generate_report(result) -> dict: 
+    
+    print("result:", result)
+    
     score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]]) 
     description = result["SA"]["descriptions"]
     permissions = result["permissions"]

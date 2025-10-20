@@ -15,7 +15,7 @@ class SecureAnnex_interpretator:
             "urls": [], 
             "descriptions": [],
             "risk_types" : [],
-            "score":int,
+            "score":0,
         }
 
         self.section_points = {"manifest": 0, "signatures": 0, "urls": 0, "analysis": 0}
