@@ -2,15 +2,18 @@ import requests
 import json
 import time
 import os
-
+from dotenv import load_dotenv
 from app import constants
 
-def scan_file(file_path):
-    """Scans a file with OPSWAT MetaDefender and returns score + malware_type as a dictionary"""
+load_dotenv()
+API_KEY = os.getenv("OPSWAT_API_KEY")
 
+
+def scan_file(file_path):    
+    """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
+   
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File '{file_path}' not found.")
-
 
     url_upload = "https://api.metadefender.com/v4/file"
     headers_upload = {
