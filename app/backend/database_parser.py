@@ -1,6 +1,13 @@
 import json
 import sqlite3
 import datetime
+import os
+
+directory = os.path.dirname(os.path.abspath(__file__))
+root_parent = os.path.dirname(directory)
+root_grandparent = os.path.dirname(root_parent)
+
+# SQL statements
 
 delete_reports_table = """
 DROP TABLE IF EXISTS reports;
@@ -53,10 +60,10 @@ def ParseReport(report :dict):
     print("\n Storing in Database...\n")
     
     try:
-        with sqlite3.connect('db.sqlite3') as conn:  
+        with sqlite3.connect(os.path.join(root_grandparent, "db.sqlite3")) as conn:  
             cursor = conn.cursor()
+            #cursor.execute(delete_reports_table)
             # create reports table
-            cursor.execute(delete_reports_table)
             cursor.execute(create_reports_table)
                   
             success = add_report(conn, report)
@@ -80,4 +87,4 @@ dummyreport = {
 
 if __name__ == "__main__":
     
-    ParseReport(dummyreport)
+    ParseReport()
