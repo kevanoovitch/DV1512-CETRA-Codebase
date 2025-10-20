@@ -14,6 +14,7 @@ if not ApiKey:
 
 
 def scan_file(file_name: str):
+    output = {"malware_types":[],"score":0,"raw":{}}
     try:
         file_path = file_name
         
@@ -31,7 +32,7 @@ def scan_file(file_name: str):
 
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
         
-        timeout = 20
+        timeout = 40
         print("loading data from Virus total")
         while timeout > 0:
             res = requests.get(analysis_url, headers=headers)
@@ -39,15 +40,15 @@ def scan_file(file_name: str):
             data = res.json()
             status = data["data"]["attributes"]["status"]
             if status == "completed":
-                return _analyse_data(data["data"])
-
+                data = _analyse_data(data["data"])
+                return data
             time.sleep(1)
             timeout -= 1
 
-        return None
+        return output
     except Exception as e:
         print(f"[scan_file] Error: {e}")
-        return None
+        return output
     
 
 def _analyse_data(result):
