@@ -54,15 +54,12 @@ def apiCaller(value):
     result["extension_id"] = fileFormat.ID
     result["file_path"] = fileFormat.filePath
 
-    
+
 
     report = generate_report(result)
-    
+
     #TODO: implement this
     # write_to_db(report)
-    
-    
-
 
 #function checks wether the input is either a file or a chrome extension
 #return 0 if file, 1 if chrome ID, -1 if neither.
@@ -81,12 +78,12 @@ def preform_secure_annex_scan(input):
     #Helper function to query SA and build json file
     client = Interface_Secure_Annex()
     interpreter = SecureAnnex_interpretator()
-    path = Path(constants.SA_OUTPUT_FILE) 
-    
+    path = Path(constants.SA_OUTPUT_FILE)
+
     client.perform_scan(input,path)
 
     #Parse the output
     parsed = interpreter.interpret_output()
-  
+
     #Deliver verdict from SA also returns findings for later use
     return parsed

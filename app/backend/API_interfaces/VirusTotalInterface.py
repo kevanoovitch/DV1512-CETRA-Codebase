@@ -17,7 +17,7 @@ def scan_file(file_name: str):
     output = {"malware_types":[],"score":0,"raw":{}}
     try:
         file_path = file_name
-        
+
         headers = {"x-apikey": ApiKey}
 
         with open(file_path, "rb") as f:
@@ -31,7 +31,7 @@ def scan_file(file_name: str):
         analysis_id = response.json()["data"]["id"]
 
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
-        
+
         timeout = 40
         print("loading data from Virus total")
         while timeout > 0:
@@ -49,7 +49,7 @@ def scan_file(file_name: str):
     except Exception as e:
         print(f"[scan_file] Error: {e}")
         return output
-    
+
 
 def _analyse_data(result):
     data = {}

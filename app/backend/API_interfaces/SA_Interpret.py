@@ -12,7 +12,7 @@ class SecureAnnex_interpretator:
         self.report_path = constants.SA_OUTPUT_FILE
         self.combined_score = 0
         self.returnDict = {
-            "urls": [], 
+            "urls": [],
             "descriptions": [],
             "risk_types" : [],
             "score":0,
@@ -53,7 +53,7 @@ class SecureAnnex_interpretator:
         self.returnDict["score"] = self._final_score()
         return self.returnDict
 
-    
+
     # --- private functions and modules ---
 
     def _add_points(self, section: str, pts: int) -> None:
@@ -71,7 +71,7 @@ class SecureAnnex_interpretator:
             return 0
         s = max(0, min(10,s))
         return s * factor
-        
+
     def _cap_section(self, section: str) -> int:
         cap = self.SECTION_CAPS[section]
         subtotal = self.section_points.get(section, 0)
@@ -87,7 +87,7 @@ class SecureAnnex_interpretator:
 
 
 
-   
+
     def _interpret_manifest(self, items: List[Dict[str, Any]]) -> None:
         """
         Add 'description in <snippet>' lines to returnDict['descriptions'],
@@ -151,18 +151,18 @@ class SecureAnnex_interpretator:
             self._add_points("manifest", 10)
 
 
-    
+
     def _interpret_urls(self, urls: List[Dict[str, Any]]):
-       
-       
-        seen = set(self.returnDict.get("urls", [])) 
 
 
-        for u in urls: 
+        seen = set(self.returnDict.get("urls", []))
+
+
+        for u in urls:
             url = (u.get("url") or "").strip()
             file_path = (u.get("file_path") or "").strip()
             domain = (u.get("domain") or "").strip()
-            
+
 
             bad = False
             url_pts = 0
@@ -174,24 +174,24 @@ class SecureAnnex_interpretator:
 
             # Rule 2: Background script referencing external (non-Google) domain
             if (
-                ("background" in file_path.lower() or "static/background" in file_path.lower()) and domain 
+                ("background" in file_path.lower() or "static/background" in file_path.lower()) and domain
                 and not domain.endswith(("google.com", "chrome.google.com"))
-                
+
             ):
-                
+
                 bad = True
                 url_pts = max(url_pts, self._severity_points(6, factor=2))
-            
+
                 if not url:
                     url = domain
 
-            if bad and url: 
+            if bad and url:
                 msg = f"malicious url: {url} from this file {file_path}"
                 if msg not in seen:
                     self.returnDict["urls"].append(msg)
                     seen.add(msg)
                 self._add_points("urls", url_pts)
-                
+
     def _interpret_analysis(self, rows: List[Dict[str, Any]]) -> None:
         for r in rows:
             text = (r.get("analysis") or "")
@@ -216,7 +216,7 @@ class SecureAnnex_interpretator:
                     self.returnDict["descriptions"].append(line)
 
     def _interpret_signatures(self, sigs: List[Dict[str, Any]]) -> None:
-        
+
         sev_map = {"critical": 9, "high": 8, "medium": 6, "low": 3}
 
         for s in sigs:

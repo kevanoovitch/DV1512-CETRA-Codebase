@@ -15,7 +15,7 @@ def generate_report(result) -> dict:
     file_hash = print(hashlib.file_digest(open(result["file_path"],'rb'),'sha256').hexdigest())
     extension_id = result["extension_id"]
     verdict = label_from_score(score)
-    
+
     report = {
         "score": score,
         "verdict": verdict,

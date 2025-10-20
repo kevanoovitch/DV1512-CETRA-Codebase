@@ -52,7 +52,7 @@ class Interface_Secure_Annex:
         """
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        
+
 
         #verify that input is an extensionID
         if (self._is_extension_id(extension) != True):
@@ -100,10 +100,10 @@ class Interface_Secure_Annex:
             if self.dev_mode == True:
                 console.rule(f"[bold red]DEV MODE IS ON[/bold red]")
 
-    # < --- private functions -- > 
+    # < --- private functions -- >
 
     def _is_extension_id(self, value) -> bool:
-        # Chrome extension IDs are 32 lowercase letters (a–z). 
+        # Chrome extension IDs are 32 lowercase letters (a–z).
         return (
             isinstance(value, str)
             and len(value) == 32

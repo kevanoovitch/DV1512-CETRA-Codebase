@@ -5,16 +5,13 @@ import os
 
 from app import constants
 
-
-file_path = "app/mil.crx"
-
 def scan_file(file_path):
     """Scans a file with OPSWAT MetaDefender and returns score + malware_type as a dictionary"""
-    
+
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File '{file_path}' not found.")
 
-    
+
     url_upload = "https://api.metadefender.com/v4/file"
     headers_upload = {
         "apikey": API_KEY,
@@ -31,7 +28,6 @@ def scan_file(file_path):
     if not file_id:
         raise Exception("Was not able to fetch file_id MetaDefender-responsen")
 
-    
     url_result = f"https://api.metadefender.com/v4/file/{file_id}"
     headers_result = {"apikey": API_KEY}
 
@@ -39,7 +35,7 @@ def scan_file(file_path):
         response = requests.get(url_result, headers=headers_result)
         data = response.json()
         progress = data.get("scan_results", {}).get("progress_percentage", 0)
-        
+
         if progress == 100:
             break
         time.sleep(3)
@@ -48,7 +44,7 @@ def scan_file(file_path):
     with open(constants.SCAN_RESULT_JSON, "w") as f:
         json.dump(data, f, indent=4)
 
-    
+
     scan_details = data["scan_results"]["scan_details"]
     total_avs = len(scan_details)
     detected_count = sum(1 for av in scan_details.values() if av.get("scan_result_i", 0) > 0)
@@ -58,7 +54,7 @@ def scan_file(file_path):
     if isinstance(malware_type, str):
         malware_type = [malware_type]
 
-    
+
     summary = {
         "score": score,
         "malware_type": malware_type
