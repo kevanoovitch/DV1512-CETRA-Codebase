@@ -2,19 +2,19 @@ import requests
 import json
 import time
 import os
-
-API_KEY = "d63269307d19d62ed65499ca90b16846"
+from dotenv import load_dotenv
+load_dotenv()
+API_KEY = os.getenv("OPSWAT_API_KEY")
 SCAN_RESULT_JSON = "scan_result.json"
 SUMMARY_JSON = "scan_summary.json"
 file_path = "app/mil.crx"
 
-def scan_file(file_path):
+def scan_file(file_path):    
     """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
-    
+   
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Filen '{file_path}' hittades inte.")
 
-    
     url_upload = "https://api.metadefender.com/v4/file"
     headers_upload = {
         "apikey": API_KEY,
