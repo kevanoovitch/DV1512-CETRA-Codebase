@@ -29,7 +29,7 @@ def scan_file(file_path):
 
     file_id = response_data.get("data_id") or response_data.get("file_id")
     if not file_id:
-        raise Exception("Was not able to fetch file_id MetaDefender-responsen")
+        raise Exception("Was not able to fetch file_id MetaDefender-response")
 
     url_result = f"https://api.metadefender.com/v4/file/{file_id}"
     headers_result = {"apikey": API_KEY}

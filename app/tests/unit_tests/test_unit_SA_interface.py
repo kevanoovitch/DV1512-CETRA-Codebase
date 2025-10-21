@@ -24,7 +24,7 @@ class TestPerformScan(TestCase):
             
             tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
             out = Path(tmp.name); tmp.close()
-            sa.perform_scan("ext", out)
+            sa.perform_scan("s"*32, out)
         
         data = json.loads(out.read_text())
         assert data == {

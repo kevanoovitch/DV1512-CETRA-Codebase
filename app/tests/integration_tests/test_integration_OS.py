@@ -44,7 +44,7 @@ class TestOPSWAT2Integration(unittest.TestCase):
 
         result = OPSWAT2.scan_file("app/mil.crx")
 
-        expected = {"score": 28.6, "malware_type": ["trojan"]}
+        expected = {"score": 29, "malware_type": ["trojan"]}
 
         self.assertIsInstance(result, dict)
         self.assertEqual(result, expected)

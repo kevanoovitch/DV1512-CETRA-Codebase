@@ -47,7 +47,7 @@ def scan_file(file_name: str):
 
         return output
     except Exception as e:
-        print(f"[scan_file] Error: {e}")
+        print(f"[scan_file VT] Error: {e}")
         return output
 
 
