@@ -5,14 +5,13 @@ import hashlib
 
 def generate_report(result) -> dict: 
     
-    print("result:", result)
-    
     score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]]) 
     description = result["SA"]["descriptions"]
     permissions = result["permissions"]
     risks = result["SA"]["risk_types"]
     malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
-    file_hash = print(hashlib.file_digest(open(result["file_path"],'rb'),'sha256').hexdigest())
+    with open(result["file_path"], "rb") as f:
+        file_hash = hashlib.file_digest(f, hashlib.sha256).hexdigest()
     extension_id = result["extension_id"]
     verdict = label_from_score(score)
 
@@ -27,8 +26,6 @@ def generate_report(result) -> dict:
         "file_hash": file_hash
     }
 
-    print(report)
-
     return report
 
 
@@ -40,19 +37,24 @@ def label_from_score(s):
     return "Highly malicious"
 
 def calculate_final_score(scores: list[int]) -> int:
-    total = 0
+    """
+    arg an list of ints returns one int
+    """
+    sum = 0
     count = 0
 
     for s in scores:
-        if s is None:
-            s = 0
-        elif not isinstance(s, (int, float)):
-            s = 0
-        total += s
-        count += 1
+        if s == None:
+            s = -1 #Treat none as missing data
+        if isinstance(s,float): 
+            s = round(s,0)  
+
+        if s != -1: 
+            sum += s
+            count += 1 #only count valid values
 
     if count == 0:
         return 0
 
-    average = total / count
+    average = sum / count
     return round(average)

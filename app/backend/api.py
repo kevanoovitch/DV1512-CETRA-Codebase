@@ -5,6 +5,7 @@ import app.backend.API_interfaces.VirusTotalInterface as vt
 from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
 from app.backend.utils import ExtensionIDConverter, extension_retriver, download_crx
 from app.backend.report_generator import generate_report
+from app.backend.database_parser import ParseReport
 
 from app import constants
 from pathlib import Path
@@ -58,8 +59,7 @@ def apiCaller(value):
 
     report = generate_report(result)
 
-    #TODO: implement this
-    # write_to_db(report)
+    ParseReport(report)
 
 #function checks wether the input is either a file or a chrome extension
 #return 0 if file, 1 if chrome ID, -1 if neither.

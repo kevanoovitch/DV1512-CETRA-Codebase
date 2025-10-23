@@ -14,7 +14,7 @@ if not ApiKey:
 
 
 def scan_file(file_name: str):
-    output = {"malware_types":[],"score":0,"raw":{}}
+    output = {"malware_types":[],"score":-1,"raw":{}}
     try:
         file_path = file_name
 

@@ -51,7 +51,7 @@ def scan_file(file_path):
     scan_details = data["scan_results"]["scan_details"]
     total_avs = len(scan_details)
     detected_count = sum(1 for av in scan_details.values() if av.get("scan_result_i", 0) > 0)
-    score = int(round(detected_count / total_avs * 100, 0)) if total_avs else 0
+    score = int(round(detected_count / total_avs * 100, 0)) if total_avs else -1
 
     malware_type = data.get("malware_type", [])
     if isinstance(malware_type, str):
