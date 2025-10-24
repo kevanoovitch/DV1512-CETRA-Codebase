@@ -5,7 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
-
+import sqlite3
+import json
+    
 @login_required
 def home(request):
     uploaded_file_url = None
@@ -125,19 +127,49 @@ def logout_view(request):
     return redirect("login") 
 
 def report_view(request, sha256=None):
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
+    
+    
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM reports WHERE file_hash=?;", (sha256,))
+    
+    row = cursor.fetchone()
+
+    if row:
+        result = dict(row)  # Convert sqlite3.Row to dict
+        # print(result)
+    else:
+        print("No record found.") 
+    
+    #print(json_output)
+
+    '''
+    file_hash = cursor.execute("SELECT file_hash FROM reports WHERE file_hash=?;", (sha256,))
+    extention_id = cursor.execute("SELECT extention_id FROM reports WHERE file_hash=?;", (sha256,))
+    created_at = cursor.execute("SELECT date FROM reports WHERE file_hash=?;", (sha256,))
+    score = cursor.execute("SELECT score FROM reports WHERE file_hash=?;", (sha256,))
+    verdict = cursor.execute("SELECT verdict FROM reports WHERE file_hash=?;", (sha256,))
+    summary = cursor.execute("SELECT description FROM reports WHERE file_hash=?;", (sha256,))
+    permissions = cursor.execute("SELECT permissions FROM reports WHERE file_hash=?;", (sha256,))
+    findings = cursor.execute("SELECT risks FROM reports WHERE file_hash=?;", (sha256,))
+    malware_types = cursor.execute("SELECT malware_types FROM reports WHERE file_hash=?;", (sha256,))
+    
+    
     dummy = {
-        "name": "Example Ad Blocker",
-        "extension_id": "abcd1234efgh5678",
-        "created_at": "2025-10-08 15:00",
-        "score": 82,
-        "verdict": "Malicious",
-        "summary": "This extension collects browsing data and injects ads.",
-        "permissions": ["tabs", "storage", "https://*/*"],
-        "findings": [
-            {"category": "Privacy", "description": "Tracks URLs visited", "severity": "High"},
-            {"category": "Injection", "description": "Injects remote JS", "severity": "Critical"},
-        ],
-        "iocs": ["malicious.example.com", "198.51.100.22"],
-        "sha256": sha256 or "dummyhash1234567890",
+        "file_hash": file_hash,
+        "extension_id": extention_id,
+        "created_at": created_at,
+        "score": score,
+        "verdict": verdict,
+        "summary": summary,
+        "permissions": permissions,
+        "findings": findings,
+        "malware_types": malware_types,
+        "sha256": sha256 or "abc123",
     }
-    return render(request, "result.html", {"report": dummy})
+    
+    print(dummy)
+    '''
+    return render(request, "result.html", {"report": result})
