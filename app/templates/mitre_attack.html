@@ -1,7 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Home – CETRA{% endblock %}
+{% block title %}MITRE ATT&CK – CETRA{% endblock %}
+
 {% block content %}
-    <h1>MITRE ATT&amp;CK Profile</h1>
-    <p>Welcome to the MITRE ATT&amp;CK profile page. Here you can view and manage your ATT&amp;CK profiles.</p>
-    <p>More comming soon</p>
+<h1>MITRE ATT&CK</h1>
+
+<div class="card mitre-card">
+  <p>Submit a Chrome Extension ID to see MITRE mapping.</p>
+
+  <form action="{% url 'mitre_attack' %}" method="post" class="submit-form">
+    {% csrf_token %}
+    <div class="submit-row">
+      <input type="text" name="extension_id" placeholder="Enter Chrome Web Store ID" required>
+      <button type="submit" class="btn-accent">Lookup</button>
+    </div>
+  </form>
+
+  {% if error %}
+    <p class="error">{{ error }}</p>
+  {% endif %}
+</div>
 {% endblock %}
+

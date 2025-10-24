@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Locked</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+  <style>
+    .lockout-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: var(--bg);
+      color: var(--fg);
+    }
+    .lockout-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 40px 48px;
+      text-align: center;
+      max-width: 420px;
+      box-shadow: 0 0 24px rgba(0,0,0,0.25);
+    }
+    h1 {
+      color: #f87171;
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    p {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 1.2rem;
+    }
+    #countdown {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--fg);
+      transition: opacity 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="lockout-container">
+    <div class="lockout-card">
+      <h1>Account temporarily locked</h1>
+      <p>Too many incorrect login attempts.<br>You will be redirected automatically in:</p>
+      <p id="countdown">60 seconds</p>
+    </div>
+  </div>
+
+  <script>
+    let seconds = 60;
+    const countdownEl = document.getElementById('countdown');
+
+    const timer = setInterval(() => {
+      seconds--;
+
+      countdownEl.style.opacity = 0;
+      setTimeout(() => {
+        countdownEl.textContent = `${seconds} seconds`;
+        countdownEl.style.opacity = 1;
+      }, 150);
+
+      if (seconds <= 0) {
+        clearInterval(timer);
+        countdownEl.textContent = "Redirecting...";
+        setTimeout(() => {
+          window.location.href = "{% url 'login' %}";
+        }, 2000); // wait 2 seconds before redirect
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

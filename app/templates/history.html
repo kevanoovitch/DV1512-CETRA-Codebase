@@ -1,10 +1,81 @@
+
 {% extends "base.html" %}
 {% block title %}History – CETRA{% endblock %}
+
 {% block content %}
-  <h1>History</h1>
-  <p>Comming soon</p>
+<h1>History</h1>
+<p>
+  <a class="btn btn-sm" href="{% url 'results' sha256='dummyhash1234' %}" target="_blank">
+    View test report
+  </a>
+</p>
+
+<div class="card">
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Extension ID</th>
+          <th>Date</th>
+          <th>Score</th>
+          <th class="align-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {# Riktiga rader (när ni har data): förväntar listan 'reports' i context #}
+        {% if reports %}
+          {% for r in reports %}
+            <tr>
+              <td class="name">
+                <div class="name-main">{{ r.name }}</div>
+                {% if r.verdict %}<span class="badge">{{ r.verdict }}</span>{% endif %}
+              </td>
+              <td class="mono">{{ r.extension_id }}</td>
+              <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+              <td>
+                <div class="score">
+                  <span class="score-dot" style="--score: {{ r.score|default:0 }};"></span>
+                  <span class="score-text">{{ r.score|default:"–" }}</span>
+                </div>
+              </td>
+              <td class="align-right">
+                <a class="btn btn-sm" href="{% url 'results' %}?sha256={{ r.sha256 }}">View</a>
+                <a class="btn btn-sm btn-outline" href="{% url 'report_json' r.sha256 %}">JSON</a>
+                <a class="btn btn-sm btn-outline" href="{% url 'report_pdf' r.sha256 %}">PDF</a>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          {# Placeholder-rader (ta bort när DB finns) #}
+          {% for _ in "12345" %}
+          <tr class="skeleton">
+            <td>
+              <div class="skeleton-bar w-60"></div>
+              <div class="skeleton-chip"></div>
+            </td>
+            <td class="mono"><div class="skeleton-bar w-40"></div></td>
+            <td><div class="skeleton-bar w-30"></div></td>
+            <td><div class="skeleton-bar w-15"></div></td>
+            <td class="align-right">
+              <span class="btn btn-sm disabled">View</span>
+              <span class="btn btn-sm btn-outline disabled">JSON</span>
+              <span class="btn btn-sm btn-outline disabled">PDF</span>
+            </td>
+          </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="table-footer">
+    <div class="muted">Showing {{ reports|length|default:0 }} items</div>
+    <div class="pager">
+      <a class="btn btn-sm btn-outline disabled" href="#">Prev</a>
+      <a class="btn btn-sm btn-outline" href="#">Next</a>
+    </div>
+  </div>
+</div>
 {% endblock %}
-
-
-#Show rows from db, name of extension, date, score, link for download report or link to redirect to results page
-#Just show whats in db, probably? 

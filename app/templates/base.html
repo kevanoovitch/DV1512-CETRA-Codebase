@@ -10,26 +10,49 @@
 </head>
 <body>
   <header class="navbar">
-    <nav class="container">
+  <nav class="container nav-row">
+    <div class="nav-left">
       <a class="brand" href="{% url 'home' %}">CETRA</a>
+
       <a class="tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Home</a>
       <a class="tab {% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'history' %}">History</a>
       <a class="tab {% if request.resolver_match.url_name == 'results' %}active{% endif %}" href="{% url 'results' %}">Results</a>
       <a class="tab {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">Settings</a>
-      <a class="tab {% if request.resolver_match.url_name == 'mitre_attack' %}active{% endif %}" href="{% url 'mitre_attack' %}">MITRE ATT&CK</a>
-      <form action="{% url 'logout' %}" method="post">
-      {% csrf_token %}
-      <button type="submit" name="logout_button">Logout</button>
-      </form>
-      
-      <!-- lägg fler flikar här senare -->
-    </nav>
-  </header>
+      <a class="tab {% if request.resolver_match.url_name == 'mitre_attack' %}active{% endif %}" href="{% url 'mitre_attack' %}">MITRE ATT&amp;CK</a>
+    </div>
 
-  <main class="container">
+    <div class="nav-right">
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" name="logout_button" class="logout-btn">Logout</button>
+      </form>
+    </div>
+  </nav>
+</header>
+
+
+   <main class="container">
     {% block content %}{% endblock %}
   </main>
 
   {% block scripts %}{% endblock %}
+
+  <script>
+    // Load saved theme (default = dark)
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    document.documentElement.setAttribute("data-theme", savedTheme);
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const toggleBtn = document.getElementById("theme-toggle");
+      if (!toggleBtn) return;
+
+      toggleBtn.addEventListener("click", () => {
+        const current = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = current === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
+      });
+    });
+  </script>
 </body>
 </html>

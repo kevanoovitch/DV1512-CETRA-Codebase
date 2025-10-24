@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Report – CETRA{% endblock %}
+
+{% block content %}
+<h1>Report</h1>
+
+<div class="card report-card">
+
+  <!-- Header med huvudinfo -->
+  <div class="report-header">
+    <div class="report-main">
+      <h2 class="report-title">{{ report.name|default:"Unknown Extension" }}</h2>
+      <div class="report-meta">
+        <span class="mono">ID: {{ report.extension_id|default:"—" }}</span>
+        <span>{{ report.created_at|date:"Y-m-d H:i" }}</span>
+      </div>
+    </div>
+    <div class="report-score">
+      <div class="score-circle">
+        <span class="score-value">{{ report.score|default:"–" }}</span>
+      </div>
+      <div class="verdict {{ report.verdict|default:'unknown'|lower }}">
+        {{ report.verdict|default:"Unknown" }}
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Metadata / Summary -->
+  <div class="report-section">
+    <h3>Summary</h3>
+    <p>{{ report.summary|default:"No summary available yet." }}</p>
+  </div>
+
+  <!-- Permissions -->
+  <div class="report-section">
+    <h3>Permissions</h3>
+    {% if report.permissions %}
+      <ul class="report-list">
+        {% for perm in report.permissions %}
+          <li>{{ perm }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No permissions listed.</p>
+    {% endif %}
+  </div>
+
+  <!-- Findings -->
+  <div class="report-section">
+    <h3>Findings</h3>
+    {% if report.findings %}
+      <table class="table">
+        <thead>
+          <tr><th>Category</th><th>Description</th><th>Severity</th></tr>
+        </thead>
+        <tbody>
+          {% for f in report.findings %}
+            <tr>
+              <td>{{ f.category }}</td>
+              <td>{{ f.description }}</td>
+              <td>{{ f.severity }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No findings detected.</p>
+    {% endif %}
+  </div>
+
+  <!-- IOCs -->
+  <div class="report-section">
+    <h3>IOCs (Indicators of Compromise)</h3>
+    {% if report.iocs %}
+      <ul class="report-list">
+        {% for ioc in report.iocs %}
+          <li>{{ ioc }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No IOCs found.</p>
+    {% endif %}
+  </div>
+
+  <hr>
+
+  <!-- Footer / Actions -->
+  <div class="report-footer">
+    <div class="left muted">SHA256: {{ report.sha256|default:"–" }}</div>
+    <div class="right">
+    </div>
+  </div>
+</div>
+{% endblock %}
