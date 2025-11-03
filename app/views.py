@@ -139,37 +139,8 @@ def report_view(request, sha256=None):
 
     if row:
         result = dict(row)  # Convert sqlite3.Row to dict
-        # print(result)
     else:
         print("No record found.") 
-    
-    #print(json_output)
 
-    '''
-    file_hash = cursor.execute("SELECT file_hash FROM reports WHERE file_hash=?;", (sha256,))
-    extention_id = cursor.execute("SELECT extention_id FROM reports WHERE file_hash=?;", (sha256,))
-    created_at = cursor.execute("SELECT date FROM reports WHERE file_hash=?;", (sha256,))
-    score = cursor.execute("SELECT score FROM reports WHERE file_hash=?;", (sha256,))
-    verdict = cursor.execute("SELECT verdict FROM reports WHERE file_hash=?;", (sha256,))
-    summary = cursor.execute("SELECT description FROM reports WHERE file_hash=?;", (sha256,))
-    permissions = cursor.execute("SELECT permissions FROM reports WHERE file_hash=?;", (sha256,))
-    findings = cursor.execute("SELECT risks FROM reports WHERE file_hash=?;", (sha256,))
-    malware_types = cursor.execute("SELECT malware_types FROM reports WHERE file_hash=?;", (sha256,))
-    
-    
-    dummy = {
-        "file_hash": file_hash,
-        "extension_id": extention_id,
-        "created_at": created_at,
-        "score": score,
-        "verdict": verdict,
-        "summary": summary,
-        "permissions": permissions,
-        "findings": findings,
-        "malware_types": malware_types,
-        "sha256": sha256 or "abc123",
-    }
-    
-    print(dummy)
-    '''
+    conn.close()
     return render(request, "result.html", {"report": result})
