@@ -56,32 +56,37 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
 
-        #Structure
-        self.assertIn("score", res)
-        self.assertIn("findings",res)
-        self.assertIsInstance(res["findings"], list)
-        self.assertGreaterEqual(res["score"], 0)
-        self.assertLessEqual(res["score"], 100)
+        # Structure
 
-        manifest = [f for f in res["findings"] if f.source == "manifest"]
-        sigs = [f for f in res["findings"] if f.source == "signatures"]
-        urls = [f for f in res["findings"] if f.source == "urls"]
-        analysis = [f for f in res["findings"] if f.source == "analysis"]
+        for key in ("score","urls", "descriptions", "risk_types"):
+            self.assertIn(key,res)
+        self.assertIsInstance(res["urls"], list)
+        self.assertIsInstance(res["descriptions"], list)
+        self.assertIsInstance(res["risk_types"], list)
+        self.assertIsInstance(res["score"], int)
+        self.assertIsInstance(res["score"],int)
 
-        rtypes = {f.risk_type for f in manifest}
-        self.assertIn("SYNERGY_ALLURLS_SCRIPTING", rtypes)
-        self.assertIn("SYNERGY_WEBREQ_GLOBAL", rtypes)
+        rtypes = set(res["risk_types"])
+        self.assertIn("ALL_URLS_ACCESS", rtypes)
+        self.assertIn("SCRIPTING_PERMISSION", rtypes)
+        self.assertIn("WEBREQUEST", rtypes)
 
-        # Signatures severity mapping -> points (high => sev 8 => 16 pts with factor=2)
-        self.assertTrue(any(f.severity == 8 and f.points == 16 for f in sigs))
+        descs = res["descriptions"]
+        self.assertTrue(any("Scripting + <all_urls>" in d for d in descs))
+        self.assertTrue(any("webRequest + broad URL scope" in d for d in descs))
 
-        # URLs: plaintext + external background domain
-        url_types = {f.risk_type for f in urls}
-        self.assertIn("PLAINTEXT_URL", url_types)
-        self.assertIn("EXTERNAL_CONTROL_DOMAIN", url_types)
+        self.assertTrue(any("Signature matched:" in d for d in descs))
 
-        #Analysis: keyword flags 
-        self.assertTrue(analysis)
+        self.assertTrue(any("Signature matched:" in d for d in descs))
+
+        self.assertTrue(any(("CSP Risk" in d) or ("exfil" in d.lower()) for d in descs))
+
+        self.assertTrue(res["urls"])
+        self.assertTrue(any("http://example.com/api" in u for u in res["urls"]))
+        self.assertTrue(any("static/background/index.js" in u for u in res["urls"]))
+
+        self.assertEqual(res["score"],100)
+
 
     def test_empty_sections_safe_defaults(self):
         self.write_payload({
@@ -94,7 +99,9 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
         self.assertEqual(res["score"],0)
-        self.assertEqual(res["findings"], [])
+        self.assertEqual(res.get("descriptions"), [])
+        self.assertEqual(res.get("urls"), [])
+        self.assertEqual(res.get("risk_types"), [])
 
     def test_scoring_caps_manifest(self):
         """Make manifest alone huge and verify the per-section cap (60) is applied."""

@@ -149,3 +149,7 @@ cwd = os.getcwd()
 
 MEDIA_URL = "/uploaded/"
 MEDIA_ROOT = os.path.join(cwd, "uploaded")
+
+
+# Adding red green output of tests
+TEST_RUNNER = "redgreenunittest.django.runner.RedGreenDiscoverRunner"
