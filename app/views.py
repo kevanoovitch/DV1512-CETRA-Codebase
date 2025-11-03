@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
+
+# import apiCaller from api.py
+# from app.backend.api import apiCaller
 import sqlite3
 import json
     
@@ -39,6 +42,9 @@ def home(request):
 
             filename = fs.save(upload.name, upload)
             uploaded_file_url = fs.url(filename)
+            
+            # Call apiCaller with the path to the uploaded file
+            # apiCaller(fs.path(filename))
             return render(request, "home.html", {
                 "uploaded_file_url": uploaded_file_url,
                 "error": None
@@ -60,6 +66,8 @@ def home(request):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
+            # Call apiCaller with the Webstore ID
+            # apiCaller(webstore_id)
             return render(request, "home.html", {"error": None})
 
         # --- 🔹 Case 3: okänd typ ---
