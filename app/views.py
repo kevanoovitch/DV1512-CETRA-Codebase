@@ -83,7 +83,28 @@ def report(request):
 
 @login_required
 def history(request):
-    return render(request, "history.html")
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
+    
+    
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT file_hash, extention_id, date, score FROM reports ORDER BY date desc limit 5;")
+    
+    rows = cursor.fetchall()
+
+    reports = [
+        {
+            "file_hash": row[0],
+            "extension_id": row[1],
+            "date": row[2],
+            "score": row[3],
+        }
+        for row in rows
+    ]
+
+    conn.close()
+    return render(request, "history.html", {"reports": reports})
 
 @login_required
 def results(request):

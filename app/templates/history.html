@@ -4,11 +4,6 @@
 
 {% block content %}
 <h1>History</h1>
-<p>
-  <a class="btn btn-sm" href="{% url 'results' sha256='abc123' %}" target="_blank">
-    View test report
-  </a>
-</p>
 
 <div class="card">
   <div class="table-wrap">
@@ -24,16 +19,12 @@
       </thead>
 
       <tbody>
-        {# Riktiga rader (när ni har data): förväntar listan 'reports' i context #}
         {% if reports %}
           {% for r in reports %}
             <tr>
-              <td class="name">
-                <div class="name-main">{{ r.name }}</div>
-                {% if r.verdict %}<span class="badge">{{ r.verdict }}</span>{% endif %}
-              </td>
+              <td class="mono">{{ r.file_hash }}</td>
               <td class="mono">{{ r.extension_id }}</td>
-              <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+              <td>{{ r.date|date:"Y-m-d H:i" }}</td>
               <td>
                 <div class="score">
                   <span class="score-dot" style="--score: {{ r.score|default:0 }};"></span>
@@ -41,29 +32,23 @@
                 </div>
               </td>
               <td class="align-right">
-                <a class="btn btn-sm" href="{% url 'results' %}?sha256={{ r.sha256 }}">View</a>
-                <a class="btn btn-sm btn-outline" href="{% url 'report_json' r.sha256 %}">JSON</a>
-                <a class="btn btn-sm btn-outline" href="{% url 'report_pdf' r.sha256 %}">PDF</a>
+                <a class="btn btn-sm" href="{% url 'report' %}{{ r.file_hash }}">View</a>
               </td>
             </tr>
           {% endfor %}
         {% else %}
-          {# Placeholder-rader (ta bort när DB finns) #}
           {% for _ in "12345" %}
-          <tr class="skeleton">
-            <td>
-              <div class="skeleton-bar w-60"></div>
-              <div class="skeleton-chip"></div>
-            </td>
-            <td class="mono"><div class="skeleton-bar w-40"></div></td>
-            <td><div class="skeleton-bar w-30"></div></td>
-            <td><div class="skeleton-bar w-15"></div></td>
-            <td class="align-right">
-              <span class="btn btn-sm disabled">View</span>
-              <span class="btn btn-sm btn-outline disabled">JSON</span>
-              <span class="btn btn-sm btn-outline disabled">PDF</span>
-            </td>
-          </tr>
+            <tr class="skeleton">
+              <td><div class="skeleton-bar w-60"></div></td>
+              <td><div class="skeleton-bar w-40"></div></td>
+              <td><div class="skeleton-bar w-30"></div></td>
+              <td><div class="skeleton-bar w-15"></div></td>
+              <td class="align-right">
+                <span class="btn btn-sm disabled">View</span>
+                <span class="btn btn-sm btn-outline disabled">JSON</span>
+                <span class="btn btn-sm btn-outline disabled">PDF</span>
+              </td>
+            </tr>
           {% endfor %}
         {% endif %}
       </tbody>

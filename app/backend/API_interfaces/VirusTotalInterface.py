@@ -9,13 +9,11 @@ from app import config
 
 
 def scan_file(file_name: str):
-    load_dotenv()
-
-    ApiKey = os.getenv("VT_API_KEY")
-    
     
     output = {"malware_types":[],"score":-1,"raw":{}}
     try:
+        load_dotenv()
+        ApiKey = os.getenv("VT_API_KEY")
         file_path = file_name
 
         headers = {"x-apikey": ApiKey}
