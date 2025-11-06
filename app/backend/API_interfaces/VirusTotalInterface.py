@@ -68,7 +68,11 @@ def _calculate_malicious_score(stats: dict) -> int:
     if total == 0:
         return 0
 
+    print("VT TOTAL:",total)
+
     score = (2 * malicious + 1 * suspicious) / (2 * total) * 100
+    print("VT TOTAL:",score)
+
     return round(score)
 
 

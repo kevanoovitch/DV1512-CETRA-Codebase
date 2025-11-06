@@ -11,12 +11,12 @@
       <h2 class="report-title">{{ report.file_hash|default:"Unknown Extension" }}</h2>
       <div class="report-meta">
         <span class="mono">ID: {{ report.extention_id|default:"—" }}</span>
-        <span>{{ report.created_at|date:"Y-m-d H:i" }}</span>
+        <span>{{ report.created_at }}</span>
       </div>
     </div>
     <div class="report-score">
       <div class="score-circle">
-        <span class="score-value">{{ report.score|default:"–" }}</span>
+        <span class="score-value">{{ report.score }}</span>
       </div>
       <div class="verdict {{ report.verdict|default:'unknown'|lower }}">
         {{ report.verdict|default:"Unknown" }}

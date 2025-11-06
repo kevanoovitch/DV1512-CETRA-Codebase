@@ -36,9 +36,12 @@ def apiCaller(value):
 
 
     if fileType == 0:
+        print("its an file")
         fileFormat.ID = Id_to_file_converter.convert_file_to_id(value)
         fileFormat.filePath = value
     if fileType == 1:
+        print("its an ID")
+
         fileFormat.ID = value
         fileFormat.filePath = download_crx(value)
 
@@ -53,6 +56,7 @@ def apiCaller(value):
 
     result["permissions"] = extension_retriver(fileFormat.filePath)
     result["extension_id"] = fileFormat.ID
+    print(fileFormat.filePath)
     result["file_path"] = fileFormat.filePath
 
 

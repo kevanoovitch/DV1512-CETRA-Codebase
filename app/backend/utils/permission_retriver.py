@@ -10,6 +10,6 @@ def extension_retriver(file_name: str):
         manifest_file = archive.read('manifest.json')
         manifest_json=json.loads(manifest_file)
         return manifest_json["permissions"]
-    except e:
+    except Exception as e:
         print("Exception from extension_retriver:",e)
-        return None
+        return []
