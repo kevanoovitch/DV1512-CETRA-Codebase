@@ -23,11 +23,11 @@
           {% for r in reports %}
             <tr>
               <td class="mono">{{ r.file_hash }}</td>
-              <td class="mono">{{ r.extension_id }}</td>
-              <td>{{ r.date|date:"Y-m-d H:i" }}</td>
+              <td class="mono">{{ r.extention_id }}</td>
+              <td>{{ r.date }}</td>
               <td>
                 <div class="score">
-                  <span class="score-dot" style="--score: {{ r.score|default:0 }};"></span>
+                  
                   <span class="score-text">{{ r.score|default:"–" }}</span>
                 </div>
               </td>

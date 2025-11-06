@@ -1,7 +1,7 @@
 import requests
 
 def download_crx(extension_id):
-    output_file="app/uploaded/"+output_file
+    output_file="app/uploaded/"
     url = (
         "https://clients2.google.com/service/update2/crx?"
         "response=redirect&os=linux&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&"
@@ -11,11 +11,9 @@ def download_crx(extension_id):
 
     print(f"Downloading CRX for extension ID: {extension_id}...")
     response = requests.get(url, allow_redirects=True)
-
+    output_file=output_file+extension_id
     if response.status_code == 200:
         with open(output_file, "wb") as f:
             f.write(response.content)
         return extension_id
     return None
-
-

@@ -96,7 +96,7 @@ def history(request):
     reports = [
         {
             "file_hash": row[0],
-            "extension_id": row[1],
+            "extention_id": row[1],
             "date": row[2],
             "score": row[3],
         }
