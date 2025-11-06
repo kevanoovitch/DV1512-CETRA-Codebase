@@ -3,25 +3,21 @@ import time
 import json
 from dotenv import load_dotenv
 import os
-
-load_dotenv()
-
-ApiKey = os.getenv("VT_API_KEY")
-
-if not ApiKey:
-    raise ValueError
-
-base_url = "https://www.virustotal.com/api/v3/files/upload_url"
-
-HEADERS = { "x-apikey": ApiKey}
-
-directory_path = "../uploaded/"
+from app import config
 
 
-def scan_file(file_name: str, debug=False):
+
+
+def scan_file(file_name: str):
+    load_dotenv()
+
+    ApiKey = os.getenv("VT_API_KEY")
+    
+    
+    output = {"malware_types":[],"score":-1,"raw":{}}
     try:
-        file_path = file_name if debug else directory_path + file_name
-        
+        file_path = file_name
+
         headers = {"x-apikey": ApiKey}
 
         with open(file_path, "rb") as f:
@@ -35,8 +31,8 @@ def scan_file(file_name: str, debug=False):
         analysis_id = response.json()["data"]["id"]
 
         analysis_url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
-        
-        timeout = 30
+
+        timeout = 40
         print("loading data from Virus total")
         while timeout > 0:
             res = requests.get(analysis_url, headers=headers)
@@ -44,28 +40,29 @@ def scan_file(file_name: str, debug=False):
             data = res.json()
             status = data["data"]["attributes"]["status"]
             if status == "completed":
-                return analyse_data(data["data"])
-
+                data = _analyse_data(data["data"])
+                return data
             time.sleep(1)
             timeout -= 1
 
-        return None
+        return output
     except Exception as e:
-        print(f"[scan_file] Error: {e}")
-        return None
-    
+        print(f"[scan_file VT] Error: {e}")
+        return output
 
-def analyse_data(result):
+
+def _analyse_data(result):
     data = {}
-    detectedby = []
+    malware_types = []
     data = {"stats":result["attributes"]["status"],}
     for engine,details in result["attributes"]["results"].items():
-        if(details["category"] != "undetected" and details["category"] != "type-unsupported"):
-            detectedby.append(details)
+        if(details["category"] != "undetected" and details["category"] != "type-unsupported" and  details["method"] != "timeout") and details["result"] != None:
+            malware_types.append(details["result"])
     stats = result["attributes"]["stats"]
-    return  {"stats":stats, "detectedby":detectedby,"score":calculate_malicious_score(stats)}
 
-def calculate_malicious_score(stats: dict) -> int:
+    return  {"malware_types":malware_types,"score":_calculate_malicious_score(stats),"raw":result}
+
+def _calculate_malicious_score(stats: dict) -> int:
     malicious = stats.get("malicious", 0)
     suspicious = stats.get("suspicious", 0)
 

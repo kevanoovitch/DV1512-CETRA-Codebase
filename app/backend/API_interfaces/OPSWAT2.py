@@ -8,7 +8,8 @@ from app import constants
 
 
 
-def scan_file(file_path):
+
+def scan_file(file_path):    
     """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
 
     try:

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Report – CETRA{% endblock %}
+
+{% block content %}
+<h1>Report</h1>
+
+<div class="card report-card">
+
+  <div class="report-header">
+    <div class="report-main">
+      <h2 class="report-title">{{ report.file_hash|default:"Unknown Extension" }}</h2>
+      <div class="report-meta">
+        <span class="mono">ID: {{ report.extention_id|default:"—" }}</span>
+        <span>{{ report.created_at|date:"Y-m-d H:i" }}</span>
+      </div>
+    </div>
+    <div class="report-score">
+      <div class="score-circle">
+        <span class="score-value">{{ report.score|default:"–" }}</span>
+      </div>
+      <div class="verdict {{ report.verdict|default:'unknown'|lower }}">
+        {{ report.verdict|default:"Unknown" }}
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="report-section">
+    <h3>Summary</h3>
+    <p>{{ report.description|default:"No summary available yet." }}</p>
+  </div>
+
+  <div class="report-section">
+    <h3>Permissions</h3>
+    
+    <!--
+    {% if report.permissions %}
+      <ul class="report-list">
+        {% for perm in report.permissions %}
+          <li>{{ perm }}</li>
+        {% endfor %}
+      </ul>
+    -->
+      <p>{{ report.permissions|default:"No permissions found." }}</p>
+    <!--
+    {% else %}
+      <p class="muted">No permissions listed.</p>
+    {% endif %} -->
+  </div>
+
+  <div class="report-section">
+    <h3>Risks</h3>
+    <!--
+    {% if report.risks %}
+      <table class="table">
+        <thead>
+          <tr><th>Category</th><th>Description</th><th>Severity</th></tr>
+        </thead>
+        <tbody>
+          {% for f in report.risks %}
+            <tr>
+              <td>{{ f.category }}</td>
+              <td>{{ f.description }}</td>
+              <td>{{ f.severity }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No risks detected.</p>
+    {% endif %}
+    -->
+    <p>{{ report.risks|default:"No risks detected." }}</p>
+  </div>
+
+  <div class="report-section">
+    <h3>Malware_types</h3>
+    <!--
+    {% if report.malware_types %}
+      <ul class="report-list">
+        {% for malware_type in report.malware_types %}
+          <li>{{ malware_type }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No malware types found.</p>
+    {% endif %}
+    -->
+    <p>{{ report.malware_types|default:"No malware types found." }}</p
+  </div>
+
+  <hr>
+
+  <div class="report-footer">
+    <!--
+    <div class="left muted">SHA256: {{ report.sha256|default:"–" }}</div>
+  -->
+    <div class="right">
+    </div>
+  </div>
+</div>
+{% endblock %}

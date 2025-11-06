@@ -1,42 +1,110 @@
 {% extends "base.html" %}
 {% block title %}Home – CETRA{% endblock %}
+
 {% block content %}
-  <h1>Home</h1>
-  <p>Välkommen till CETRA. Här kommer startsidans innehåll.</p>
+<h1>Home</h1>
 
-  <body>
-<h2>Upload a Zip/Crx File</h2>
-<form action="{% url 'home' %}" method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  <input type="file" name="myUploadedFile" required accept=".zip,.crx">
-  <button type="submit">Upload</button>
-</form>
+<div class="card home-card">
+  <p>Welcome to CETRA — analyze a Chrome extension by uploading a file or entering an ID.</p>
 
-{% if uploaded_file_url %}
-  <p style="color: green;">File uploaded successfully: 
-     <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a>
-  </p>
-{% endif %}
+  <div class="submit-section">
+    <h2>Submit an Extension</h2>
+    <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="submit-form">
+      {% csrf_token %}
+      <div class="submit-row">
 
-<!-- Error -->
-{% if error %}
-  <p style="color: red;">{{ error }}</p>
-{% endif %}
+        <!-- dropdown med ID som standard -->
+        <select name="submit_type" class="select-input" required>
+          <option value="id" selected>Extension ID</option>
+          <option value="zip">ZIP File</option>
+          <option value="crx">CRX File</option>
+        </select>
 
+        <!-- textfält + filfält (växlar med JS) -->
+        <input type="text" name="submission_value" placeholder="Enter Chrome Web Store ID" required>
+        <input type="file" name="submission_file" accept=".zip,.crx" class="file-input">
 
-<h2>Submit an Extention ID</h2>
-<form action="{% url 'home' %}" method="post">
-  {% csrf_token %}
-  <label for="mytext">Submit Your Extentions ID:</label>
-  <input type="text" id="mytext" name="mytext" required>
-  <button type="submit">Submit</button>
-</form>
+        <button type="submit" class="btn-pill btn-accent">Submit</button>
+      </div>
+    </form>
 
-</body>
+    {% if uploaded_file_url %}
+      <p class="success">
+        File uploaded successfully:
+        <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a>
+      </p>
+    {% endif %}
 
+    {% if error %}
+      <p class="error">{{ error }}</p>
+    {% endif %}
+  </div>
+</div>
+<!-- ===== Scoreboard Section ===== -->
+<div class="card top-list">
+  <h2>Top 5 Highest Scores</h2>
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Score</th>
+          <th>Name</th>
+          <th>Extension ID</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if top_reports %}
+          {% for r in top_reports %}
+          <tr>
+            <td>
+              <div class="score">
+                <span class="score-dot" style="--score: {{ r.score|default:0 }};"></span>
+                <span class="score-text">{{ r.score|default:"–" }}</span>
+              </div>
+            </td>
+            <td class="name">
+              <div class="name-main">{{ r.name|default:"Unknown" }}</div>
+            </td>
+            <td class="mono">{{ r.extension_id|default:"—" }}</td>
+            <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          {% for _ in "12345" %}
+          <tr class="skeleton">
+            <td><div class="skeleton-bar w-15"></div></td>
+            <td><div class="skeleton-bar w-60"></div></td>
+            <td class="mono"><div class="skeleton-bar w-40"></div></td>
+            <td><div class="skeleton-bar w-30"></div></td>
+          </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const select = document.querySelector('.select-input');
+  const textField = document.querySelector('input[name="submission_value"]');
+  const fileField = document.querySelector('input[name="submission_file"]');
+
+  function toggleInputs() {
+    if (select.value === 'id') {
+      textField.style.display = 'block';
+      fileField.style.display = 'none';
+      textField.required = true;
+      fileField.required = false;
+    } else {
+      textField.style.display = 'none';
+      fileField.style.display = 'block';
+      textField.required = false;
+      fileField.required = true;
+    }
+  }
+
+  toggleInputs();
+  select.addEventListener('change', toggleInputs);
+</script>
 {% endblock %}
-
-
-
-#FILL OUT HOMEPAGE??
-#Scoreboard 

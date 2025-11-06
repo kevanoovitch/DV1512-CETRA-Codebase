@@ -2,7 +2,7 @@ import io, json, zipfile, struct, hashlib, base64, tempfile
 from unittest import TestCase
 from pathlib import Path
 
-from app.backend.API_interfaces.ExtensionIDConverter import ExtensionIDConverter
+from app.backend.utils.ExtensionIDConverter import ExtensionIDConverter
 
 
 # --- Builders & helpers --- # 
