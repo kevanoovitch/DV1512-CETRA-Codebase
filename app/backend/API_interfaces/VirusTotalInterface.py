@@ -5,15 +5,15 @@ from dotenv import load_dotenv
 import os
 from app import config
 
-load_dotenv()
 
-ApiKey = os.getenv("VT_API_KEY")
-
-if not ApiKey:
-    raise ValueError
 
 
 def scan_file(file_name: str):
+    load_dotenv()
+
+    ApiKey = os.getenv("VT_API_KEY")
+    
+    
     output = {"malware_types":[],"score":-1,"raw":{}}
     try:
         file_path = file_name

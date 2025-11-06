@@ -6,6 +6,11 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 
+# import apiCaller from api.py
+from app.backend.api import apiCaller
+import sqlite3
+import json
+    
 @login_required
 def home(request):
     uploaded_file_url = None
@@ -37,6 +42,9 @@ def home(request):
 
             filename = fs.save(upload.name, upload)
             uploaded_file_url = fs.url(filename)
+            
+            # Call apiCaller with the path to the uploaded file
+            apiCaller(fs.path(filename))
             return render(request, "home.html", {
                 "uploaded_file_url": uploaded_file_url,
                 "error": None
@@ -58,6 +66,8 @@ def home(request):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
+            # Call apiCaller with the Webstore ID
+            apiCaller(webstore_id)
             return render(request, "home.html", {"error": None})
 
         # --- 🔹 Case 3: okänd typ ---
@@ -125,19 +135,20 @@ def logout_view(request):
     return redirect("login") 
 
 def report_view(request, sha256=None):
-    dummy = {
-        "name": "Example Ad Blocker",
-        "extension_id": "abcd1234efgh5678",
-        "created_at": "2025-10-08 15:00",
-        "score": 82,
-        "verdict": "Malicious",
-        "summary": "This extension collects browsing data and injects ads.",
-        "permissions": ["tabs", "storage", "https://*/*"],
-        "findings": [
-            {"category": "Privacy", "description": "Tracks URLs visited", "severity": "High"},
-            {"category": "Injection", "description": "Injects remote JS", "severity": "Critical"},
-        ],
-        "iocs": ["malicious.example.com", "198.51.100.22"],
-        "sha256": sha256 or "dummyhash1234567890",
-    }
-    return render(request, "result.html", {"report": dummy})
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
+    
+    
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM reports WHERE file_hash=?;", (sha256,))
+    
+    row = cursor.fetchone()
+
+    if row:
+        result = dict(row)  # Convert sqlite3.Row to dict
+    else:
+        print("No record found.") 
+
+    conn.close()
+    return render(request, "result.html", {"report": result})
