@@ -41,6 +41,10 @@ class SecureAnnex_interpretator:
         signature_items  = (payload.get("signatures") or {}).get("result") or []
         url_items = (payload.get("urls") or {}).get("result") or []
         analysis_items   = (payload.get("analysis") or {}).get("result") or []
+        
+        if not (manifest_items or signature_items or url_items or analysis_items):
+            self.returnDict["score"] = -1
+            return self.returnDict
 
         self._interpret_manifest(manifest_items)
         self._interpret_signatures(signature_items)
@@ -75,7 +79,7 @@ class SecureAnnex_interpretator:
         return subtotal if subtotal <= cap else cap
 
     def _final_score(self) -> int:
-        total = 0
+        total = -1
         total += self._cap_section("manifest")
         total += self._cap_section("signatures")
         total += self._cap_section("urls")

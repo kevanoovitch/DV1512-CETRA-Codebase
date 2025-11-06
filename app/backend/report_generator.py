@@ -15,6 +15,7 @@ def generate_report(result) -> dict:
     extension_id = result["extension_id"]
     verdict = label_from_score(score)
 
+
     report = {
         "score": score,
         "verdict": verdict,
@@ -42,7 +43,8 @@ def calculate_final_score(scores: list[int]) -> int:
     """
     sum = 0
     count = 0
-
+    print("calculating score")
+    print("scores:",scores)
     for s in scores:
         if s == None:
             s = -1 #Treat none as missing data
@@ -55,6 +57,8 @@ def calculate_final_score(scores: list[int]) -> int:
 
     if count == 0:
         return 0
+    print("calcualted ", sum)
 
     average = sum / count
+    print("calcualted score ", average)
     return round(average)

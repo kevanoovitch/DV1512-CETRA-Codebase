@@ -15,5 +15,7 @@ def download_crx(extension_id):
     if response.status_code == 200:
         with open(output_file, "wb") as f:
             f.write(response.content)
-        return extension_id
-    return None
+        return output_file
+    return ""
+
+

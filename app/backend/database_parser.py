@@ -41,7 +41,7 @@ def add_report(conn, report):
     report_permissions = report.get("permissions")
     report_risks = report.get("risks")
     report_malware_types = report.get("malware_types")
-    report_ExtentionID = report.get("extention_id")
+    report_ExtentionID = report.get("extension_id")
     report_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     # Create  a cursor
@@ -80,7 +80,7 @@ dummyreport = {
         "permissions": ["read_contacts", "send_sms", "etc."],
         "risks": ["data_leak", "financial_loss", "etc."],
         "malware_types": ["trojan", "ransomware", "etc."],
-        "extention_id": "ext123",
+        "extension_id": "ext123",
         "file_hash": "abc123",
         }
 
