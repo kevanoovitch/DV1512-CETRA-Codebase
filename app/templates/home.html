@@ -48,7 +48,7 @@
       <thead>
         <tr>
           <th>Score</th>
-          <th>Name</th>
+          <th>File Hash</th>
           <th>Extension ID</th>
           <th>Date</th>
         </tr>
@@ -56,28 +56,25 @@
       <tbody>
         {% if top_reports %}
           {% for r in top_reports %}
-          <tr>
-            <td>
-              <div class="score">
-                <span class="score-dot" style="--score: {{ r.score|default:0 }};"></span>
-                <span class="score-text">{{ r.score|default:"–" }}</span>
-              </div>
-            </td>
-            <td class="name">
-              <div class="name-main">{{ r.name|default:"Unknown" }}</div>
-            </td>
-            <td class="mono">{{ r.extension_id|default:"—" }}</td>
-            <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
-          </tr>
+            <tr>
+              <td>
+                <div class="score">
+                  <span class="score-text">{{ r.score}}</span>
+                </div>
+              </td>
+              <td class="mono">{{ r.file_hash }}</td>
+              <td class="mono">{{ r.extention_id }}</td>
+              <td>{{ r.date}}</td>
+            </tr>
           {% endfor %}
         {% else %}
           {% for _ in "12345" %}
-          <tr class="skeleton">
-            <td><div class="skeleton-bar w-15"></div></td>
-            <td><div class="skeleton-bar w-60"></div></td>
-            <td class="mono"><div class="skeleton-bar w-40"></div></td>
-            <td><div class="skeleton-bar w-30"></div></td>
-          </tr>
+            <tr class="skeleton">
+              <td><div class="skeleton-bar w-15"></div></td>
+              <td><div class="skeleton-bar w-60"></div></td>
+              <td class="mono"><div class="skeleton-bar w-40"></div></td>
+              <td><div class="skeleton-bar w-30"></div></td>
+            </tr>
           {% endfor %}
         {% endif %}
       </tbody>

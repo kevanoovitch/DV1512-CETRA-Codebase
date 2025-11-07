@@ -16,10 +16,31 @@ def home(request):
     uploaded_file_url = None
     error = None
 
-    #top_reports = Report.objects.order_by('-score')[:5]
-    #change when DB is ready
-    top_reports = []
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
+    cursor.execute("""
+        SELECT file_hash, extention_id, date, score
+        FROM reports
+        WHERE score IS NOT NULL
+        ORDER BY score DESC
+        LIMIT 5;
+    """)
+
+    rows = cursor.fetchall()
+
+    top_reports = [
+        {
+            "file_hash": row["file_hash"],
+            "extention_id": row["extention_id"],
+            "date": row["date"],
+            "score": row["score"],
+        }
+        for row in rows
+    ]
+
+    conn.close()
 
     if request.method == "POST":
         submit_type = request.POST.get("submit_type")
@@ -75,7 +96,7 @@ def home(request):
             error = "Invalid submission type."
             return render(request, "home.html", {"error": error})
 
-    return render(request, "home.html")
+    return render(request, "home.html", {"top_reports": top_reports})
 
 @login_required
 def report(request):
