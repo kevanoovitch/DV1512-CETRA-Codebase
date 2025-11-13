@@ -1,19 +1,17 @@
 from app import config
 from app import constants
 
-
+import logging
 import json
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 import requests
 from dotenv import load_dotenv
-from rich import print_json
-from rich.console import Console
 from app.backend.utils.ExtensionIDConverter import ExtensionIDConverter
 
-
+logger = logging.getLogger(__name__)
 
 class Interface_Secure_Annex:
     SECTION_MAP = {
@@ -43,6 +41,8 @@ class Interface_Secure_Annex:
         self.fixture_path = self.cache_path
         self.conveter = ExtensionIDConverter()
 
+   
+
     # <--- Exposed functions --->
 
     def perform_scan(self, extension: str, path: Path) -> None:
@@ -50,20 +50,22 @@ class Interface_Secure_Annex:
         Fetch Secure Annex sections (or load cached in dev mode) and write to `path`.
         Does not parse.
         """
+        logger.info("SA scan start", extra={"extension_id": extension, "out_path": str(path), "dev_mode": self.dev_mode})
         path.parent.mkdir(parents=True, exist_ok=True)
 
 
 
         #verify that input is an extensionID
         if (self._is_extension_id(extension) != True):
-            print("Input was not an ID calling conveter")
+            logger.info("Input was not an ID — calling converter", extra={"extension": extension})
             extension = self.conveter.convert_file_to_id(extension)
 
-            if extension == None :
-                "print missing ID"
-            return None
+            if extension is None :
+                logger.warning("Missing ID — could not convert file to extension ID")
+                return None
 
         if self.dev_mode:
+            logger.info("DEV MODE — loading cached report", extra={"cache_path": str(path)})
             raw_report = self._load_cached_report(path)
         else:
             # build fetcher map
@@ -76,29 +78,13 @@ class Interface_Secure_Annex:
                 try:
                     raw_report[section] = fetcher(extension)
                 except Exception as exc:
+                    logger.info("DEV MODE — loading cached report", extra={"cache_path": str(path)})
                     raw_report[section] = {"error": str(exc)}
 
         # Always write the report out
         tmp = path.with_suffix(path.suffix + ".tmp")
         tmp.write_text(json.dumps(raw_report, indent=2), encoding="utf-8")
         tmp.replace(path)
-
-
-    def print_analysis(
-            self,
-            report: Optional[Dict[str, Any]] = None,
-            *,
-            path: Optional[Path | str] = None,) -> None:
-            data = report if report is not None else self._load_cached_report(Path(constants.SA_OUTPUT_FILE))
-            console = Console()
-
-            for section_key, title in self.SECTION_TITLES.items():
-                console.rule(f"[bold cyan]{title}[/bold cyan]")
-                payload = data.get(section_key, {"warning": "section missing"})
-                self.pretty_print_json(payload)
-
-            if self.dev_mode == True:
-                console.rule(f"[bold red]DEV MODE IS ON[/bold red]")
 
     # < --- private functions -- >
 
@@ -117,18 +103,6 @@ class Interface_Secure_Annex:
         if not path.exists():
             raise FileNotFoundError(f"No cached SA report at {path}")
         return json.loads(path.read_text(encoding="utf-8"))
-
-
-    @staticmethod
-    def pretty_print_json(data: Any) -> None:
-        if isinstance(data, str):
-            try:
-                print_json(data)
-                return
-            except Exception:  # pragma: no cover - fall back to raw print
-                print(data)
-                return
-        print_json(json.dumps(data))
 
     # <--- Getters & fetchers --->
 

@@ -37,7 +37,6 @@ def apiCaller(value,submission_type):
         fileFormat.ID = value
         fileFormat.filePath = download_crx(value)
 
-
     if(fileFormat.ID is not None):
         logger.info("Calling Secure-Annex")
         SA = preform_secure_annex_scan(fileFormat.ID)
