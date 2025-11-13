@@ -11,6 +11,21 @@ load_dotenv()
 
 filehash = "0efc314b1b7f6c74e772eb1f8f207ed50c2e702aed5e565081cbcf8f28f0fe26"
 url = f"https://www.virustotal.com/api/v3/files/{filehash}/behaviour_mitre_trees"
+
+def print_mitre(parsed: dict):
+    print(f"File Hash: {parsed['file_hash']}\n")
+
+    for sandbox, tactics in parsed.items():
+        if sandbox == "file_hash":
+            continue
+        print(f"Sandbox: {sandbox}")
+        for tactic in tactics:
+            print(f"  Tactic: {tactic['tactic_name']} ({tactic['tactic_id']})")
+            for technique in tactic["techniques"]:
+                print(f"    Technique: {technique['technique_name']} ({technique['technique_id']})")
+        print()
+
+
 def mitre_report(filehash: str, response):
     parsed = {
         "file_hash": filehash, 
@@ -35,7 +50,8 @@ def mitre_report(filehash: str, response):
 
             parsed[sandbox_name].append(tactic_entry)
 
-    print(json.dumps(parsed, indent=2))
+    #print(json.dumps(parsed, indent=2))
+    print_mitre(parsed)
     pass
 
 
