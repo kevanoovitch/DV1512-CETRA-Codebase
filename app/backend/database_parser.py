@@ -6,7 +6,8 @@ import os
 directory = os.path.dirname(os.path.abspath(__file__))
 root_parent = os.path.dirname(directory)
 root_grandparent = os.path.dirname(root_parent)
-
+import logging
+logger = logging.getLogger(__name__)
 # SQL statements
 
 delete_reports_table = """
@@ -57,7 +58,7 @@ def add_report(conn, report):
     return True
 
 def ParseReport(report :dict):
-    print("\n Storing in Database...\n")
+    logger.info("Writing report to database")
     
     try:
         with sqlite3.connect(os.path.join(root_grandparent, "db.sqlite3")) as conn:  
@@ -84,7 +85,8 @@ dummyreport = {
         "file_hash": "abc123",
         }
 
-
+"""
 if __name__ == "__main__":
     
     ParseReport()
+"""

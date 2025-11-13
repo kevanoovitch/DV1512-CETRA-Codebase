@@ -85,7 +85,7 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
         self.assertTrue(any("http://example.com/api" in u for u in res["urls"]))
         self.assertTrue(any("static/background/index.js" in u for u in res["urls"]))
 
-        self.assertEqual(res["score"],100)
+        self.assertEqual(res["score"],68)
 
 
     def test_empty_sections_safe_defaults(self):
@@ -98,7 +98,7 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
 
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
-        self.assertEqual(res["score"],0)
+        self.assertEqual(res["score"],-1)
         self.assertEqual(res.get("descriptions"), [])
         self.assertEqual(res.get("urls"), [])
         self.assertEqual(res.get("risk_types"), [])
@@ -120,6 +120,6 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
 
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
-        # sev => 10 10*factor(5) = 50 pts per finding, but capped at 60 for manifest
-        self.assertEqual(res["score"], 60)
+        # New logic where each factor is 0 since SA can't evaluate manifest accuratly it should only view it not give a verdict on it
+        self.assertEqual(res["score"], 0)
 

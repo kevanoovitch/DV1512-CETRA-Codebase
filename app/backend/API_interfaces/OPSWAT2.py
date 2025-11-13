@@ -2,23 +2,23 @@ import requests
 import json
 import time
 import os
+import logging
 from dotenv import load_dotenv
 from app import constants
 
+logger = logging.getLogger(__name__)
 
-
-
-
+#print ("OPSWAT utanför scan_file")
 def scan_file(file_path):    
     """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
-
+    logger.info (" function scan_file called")
     try:
         summary = {"score": -1, "malware_type": []}
         load_dotenv()
         API_KEY = os.getenv("OPSWAT_API_KEY")
 
         if not os.path.exists(file_path):
-            print(f"[Fel] Filen '{file_path}' hittades inte.")
+            logger.exception(f"[ErrorOPSWAT] File '{file_path}' could not be found.")
             return summary
 
         url_upload = "https://api.metadefender.com/v4/file"
@@ -30,21 +30,21 @@ def scan_file(file_path):
         with open(file_path, "rb") as f:
             payload = f.read()
 
-        # Försök ladda upp filen
+        logger.info ("uploading file for scanning...")
         try:
             response = requests.post(url_upload, headers=headers_upload, data=payload, timeout=15)
             response.raise_for_status()
         except requests.RequestException as e:
-            print(f"[Fel] Kunde inte ladda upp filen: {e}")
+            logger.exception(f"could not load the file: {e}")
             return summary
 
         response_data = response.json()
         file_id = response_data.get("data_id") or response_data.get("file_id")
         if not file_id:
-            print("[Fel] Kunde inte hämta file_id från MetaDefender-svaret.")
+            logger.exception("couldn't find file_id from MetaDefender-response.")
             return summary
 
-        # Hämta resultatet
+        logger.info ("retrieving scan results...")
         url_result = f"https://api.metadefender.com/v4/file/{file_id}"
         headers_result = {"apikey": API_KEY}
 
@@ -54,7 +54,7 @@ def scan_file(file_path):
                 response.raise_for_status()
                 data = response.json()
             except requests.RequestException as e:
-                print(f"[Fel] Kunde inte hämta skanningsresultat: {e}")
+                logger.exception(f"Could not retrieve scan results: {e}")
                 return summary
 
             progress = data.get("scan_results", {}).get("progress_percentage", 0)
@@ -62,12 +62,12 @@ def scan_file(file_path):
                 break
             time.sleep(3)
 
-        # Spara hela resultatet
+        logger.info ("save scan results...")
         try:
             with open(constants.SCAN_RESULT_JSON, "w") as f:
                 json.dump(data, f, indent=4)
         except Exception as e:
-            print(f"[Varning] Kunde inte spara skanningsresultat: {e}")
+            logger.warning(f"could not save scan result: {e}")
 
         scan_details = data["scan_results"]["scan_details"]
         total_avs = len(scan_details)
@@ -84,10 +84,10 @@ def scan_file(file_path):
             with open(constants.SUMMARY_JSON, "w") as f:
                 json.dump(summary, f, indent=4)
         except Exception as e:
-            print(f"[Varning] Kunde inte spara summary.json: {e}")
+            logger.warning(f"could not save summary.json: {e}")
 
         return summary
 
     except Exception as e:
-        print(f"[Allmänt fel] Något gick fel under skanningen: {e}")
+        logger.exception(f"Something went wrong during the scanning: {e}")
         return summary

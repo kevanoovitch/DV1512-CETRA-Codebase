@@ -1,10 +1,14 @@
 from app import config
 from app import constants
 
+import logging
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
+
+logger = logging.getLogger(__name__)
+
 
 class SecureAnnex_interpretator:
 
@@ -27,15 +31,48 @@ class SecureAnnex_interpretator:
     "analysis": 20,
     }
 
+    RISK_WEIGHTS_MANIFEST = {
+    # Strong capabilities
+    "SCRIPTING_PERMISSION": 0,
+    "WEBREQUEST": 0,
+
+    # Broad scope alone is a weak signal
+    "ALL_URLS_ACCESS": 0,
+    "CONTENT_SCRIPT_ALL_URLS": 0,
+
+    
+    }
+
+
     # --- Exposed functions --- #
 
     def interpret_output(self) -> dict:
         """
         Load SA output JSON file from constants.SA_OUTPUT_FILE and parse.
         """
-
+        logger.info("SA interpret_output: starting parse of %s", constants.SA_OUTPUT_FILE)
         path = Path(constants.SA_OUTPUT_FILE)
-        payload = json.loads(path.read_text(encoding="utf-8"))
+
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            logger.exception("SA output file not found: %s", path)
+            return self.returnDict
+        except json.JSONDecodeError:
+            logger.exception("Malformed SA JSON in %s: %s", path)
+            return self.returnDict
+
+
+
+        for section, data in payload.items():
+            if isinstance(data, dict):
+                err = str(data.get("error", ""))
+                if "401" in err:
+                    self.returnDict["score"] = -1
+                    self.returnDict["descriptions"].append("Secure Annex API unauthorized (401).")
+
+                    logger.warning("SA unauthorized (401) in section '%s': %s", section, data.get("error"))
+                    return self.returnDict
 
         manifest_items = (payload.get("manifest") or {}).get("result") or []
         signature_items  = (payload.get("signatures") or {}).get("result") or []
@@ -43,6 +80,7 @@ class SecureAnnex_interpretator:
         analysis_items   = (payload.get("analysis") or {}).get("result") or []
         
         if not (manifest_items or signature_items or url_items or analysis_items):
+            logger.warning("SA payload contained no actionable results (all sections empty).")
             self.returnDict["score"] = -1
             return self.returnDict
 
@@ -79,11 +117,13 @@ class SecureAnnex_interpretator:
         return subtotal if subtotal <= cap else cap
 
     def _final_score(self) -> int:
-        total = -1
+        total = 0
         total += self._cap_section("manifest")
         total += self._cap_section("signatures")
         total += self._cap_section("urls")
         total += self._cap_section("analysis")
+
+        logger.info(f"SA final score was {max(0, min(100, total))}")
         return max(0, min(100, total))
 
 
@@ -112,14 +152,19 @@ class SecureAnnex_interpretator:
         has_webrequest = False
 
         for it in items:
-            rtype = (it.get("risk_type") or "").strip()
+            rtype = (it.get("risk_type") or "").strip().upper()
             description = (it.get("description") or "").strip()
             snip = _short(it.get("snippet") or "")
             sev = it.get("severity")
+            
 
-            # points (manifest factor=5)
-            pts = self._severity_points(sev, factor=5)
-            self._add_points("manifest", pts)
+            base = self.RISK_WEIGHTS_MANIFEST.get(rtype, 0)
+            sev_pts = self._severity_points(sev, factor=2) if base > 0 else 0
+            pts = base + sev_pts
+            if pts: 
+                self._add_points("manifest", pts)
+                logger.debug("Manifest scoring: rtype=%s base=%d sev=%s sev_pts=%d total=%d",
+                rtype, base, sev, sev_pts, pts)
 
             if rtype == "ALL_URLS_ACCESS": has_all_urls = True
             if rtype == "CONTENT_SCRIPT_ALL_URLS": has_cs_all_urls = True
@@ -151,6 +196,23 @@ class SecureAnnex_interpretator:
                 descs.append(msg); seen_descs.add(msg)
             self._add_points("manifest", 10)
 
+
+        subtotal = self.section_points.get("manifest", 0)
+        cap = self.SECTION_CAPS["manifest"]
+        capped = subtotal if subtotal <= cap else cap
+
+        is_mv3 = any('"manifest_version": 3' in (it.get("snippet") or "") for it in items)
+        if is_mv3:
+            before = self.section_points["manifest"]
+            self.section_points["manifest"] = int(before * 0.8)
+            logger.debug("MV3 discount applied to manifest: %d -> %d", before, self.section_points["manifest"])
+
+
+
+        logger.info(
+            "Manifest points computed (pre-cap): subtotal=%s, cap=%s, final=%s",
+            subtotal, cap, capped
+        )
 
 
     def _interpret_urls(self, urls: List[Dict[str, Any]]):

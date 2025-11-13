@@ -1,6 +1,4 @@
 import sys, os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-
 
 import unittest
 from unittest.mock import patch, mock_open
@@ -12,7 +10,7 @@ class TestOPSWAT2Integration(unittest.TestCase):
 
     @patch("app.backend.API_interfaces.OPSWAT2.requests.post")
     @patch("app.backend.API_interfaces.OPSWAT2.requests.get")
-    @patch("builtins.open", new_callable=mock_open, read_data=b"dummy data")
+    @patch("app.backend.API_interfaces.OPSWAT2.open", new_callable=mock_open, read_data=b"dummy data")
     @patch("os.path.exists", return_value=True)
     def test_scan_file_returns_expected_summary(self, mock_exists, mock_file, mock_get, mock_post):
         mock_post.return_value.json.return_value = {"data_id": "fake_id_123"}
