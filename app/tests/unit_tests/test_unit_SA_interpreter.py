@@ -98,7 +98,7 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
 
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
-        self.assertEqual(res["score"],0)
+        self.assertEqual(res["score"],-1)
         self.assertEqual(res.get("descriptions"), [])
         self.assertEqual(res.get("urls"), [])
         self.assertEqual(res.get("risk_types"), [])
