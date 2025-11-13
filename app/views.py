@@ -44,7 +44,7 @@ def home(request):
             uploaded_file_url = fs.url(filename)
             
             # Call apiCaller with the path to the uploaded file
-            apiCaller(fs.path(filename))
+            apiCaller(fs.path(filename),"file")
             return render(request, "home.html", {
                 "uploaded_file_url": uploaded_file_url,
                 "error": None
@@ -67,7 +67,7 @@ def home(request):
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
             # Call apiCaller with the Webstore ID
-            apiCaller(webstore_id)
+            apiCaller(webstore_id,"id")
             return render(request, "home.html", {"error": None})
 
         # --- 🔹 Case 3: okänd typ ---

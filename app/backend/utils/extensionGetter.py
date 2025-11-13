@@ -1,5 +1,6 @@
 import requests
-
+import logging
+logger = logging.getLogger(__name__)
 def download_crx(extension_id):
     output_file="app/uploaded/"
     url = (
@@ -8,14 +9,14 @@ def download_crx(extension_id):
         "prod=chromecrx&prodchannel=unknown&prodversion=9999.0.9999.0&"
         "acceptformat=crx2,crx3&x=id%3D" + extension_id + "%26uc"
     )
-
-    print(f"Downloading CRX for extension ID: {extension_id}...")
+    logger.info("Downloading CRX for extension ID: %s",extension_id)
     response = requests.get(url, allow_redirects=True)
     output_file=output_file+extension_id
     if response.status_code == 200:
         with open(output_file, "wb") as f:
             f.write(response.content)
+        logger.info("Saved file to %s and returning the file path",output_file)
         return output_file
-    return ""
+    return None
 
 

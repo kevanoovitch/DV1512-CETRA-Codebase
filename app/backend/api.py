@@ -11,7 +11,9 @@ from app import constants
 from pathlib import Path
 import re
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 #function that gather both inputs ID and filepath in one object
 class FileFormat:
@@ -19,64 +21,51 @@ class FileFormat:
         filePath = None
         ID = None
 
-def apiCaller(value):
+def apiCaller(value,submission_type):
     result={}
-
-    Id_to_file_converter = ExtensionIDConverter()
-
-    #Step 1, create an object that contain both the ID and the file path
-    fileType = check_valid_input(value)
-
-    #return -1 if file is invalid, let the frontend know that the inputted value is invalid
-    if fileType == -1:
-        return -1
 
     #instanstiate a FileFormat object to store both path and ID
     fileFormat = FileFormat()
 
 
-    if fileType == 0:
-        print("its an file")
-        fileFormat.ID = Id_to_file_converter.convert_file_to_id(value)
+    if submission_type == "file":
+        logger.info("Received a file, retreiving the Id ouf of the file")
         fileFormat.filePath = value
-    if fileType == 1:
-        print("its an ID")
-
+        fileFormat.ID = ExtensionIDConverter().convert_file_to_id(value)
+    if submission_type == "id":
+        logger.info("Received a ID, Downloading the file...")
         fileFormat.ID = value
         fileFormat.filePath = download_crx(value)
 
 
     if(fileFormat.ID is not None):
+        logger.info("Calling Secure-Annex")
         SA = preform_secure_annex_scan(fileFormat.ID)
         if SA is not None :
-            result["SA"] = SA
+            result["SA"] = SA   
+    else:
+        logger.warning("Skipping Secure-Annex")
+  
     #VT returns {"malware_types:[], score:int,"raw":{}"}
-    result["VT"] = vt.scan_file(fileFormat.filePath)
-    result["OWASP"]=opswat_scan_file(fileFormat.filePath)
+    if fileFormat.filePath != None:
+        logger.info("Calling VirusTotal")
+        result["VT"] = vt.scan_file(fileFormat.filePath)
+        logger.info("Calling OWASP")
+        result["OWASP"]=opswat_scan_file(fileFormat.filePath)
 
+    logger.info("Retreiving permissions")
     result["permissions"] = extension_retriver(fileFormat.filePath)
     result["extension_id"] = fileFormat.ID
-    print(fileFormat.filePath)
+    if fileFormat.ID != None:
+        logger.warning("Extension ID is empty")
+
     result["file_path"] = fileFormat.filePath
 
-
-
+    logger.info("Generating report")
     report = generate_report(result)
-
+    logger.info("Saving the report")
     ParseReport(report)
 
-#function checks wether the input is either a file or a chrome extension
-#return 0 if file, 1 if chrome ID, -1 if neither.
-def check_valid_input(value):
-    # Chrome extension IDs are usually 32 lowercase letters (a–p)
-    chrome_ext_pattern = re.compile(r'^[a-p]{32}$')
-
-    if chrome_ext_pattern.match(value):
-        return 1
-    elif os.path.exists(value):
-        return 0
-    else:
-        return -1
 
 def preform_secure_annex_scan(input):
     #Helper function to query SA and build json file

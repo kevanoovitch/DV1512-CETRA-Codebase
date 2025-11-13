@@ -2,9 +2,11 @@ import os
 import re
 from typing import  Any
 import hashlib
-
+import logging
+logger = logging.getLogger(__name__)
 def generate_report(result) -> dict: 
-    
+    logger.info("Generating Report...")
+
     score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]]) 
     description = result["SA"]["descriptions"]
     permissions = result["permissions"]
@@ -26,6 +28,7 @@ def generate_report(result) -> dict:
         "extension_id": extension_id,
         "file_hash": file_hash
     }
+    logger.info("Generated report succesfully!")
 
     return report
 
@@ -38,13 +41,10 @@ def label_from_score(s):
     return "Highly malicious"
 
 def calculate_final_score(scores: list[int]) -> int:
-    """
-    arg an list of ints returns one int
-    """
+
     sum = 0
     count = 0
-    print("calculating score")
-    print("scores:",scores)
+    logger.info("Calculating score...")
     for s in scores:
         if s == None:
             s = -1 #Treat none as missing data
@@ -57,8 +57,8 @@ def calculate_final_score(scores: list[int]) -> int:
 
     if count == 0:
         return 0
-    print("calcualted ", sum)
 
     average = sum / count
-    print("calcualted score ", average)
+    logger.info("Calculated score %d from the scores: %s", average, scores)
+
     return round(average)
