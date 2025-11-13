@@ -13,15 +13,13 @@
     <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="submit-form">
       {% csrf_token %}
       <div class="submit-row">
-
-        <!-- dropdown med ID som standard -->
+        
         <select name="submit_type" class="select-input" required>
           <option value="id" selected>Extension ID</option>
           <option value="zip">ZIP File</option>
           <option value="crx">CRX File</option>
         </select>
 
-        <!-- textfält + filfält (växlar med JS) -->
         <input type="text" name="submission_value" placeholder="Enter Chrome Web Store ID" required>
         <input type="file" name="submission_file" accept=".zip,.crx" class="file-input">
 
@@ -29,12 +27,8 @@
       </div>
     </form>
 
-    <!-- STATUS-MEDELANDEN UNDER FORMULÄRET -->
     <div class="status-area">
-      <!-- JS-meddelande: visas direkt när man klickar Submit -->
       <p id="run-status" class="status-banner info is-hidden"></p>
-
-      <!-- Server-svar efter analys -->
       {% if status_message %}
         <p class="status-banner success">{{ status_message }}</p>
       {% endif %}
@@ -46,7 +40,6 @@
   </div>
 </div>
 
-<!-- ===== Scoreboard Section ===== -->
 <div class="card top-list">
   <h2>Top 5 Highest Scores</h2>
   <div class="table-wrap">

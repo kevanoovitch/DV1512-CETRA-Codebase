@@ -109,7 +109,6 @@ def home(request):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
-            # Skicka med typ "id" till apiCaller
             apiCaller(webstore_id, "id")
 
             status_message = "Analysis finished. See the History tab for full results."
@@ -128,7 +127,6 @@ def home(request):
                 "top_reports": load_top_reports(),
             })
 
-    # GET request -> bara visa form + nuvarande top-list
     return render(request, "home.html", {"top_reports": load_top_reports()})
 
 
