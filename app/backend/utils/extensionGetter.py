@@ -1,8 +1,11 @@
 import requests
 import logging
+
+from app import constants
+
 logger = logging.getLogger(__name__)
 def download_crx(extension_id):
-    output_file="app/uploaded/"
+    output_file=constants.UPLOADED_PATH
     url = (
         "https://clients2.google.com/service/update2/crx?"
         "response=redirect&os=linux&arch=x86-64&os_arch=x86-64&nacl_arch=x86-64&"

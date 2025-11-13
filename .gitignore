@@ -215,3 +215,6 @@ __marimo__/
 app/backend/sa_output.json
 
 app/backend/API_interfaces/output_files/*
+
+app/uploaded
+/uploaded
