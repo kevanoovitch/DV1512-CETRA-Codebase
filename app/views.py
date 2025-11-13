@@ -5,77 +5,144 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
-
-# import apiCaller from api.py
 from app.backend.api import apiCaller
 import sqlite3
 import json
+import zipfile
+
     
 @login_required
 def home(request):
-    uploaded_file_url = None
     error = None
+    status_message = None
 
-    #top_reports = Report.objects.order_by('-score')[:5]
-    #change when DB is ready
-    top_reports = []
-
+    def load_top_reports():
+        conn = sqlite3.connect('db.sqlite3')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT file_hash, extention_id, date, score
+            FROM reports
+            WHERE score IS NOT NULL
+            ORDER BY score DESC
+            LIMIT 5;
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            {
+                "file_hash": row["file_hash"],
+                "extention_id": row["extention_id"],
+                "date": row["date"],
+                "score": row["score"],
+            }
+            for row in rows
+        ]
 
     if request.method == "POST":
         submit_type = request.POST.get("submit_type")
         fs = FileSystemStorage()
 
-        # --- 🔹 Case 1: ZIP eller CRX uppladdning ---
+        # --- Case 1: ZIP or CRX upload ---
         if submit_type in ["zip", "crx"]:
             upload = request.FILES.get("submission_file")
             if not upload:
                 error = f"Please select a valid .{submit_type} file."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             name = upload.name.lower()
             if submit_type == "zip" and not name.endswith(".zip"):
                 error = "Uploaded file must be a .zip file."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
             if submit_type == "crx" and not name.endswith(".crx"):
                 error = "Uploaded file must be a .crx file."
-                return render(request, "home.html", {"error": error})
-
-            filename = fs.save(upload.name, upload)
-            uploaded_file_url = fs.url(filename)
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
             
-            # Call apiCaller with the path to the uploaded file
-            apiCaller(fs.path(filename),"file")
+            filename = fs.save(upload.name, upload)
+            file_path = fs.path(filename)
+
+            if not check_zip(file_path):
+                error = "manifest.json not found inside the uploaded file. Not an Extension package."
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
+
+            apiCaller(file_path, "file")
+
+            status_message = "Analysis finished. See the History tab for full results."
+
             return render(request, "home.html", {
-                "uploaded_file_url": uploaded_file_url,
-                "error": None
+                "error": None,
+                "status_message": status_message,
+                "top_reports": load_top_reports(),
             })
 
-        # --- 🔹 Case 2: Webstore ID ---
+        # --- Case 2: Webstore ID ---
         elif submit_type == "id":
             webstore_id = (request.POST.get("submission_value") or "").strip()
             if not webstore_id:
                 error = "Please enter an Extension ID."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             if not (len(webstore_id) == 32 and webstore_id.isalpha() and webstore_id.islower()):
                 error = "Webstore ID must be 32 lowercase letters (a–z)."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             txt_name = "webstore_id.txt"
             if fs.exists(txt_name):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
-            # Call apiCaller with the Webstore ID
-            apiCaller(webstore_id,"id")
-            return render(request, "home.html", {"error": None})
+            apiCaller(webstore_id, "id")
 
-        # --- 🔹 Case 3: okänd typ ---
+            status_message = "Analysis finished. See the History tab for full results."
+
+            return render(request, "home.html", {
+                "error": None,
+                "status_message": status_message,
+                "top_reports": load_top_reports(),
+            })
+
+        # --- Case 3: unknown type ---
         else:
             error = "Invalid submission type."
-            return render(request, "home.html", {"error": error})
+            return render(request, "home.html", {
+                "error": error,
+                "top_reports": load_top_reports(),
+            })
 
-    return render(request, "home.html")
+    return render(request, "home.html", {"top_reports": load_top_reports()})
+
+
+def check_zip(file_path: str) -> bool:
+    """
+    Returns True if manifest.json exists inside the zip/crx file.
+    """
+    try:
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            for name in zip_ref.namelist():
+                if name.lower().endswith("manifest.json"):
+                    return True
+        return False
+    except Exception:
+        return False
+
 
 @login_required
 def report(request):

@@ -371,3 +371,58 @@ input[type="text"]:focus {
   background: radial-gradient(circle at 30% 30%, #f87171, #b91c1c);
   box-shadow: 0 0 0 2px #273147 inset, 0 0 10px rgba(239,68,68,0.35);
 }
+
+/* ===== Status messages under submit form ===== */
+
+.status-area {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-banner {
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(4px);
+  animation: fadeSlideIn 0.25s ease-out forwards;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Dölj via klass istället för inline-style */
+.status-banner.is-hidden {
+  display: none;
+}
+
+/* Info – mörk blå/grå */
+.status-banner.info {
+  background: #0b1120;  /* very dark blue/gray */
+  color: #e5f1ff;       /* light bluish text */
+}
+
+/* Success – mörk grön med "glow" */
+.status-banner.success {
+  background: #022c22;        /* dark green */
+  color: #bbf7d0;             /* light green text */
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.45);
+}
+
+/* Error – mörk röd */
+.status-banner.error {
+  background: #450a0a;        /* dark red */
+  color: #fecaca;             /* light red/pink */
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.45);
+}
+
+@keyframes fadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
