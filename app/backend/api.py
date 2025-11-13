@@ -19,7 +19,7 @@ class FileFormat:
         filePath = None
         ID = None
 
-def apiCaller(value):
+def apiCaller(value, type):
     result={}
 
     Id_to_file_converter = ExtensionIDConverter()

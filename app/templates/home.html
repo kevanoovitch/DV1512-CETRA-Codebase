@@ -9,6 +9,7 @@
 
   <div class="submit-section">
     <h2>Submit an Extension</h2>
+
     <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="submit-form">
       {% csrf_token %}
       <div class="submit-row">
@@ -28,18 +29,23 @@
       </div>
     </form>
 
-    {% if uploaded_file_url %}
-      <p class="success">
-        File uploaded successfully:
-        <a href="{{ uploaded_file_url }}">{{ uploaded_file_url }}</a>
-      </p>
-    {% endif %}
+    <!-- STATUS-MEDELANDEN UNDER FORMULÄRET -->
+    <div class="status-area">
+      <!-- JS-meddelande: visas direkt när man klickar Submit -->
+      <p id="run-status" class="status-banner info is-hidden"></p>
 
-    {% if error %}
-      <p class="error">{{ error }}</p>
-    {% endif %}
+      <!-- Server-svar efter analys -->
+      {% if status_message %}
+        <p class="status-banner success">{{ status_message }}</p>
+      {% endif %}
+
+      {% if error %}
+        <p class="status-banner error">{{ error }}</p>
+      {% endif %}
+    </div>
   </div>
 </div>
+
 <!-- ===== Scoreboard Section ===== -->
 <div class="card top-list">
   <h2>Top 5 Highest Scores</h2>
@@ -86,6 +92,8 @@
   const select = document.querySelector('.select-input');
   const textField = document.querySelector('input[name="submission_value"]');
   const fileField = document.querySelector('input[name="submission_file"]');
+  const form = document.querySelector('.submit-form');
+  const runStatus = document.getElementById('run-status');
 
   function toggleInputs() {
     if (select.value === 'id') {
@@ -103,5 +111,12 @@
 
   toggleInputs();
   select.addEventListener('change', toggleInputs);
+
+  if (form && runStatus) {
+    form.addEventListener('submit', function () {
+      runStatus.classList.remove('is-hidden');
+      runStatus.textContent = 'Upload successful. Analysis has started...';
+    });
+  }
 </script>
 {% endblock %}

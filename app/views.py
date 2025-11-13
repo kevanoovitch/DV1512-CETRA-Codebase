@@ -13,90 +13,118 @@ import json
     
 @login_required
 def home(request):
-    uploaded_file_url = None
     error = None
+    status_message = None
 
-    conn = sqlite3.connect('db.sqlite3')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT file_hash, extention_id, date, score
-        FROM reports
-        WHERE score IS NOT NULL
-        ORDER BY score DESC
-        LIMIT 5;
-    """)
-
-    rows = cursor.fetchall()
-
-    top_reports = [
-        {
-            "file_hash": row["file_hash"],
-            "extention_id": row["extention_id"],
-            "date": row["date"],
-            "score": row["score"],
-        }
-        for row in rows
-    ]
-
-    conn.close()
+    def load_top_reports():
+        conn = sqlite3.connect('db.sqlite3')
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT file_hash, extention_id, date, score
+            FROM reports
+            WHERE score IS NOT NULL
+            ORDER BY score DESC
+            LIMIT 5;
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+        return [
+            {
+                "file_hash": row["file_hash"],
+                "extention_id": row["extention_id"],
+                "date": row["date"],
+                "score": row["score"],
+            }
+            for row in rows
+        ]
 
     if request.method == "POST":
         submit_type = request.POST.get("submit_type")
         fs = FileSystemStorage()
 
-        # --- 🔹 Case 1: ZIP eller CRX uppladdning ---
+        # --- Case 1: ZIP or CRX upload ---
         if submit_type in ["zip", "crx"]:
             upload = request.FILES.get("submission_file")
             if not upload:
                 error = f"Please select a valid .{submit_type} file."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             name = upload.name.lower()
             if submit_type == "zip" and not name.endswith(".zip"):
                 error = "Uploaded file must be a .zip file."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
             if submit_type == "crx" and not name.endswith(".crx"):
                 error = "Uploaded file must be a .crx file."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             filename = fs.save(upload.name, upload)
-            uploaded_file_url = fs.url(filename)
-            
-            # Call apiCaller with the path to the uploaded file
-            apiCaller(fs.path(filename))
+
+            # Skicka med typ "file" till apiCaller
+            apiCaller(fs.path(filename), "file")
+
+            # ✔️ Bara “Analysis finished…”
+            status_message = "Analysis finished. See the History tab for full results."
+
             return render(request, "home.html", {
-                "uploaded_file_url": uploaded_file_url,
-                "error": None
+                "error": None,
+                "status_message": status_message,
+                "top_reports": load_top_reports(),
             })
 
-        # --- 🔹 Case 2: Webstore ID ---
+        # --- Case 2: Webstore ID ---
         elif submit_type == "id":
             webstore_id = (request.POST.get("submission_value") or "").strip()
             if not webstore_id:
                 error = "Please enter an Extension ID."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             if not (len(webstore_id) == 32 and webstore_id.isalpha() and webstore_id.islower()):
                 error = "Webstore ID must be 32 lowercase letters (a–z)."
-                return render(request, "home.html", {"error": error})
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
             txt_name = "webstore_id.txt"
             if fs.exists(txt_name):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
-            # Call apiCaller with the Webstore ID
-            apiCaller(webstore_id)
-            return render(request, "home.html", {"error": None})
+            # Skicka med typ "id" till apiCaller
+            apiCaller(webstore_id, "id")
 
-        # --- 🔹 Case 3: okänd typ ---
+            status_message = "Analysis finished. See the History tab for full results."
+
+            return render(request, "home.html", {
+                "error": None,
+                "status_message": status_message,
+                "top_reports": load_top_reports(),
+            })
+
+        # --- Case 3: unknown type ---
         else:
             error = "Invalid submission type."
-            return render(request, "home.html", {"error": error})
+            return render(request, "home.html", {
+                "error": error,
+                "top_reports": load_top_reports(),
+            })
 
-    return render(request, "home.html", {"top_reports": top_reports})
+    # GET request -> bara visa form + nuvarande top-list
+    return render(request, "home.html", {"top_reports": load_top_reports()})
+
 
 @login_required
 def report(request):
