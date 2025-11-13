@@ -5,11 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
-
-# import apiCaller from api.py
 from app.backend.api import apiCaller
 import sqlite3
 import json
+import zipfile
+
     
 @login_required
 def home(request):
@@ -66,13 +66,19 @@ def home(request):
                     "error": error,
                     "top_reports": load_top_reports(),
                 })
-
+            
             filename = fs.save(upload.name, upload)
+            file_path = fs.path(filename)
 
-            # Skicka med typ "file" till apiCaller
-            apiCaller(fs.path(filename), "file")
+            if not check_zip(file_path):
+                error = "manifest.json not found inside the uploaded file. Not an Extension package."
+                return render(request, "home.html", {
+                    "error": error,
+                    "top_reports": load_top_reports(),
+                })
 
-            # ✔️ Bara “Analysis finished…”
+            apiCaller(file_path, "file")
+
             status_message = "Analysis finished. See the History tab for full results."
 
             return render(request, "home.html", {
@@ -124,6 +130,20 @@ def home(request):
 
     # GET request -> bara visa form + nuvarande top-list
     return render(request, "home.html", {"top_reports": load_top_reports()})
+
+
+def check_zip(file_path: str) -> bool:
+    """
+    Returns True if manifest.json exists inside the zip/crx file.
+    """
+    try:
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            for name in zip_ref.namelist():
+                if name.lower().endswith("manifest.json"):
+                    return True
+        return False
+    except Exception:
+        return False
 
 
 @login_required
