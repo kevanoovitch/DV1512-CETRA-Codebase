@@ -150,6 +150,35 @@ cwd = os.getcwd()
 MEDIA_URL = "/uploaded/"
 MEDIA_ROOT = os.path.join(cwd, "uploaded")
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} [{module}] {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {  # This catches all logs
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+}
 
 # Adding red green output of tests
 TEST_RUNNER = "redgreenunittest.django.runner.RedGreenDiscoverRunner"
