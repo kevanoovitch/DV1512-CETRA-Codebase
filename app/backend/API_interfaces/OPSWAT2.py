@@ -5,17 +5,7 @@ import os
 import logging
 from dotenv import load_dotenv
 from app import constants
-#########################
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.FileHandler("scanner.log", encoding="utf-8"),  #ta bort om du # om du vill spara i logfil
-        logging.StreamHandler()
-    ]
-)
 
-#########################
 logger = logging.getLogger(__name__)
 
 #print ("OPSWAT utanför scan_file")

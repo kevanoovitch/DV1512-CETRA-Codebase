@@ -33,14 +33,14 @@ class SecureAnnex_interpretator:
 
     RISK_WEIGHTS_MANIFEST = {
     # Strong capabilities
-    "SCRIPTING_PERMISSION": 4,
-    "WEBREQUEST": 4,
+    "SCRIPTING_PERMISSION": 0,
+    "WEBREQUEST": 0,
 
     # Broad scope alone is a weak signal
-    "ALL_URLS_ACCESS": 1,
-    "CONTENT_SCRIPT_ALL_URLS": 2,
+    "ALL_URLS_ACCESS": 0,
+    "CONTENT_SCRIPT_ALL_URLS": 0,
 
-    # default: anything not listed → 0
+    
     }
 
 
