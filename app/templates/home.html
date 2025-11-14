@@ -26,15 +26,17 @@
         <button type="submit" class="btn-pill btn-accent">Submit</button>
       </div>
     </form>
-
     <div class="status-area">
-      <p id="run-status" class="status-banner info is-hidden"></p>
-      {% if status_message %}
-        <p class="status-banner success">{{ status_message }}</p>
-      {% endif %}
+        <div class="inline-status">
+          <div id="loader" class="loader hidden"></div>
+          <span id="run-status" class="status-text is-hidden"></span>
+      </div>
 
+      {% if status_message %}
+          <p class="status-banner success">{{ status_message }}</p>
+      {% endif %}
       {% if error %}
-        <p class="status-banner error">{{ error }}</p>
+          <p class="status-banner error">{{ error }}</p>
       {% endif %}
     </div>
   </div>
@@ -87,6 +89,8 @@
   const fileField = document.querySelector('input[name="submission_file"]');
   const form = document.querySelector('.submit-form');
   const runStatus = document.getElementById('run-status');
+  const loader = document.getElementById('loader');
+  const submitButton = form.querySelector('button[type="submit"]');
 
   function toggleInputs() {
     if (select.value === 'id') {
@@ -105,11 +109,14 @@
   toggleInputs();
   select.addEventListener('change', toggleInputs);
 
-  if (form && runStatus) {
-    form.addEventListener('submit', function () {
+  form.addEventListener('submit', function () {
+      loader.classList.remove('hidden');
       runStatus.classList.remove('is-hidden');
-      runStatus.textContent = 'Upload successful. Analysis has started...';
-    });
-  }
+      runStatus.textContent = 'Analyzing extension…';
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Analyzing…";
+  });
 </script>
+
 {% endblock %}
