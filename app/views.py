@@ -131,6 +131,7 @@ def mitre_attack(request):
         #    return render(request, "mitre_attack.html", {"error": error})
 
         # Finns -> redirect till rapport-sida
+        
         return redirect("mitre_report", extension_id=extension_id)
 
     return render(request, "mitre_attack.html", {"error": error})
