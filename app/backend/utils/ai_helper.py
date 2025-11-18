@@ -8,8 +8,6 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Configure logging once in your app entrypoint, example:
-# logging.basicConfig(level=logging.INFO)
 
 def Ai_Helper(request: str, response: str, data: list) -> str | None:
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
