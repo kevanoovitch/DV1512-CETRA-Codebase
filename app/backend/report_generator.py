@@ -3,12 +3,23 @@ import re
 from typing import  Any
 import hashlib
 import logging
+from app.backend.utils import Ai_Helper
+
 logger = logging.getLogger(__name__)
 def generate_report(result) -> dict: 
     logger.info("Generating Report...")
-
-    score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]]) 
+    score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]])
     description = result["SA"]["descriptions"]
+
+    summery = Ai_Helper(
+        request="please analyse the description, this is summery from a chrome extension, check the data key in this dict",
+        response="respond in free text fashion, no md, just normal text explaining to a user what this does, if you think it's asking for too much more than what it needs, don't make it too long.",
+        data=result["SA"]["descriptions"]
+    )
+
+    if summery is not None:
+        description = summery
+    
     permissions = result["permissions"]
     risks = result["SA"]["risk_types"]
     malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
@@ -28,6 +39,7 @@ def generate_report(result) -> dict:
         "extension_id": extension_id,
         "file_hash": file_hash
     }
+
     logger.info("Generated report succesfully!")
 
     return report

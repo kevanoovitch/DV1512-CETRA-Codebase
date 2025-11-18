@@ -156,7 +156,7 @@ def history(request):
     
     cursor = conn.cursor()
 
-    cursor.execute("SELECT file_hash, extention_id, date, score FROM reports ORDER BY date desc limit 5;")
+    cursor.execute("SELECT file_hash, extention_id, date, score FROM reports ORDER BY date desc;")
     
     rows = cursor.fetchall()
 
