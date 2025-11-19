@@ -198,10 +198,6 @@ def history(request):
     return render(request, "history.html", context)
 
 @login_required
-def results(request):
-    return render(request, "results.html")
-
-@login_required
 def settings(request):
     return render(request, "settings.html")
 
@@ -294,3 +290,22 @@ def report_view(request, sha256=None):
 
     conn.close()
     return render(request, "result.html", {"report": result})
+
+def mitre_report_view(request, sha256=None):
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
+    
+    
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM mitre WHERE file_hash=?;", (sha256,))
+    
+    row = cursor.fetchall()
+
+    if row:
+        result = dict(row)  # Convert sqlite3.Row to dict
+    else:
+        print("No record found.") 
+
+    conn.close()
+    return render(request, "mitre_result.html", {"mitre_report": result})
