@@ -22,7 +22,13 @@ class FileFormat:
         ID = None
 
 def apiCaller(value,submission_type):
-    result={}
+    
+    # In case it's missing an ID SA won't be called but the result strucuture still needs to be there
+    result={
+        "SA": {"score": -1, "descriptions": [], "risk_types": []},
+        "VT": {"malware_types": [], "score": -1, "raw": {}},
+        "OWASP": {"score": -1, "malware_type": []},
+    }
 
     #instanstiate a FileFormat object to store both path and ID
     fileFormat = FileFormat()
@@ -31,7 +37,13 @@ def apiCaller(value,submission_type):
     if submission_type == "file":
         logger.info("Received a file, retreiving the Id ouf of the file")
         fileFormat.filePath = value
-        fileFormat.ID = ExtensionIDConverter().convert_file_to_id(value)
+        try:
+            fileFormat.ID = ExtensionIDConverter().convert_file_to_id(value)
+        except ValueError:
+            # Converter now returns None for unsupported inputs (e.g., raw ZIP without key);
+            # keep ID empty and continue with file-based scanners.
+            fileFormat.ID = None
+            logger.warning("Unable to derive extension ID from file %s; continuing without ID", value)
     if submission_type == "id":
         logger.info("Received a ID, Downloading the file...")
         fileFormat.ID = value
@@ -55,7 +67,7 @@ def apiCaller(value,submission_type):
     logger.info("Retreiving permissions")
     result["permissions"] = extension_retriver(fileFormat.filePath)
     result["extension_id"] = fileFormat.ID
-    if fileFormat.ID != None:
+    if fileFormat.ID is None:
         logger.warning("Extension ID is empty")
 
     result["file_path"] = fileFormat.filePath
