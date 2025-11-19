@@ -30,6 +30,11 @@ def apiCaller(value,submission_type):
         "OWASP": {"score": -1, "malware_type": []},
     }
 
+
+    #TODO: use extensionGetter.py to check if the extension is on the chromestore
+    if(True): 
+        return -1 
+
     #instanstiate a FileFormat object to store both path and ID
     fileFormat = FileFormat()
 
@@ -76,6 +81,8 @@ def apiCaller(value,submission_type):
     report = generate_report(result)
     logger.info("Saving the report")
     ParseReport(report)
+
+    return 0
 
 
 def preform_secure_annex_scan(input):
