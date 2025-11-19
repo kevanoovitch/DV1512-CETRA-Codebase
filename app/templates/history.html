@@ -56,11 +56,26 @@
   </div>
 
   <div class="table-footer">
-    <div class="muted">Showing {{ reports|length|default:0 }} items</div>
-    <div class="pager">
-      <a class="btn btn-sm btn-outline disabled" href="#">Prev</a>
-      <a class="btn btn-sm btn-outline" href="#">Next</a>
-    </div>
+  <div class="muted">
+    Showing {{ start_index }}–{{ end_index }} of {{ total }} items
   </div>
+  <div class="pager">
+    {# Prev #}
+    {% if has_prev %}
+      <a class="btn btn-sm btn-outline" href="?page={{ page|add:"-1" }}">Prev</a>
+    {% else %}
+      <span class="btn btn-sm btn-outline disabled">Prev</span>
+    {% endif %}
+
+    <span class="muted">Page {{ page }} of {{ total_pages }}</span>
+
+    {# Next #}
+    {% if has_next %}
+      <a class="btn btn-sm btn-outline" href="?page={{ page|add:"1" }}">Next</a>
+    {% else %}
+      <span class="btn btn-sm btn-outline disabled">Next</span>
+    {% endif %}
+  </div>
+</div>
 </div>
 {% endblock %}
