@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS mitre (
     sandbox varchar(50),
     tactics TEXT,
     techniques TEXT,
-    date varchar(20)
+    date varchar(20),
+    PRIMARY KEY (file_hash, sandbox)
 ); """
 def addMitreResults(conn, report: dict, reportHash: str):
     # insert table statement
@@ -44,8 +45,13 @@ def addMitreResults(conn, report: dict, reportHash: str):
     # commit the changes
     conn.commit()
 
+    # if primary key contraint fails, set answer to False
+    answer = True
+    if cur.rowcount != 1:
+        answer = False
+    
     # get the id of the last inserted row
-    return True
+    return answer
 
 
 def mitreDatabaseOperations(report: dict):
@@ -88,7 +94,7 @@ def mitreDatabaseOperations(report: dict):
         with sqlite3.connect(os.path.join(root_grandparent, "db.sqlite3")) as conn:  
             cursor = conn.cursor()
             
-            cursor.execute(delete_mitre_table)
+            # cursor.execute(delete_mitre_table)
             
             # create mitre table
             cursor.execute(create_mitre_table)
@@ -98,9 +104,9 @@ def mitreDatabaseOperations(report: dict):
                   
             for sandbox in mitre_reports:
                 i = i + 1
-                print(sandbox)
                 success = addMitreResults(conn, sandbox, reportHash)
                 if success:
+                    print(sandbox)
                     print(f"Sandbox report number {i} added successfully.")
     except sqlite3.Error as e:
         print(e)
