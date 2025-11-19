@@ -207,25 +207,54 @@ def settings(request):
 
 @login_required
 def mitre_attack(request):
-    error = None
+    # --- Hämta Reports ---
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
-    if request.method == "POST":
-        extension_id = (request.POST.get("extension_id") or "").strip()
+    cursor.execute("""
+        SELECT file_hash, extention_id, date
+        FROM reports
+        ORDER BY date DESC;
+    """)
+    reports = cursor.fetchall()
+    conn.close()
 
-        if not (len(extension_id) == 32 and extension_id.isalpha() and extension_id.islower()):
-            error = "Extension ID must be 32 lowercase letters (a–z)."
-            return render(request, "mitre_attack.html", {"error": error})
+    # --- Hämta MITRE ---
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
-        #report = Report.objects.filter(extension_id=extension_id).first()
-        #if not report:
-        #    error = "Extension not found in database."
-        #    return render(request, "mitre_attack.html", {"error": error})
+    cursor.execute("""
+        SELECT file_hash
+        FROM mitre;
+    """)
+    mitre_rows = cursor.fetchall()
+    conn.close()
 
-        # Finns -> redirect till rapport-sida
-        
-        return redirect("mitre_report", extension_id=extension_id)
+    # --- Mappa MITRE-hashar till snabb lookup ---
+    mitre_map = {row["file_hash"]: True for row in mitre_rows}
 
-    return render(request, "mitre_attack.html", {"error": error})
+    # --- Bygg merged-lista ---
+    merged = []
+    for r in reports:
+        filehash = r["file_hash"]
+        date = r["date"]
+
+        # Bestäm MITRE-status
+        if filehash in mitre_map:
+            status = "done"
+        else:
+            status = "none"
+
+        merged.append({
+            "filehash": filehash,
+            "date": date,
+            "mitre_status": status
+        })
+
+    return render(request, "mitre_attack.html", {"rows": merged})
+
 
 def login_view(request):
     error = ""

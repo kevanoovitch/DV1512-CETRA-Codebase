@@ -2,22 +2,69 @@
 {% block title %}MITRE ATT&CK – CETRA{% endblock %}
 
 {% block content %}
-<h1>MITRE ATT&CK</h1>
+<h1>MITRE ATT&CK Analysis</h1>
 
-<div class="card mitre-card">
-  <p>Submit a Chrome Extension ID to see MITRE mapping.</p>
-
-  <form action="{% url 'mitre_attack' %}" method="post" class="submit-form">
-    {% csrf_token %}
-    <div class="submit-row">
-      <input type="text" name="extension_id" placeholder="Enter Chrome Web Store ID" required>
-      <button type="submit" class="btn-accent">Lookup</button>
-    </div>
-  </form>
-
-  {% if error %}
-    <p class="error">{{ error }}</p>
-  {% endif %}
+<div class="card home-card">
+  <p>This page shows MITRE ATT&CK mapping availability for each analyzed extension.</p>
 </div>
+
+<div class="card top-list">
+  <h2>MITRE Status Overview</h2>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>File Hash</th>
+          <th>Date</th>
+          <th>MITRE Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% if rows %}
+          {% for r in rows %}
+            <tr>
+              <td class="mono">{{ r.filehash }}</td>
+              <td>{{ r.date }}</td>
+
+              <td>
+                {% if r.mitre_status == "none" %}
+                  <span class="badge bg-secondary">Not Started</span>
+                  <a href="/mitre/analyze/{{ r.filehash }}" class="btn-pill btn-accent btn-sm ms-2">Analyze</a>
+
+                {% elif r.mitre_status == "done" %}
+                  <span class="badge bg-success">Completed</span>
+                  <a href="/mitre/view/{{ r.filehash }}" class="btn-pill btn-accent btn-sm ms-2">View</a>
+
+                {% elif r.mitre_status == "running" %}
+                  <span class="badge bg-warning text-dark">Running…</span>
+                  <button class="btn-pill btn-disabled btn-sm ms-2" disabled>Processing</button>
+
+                {% elif r.mitre_status == "error" %}
+                  <span class="badge bg-danger">Error</span>
+                  <a href="/mitre/analyze/{{ r.filehash }}" class="btn-pill btn-accent btn-sm ms-2">Retry</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+
+        {% else %}
+          {% for _ in "1234567" %}
+            <tr class="skeleton">
+              <td><div class="skeleton-bar w-60"></div></td>
+              <td><div class="skeleton-bar w-40"></div></td>
+              <td><div class="skeleton-bar w-30"></div></td>
+              <td><div class="skeleton-bar w-25"></div></td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+
+      </tbody>
+    </table>
+  </div>
+</div>
+
 {% endblock %}
 
