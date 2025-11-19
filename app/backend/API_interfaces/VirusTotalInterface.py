@@ -14,6 +14,7 @@ VT_API_KEY = os.getenv("VT_API_KEY")
 
 def scan_file(file_path: str) -> dict:
 
+    logger.info("FILEPATH: %s",file_path)
     output = {"malware_types": [], "score": -1, "raw": {}}
 
     try:

@@ -16,7 +16,6 @@
 
       <a class="tab {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">Home</a>
       <a class="tab {% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'history' %}">History</a>
-      <a class="tab {% if request.resolver_match.url_name == 'results' %}active{% endif %}" href="{% url 'results' %}">Results</a>
       <a class="tab {% if request.resolver_match.url_name == 'settings' %}active{% endif %}" href="{% url 'settings' %}">Settings</a>
       <a class="tab {% if request.resolver_match.url_name == 'mitre_attack' %}active{% endif %}" href="{% url 'mitre_attack' %}">MITRE ATT&amp;CK</a>
     </div>
