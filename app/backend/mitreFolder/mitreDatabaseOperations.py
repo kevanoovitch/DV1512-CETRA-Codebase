@@ -104,12 +104,55 @@ def mitreDatabaseOperations(report: dict):
                     print(f"Sandbox report number {i} added successfully.")
     except sqlite3.Error as e:
         print(e)
-        
+
 dummy_mitre_report = {
-    "file_hash": "dummyhash123",
-    "sandbox": "sandbox_name",
-    "tactics": ["tactic1","tactic2"],
-    "techniques": [["techniqueId, techniqueName", "techniqueId2, techniqueName2"], ["techniqueId3, techniqueName3", "techniqueId4, techniqueName4"]]
+  "file_hash": "0efc314b1b7f6c74e772eb1f8f207ed50c2e702aed5e565081cbcf8f28f0fe26",
+  "Sandbox 1": [
+    {
+      "tactic_id": "tacticid1",
+      "tactic_name": "tacticname1",
+      "techniques": [
+        {
+          "technique_id": "techniqueid1",
+          "technique_name": "techniquename1"
+        }
+      ]
+    }
+  ],
+  "Sandbox 2": [
+    {
+      "tactic_id": "tacticid2",
+      "tactic_name": "tacticname2",
+      "techniques": [
+        {
+          "technique_id": "tecniqueid2",
+          "technique_name": "techniquename2"
+        }
+      ]
+    },
+    {
+      "tactic_id": "tacticid2.1",
+      "tactic_name": "tacticname2.1",
+      "techniques": [
+        {
+          "technique_id": "tecniqueid2.1",
+          "technique_name": "tecniquename2.1"
+        },
+        {
+          "technique_id": "tecniqueid2.11",
+          "technique_name": "techniquename2.11"
+        },
+        {
+          "technique_id": "tecniqueid2.12",
+          "technique_name": "techniquename2.12"
+        },
+        {
+          "technique_id": "tecniqueid2.13",
+          "technique_name": "techniquename2.13"
+        }
+      ]
+    }
+  ],
 }
 
 if __name__ == "__main__":
