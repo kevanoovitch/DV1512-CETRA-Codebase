@@ -19,8 +19,7 @@ CREATE TABLE IF NOT EXISTS mitre (
     tactics TEXT,
     techniques TEXT,
     date varchar(20)
-);
-    """
+); """
 def addMitreResults(conn, report: dict, reportHash: str):
     # insert table statement
     insert = f"""
