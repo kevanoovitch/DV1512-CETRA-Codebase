@@ -49,8 +49,8 @@ def mitre_report(filehash: str, response):
 
             parsed[sandbox_name].append(tactic_entry)
 
-    # print(json.dumps(parsed, indent=2))
-    print_mitre(parsed)
+    print(json.dumps(parsed, indent=2))
+    # print_mitre(parsed)
     mitreDatabaseOperations.mitreDatabaseOperations(parsed)
     pass
 
@@ -75,3 +75,7 @@ def mitreCall(filehash: str):
 #exists = requests.get(f"https://www.virustotal.com/api/v3/files/{hash}", headers=headers)
 #print(exists.status_code)
 #print(exists.json())
+
+if __name__ == "__main__":
+    test_hash = "0efc314b1b7f6c74e772eb1f8f207ed50c2e702aed5e565081cbcf8f28f0fe26"
+    mitreCall(test_hash)
