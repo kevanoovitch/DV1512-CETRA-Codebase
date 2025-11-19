@@ -12,7 +12,7 @@
 
     <form action="{% url 'home' %}" method="post" enctype="multipart/form-data" class="submit-form">
       {% csrf_token %}
-      <div class="submit-row">
+      <div id="submit-row" class="submit-row">
         
         <select name="submit_type" class="select-input" required>
           <option value="id" selected>Extension ID</option>
@@ -22,20 +22,24 @@
 
         <input type="text" name="submission_value" placeholder="Enter Chrome Web Store ID" required>
         <input type="file" name="submission_file" accept=".zip,.crx" class="file-input">
-
-        <button type="submit" class="btn-pill btn-accent">Submit</button>
+        
+        <button id="submit-btn" type="submit" class="btn-pill btn-accent">Submit</button>
       </div>
     </form>
 
     <div class="status-area">
-      <p id="run-status" class="status-banner info is-hidden"></p>
-      {% if status_message %}
-        <p class="status-banner success">{{ status_message }}</p>
-      {% endif %}
+        <div class="inline-status">
+          <div id="loader" class="loader hidden"></div>
+          <span id="run-status" class="status-text is-hidden"></span>
+        </div>
 
-      {% if error %}
-        <p class="status-banner error">{{ error }}</p>
-      {% endif %}
+        {% if status_message %}
+            <p class="status-banner success">{{ status_message }}</p>
+        {% endif %}
+
+        {% if error %}
+            <p class="status-banner error">{{ error }}</p>
+        {% endif %}
     </div>
   </div>
 </div>
@@ -56,11 +60,7 @@
         {% if top_reports %}
           {% for r in top_reports %}
             <tr>
-              <td>
-                <div class="score">
-                  <span class="score-text">{{ r.score}}</span>
-                </div>
-              </td>
+              <td><div class="score"><span class="score-text">{{ r.score}}</span></div></td>
               <td class="mono">{{ r.file_hash }}</td>
               <td class="mono">{{ r.extention_id }}</td>
               <td>{{ r.date}}</td>
@@ -87,6 +87,8 @@
   const fileField = document.querySelector('input[name="submission_file"]');
   const form = document.querySelector('.submit-form');
   const runStatus = document.getElementById('run-status');
+  const loader = document.getElementById('loader');
+  const submitBtn = document.getElementById('submit-btn');
 
   function toggleInputs() {
     if (select.value === 'id') {
@@ -104,12 +106,18 @@
 
   toggleInputs();
   select.addEventListener('change', toggleInputs);
+  
+  form.addEventListener('submit', function () {
+    document.querySelector('.inline-status').classList.add('active');
+    loader.classList.remove('hidden');
+    runStatus.classList.remove('is-hidden');
+    runStatus.textContent = 'Analyzing extension…';
+    const row = document.getElementById('submit-row');
+    row.classList.add('disabled-section');
+    submitBtn.classList.add('disabled-tooltip');
+    
+});
 
-  if (form && runStatus) {
-    form.addEventListener('submit', function () {
-      runStatus.classList.remove('is-hidden');
-      runStatus.textContent = 'Upload successful. Analysis has started...';
-    });
-  }
 </script>
+
 {% endblock %}

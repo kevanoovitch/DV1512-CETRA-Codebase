@@ -9,6 +9,7 @@ from app.backend.api import apiCaller
 import sqlite3
 import json
 import zipfile
+import math
 
     
 @login_required
@@ -150,15 +151,24 @@ def report(request):
 
 @login_required
 def history(request):
+    page = int(request.GET.get("page", 1))
+    per_page = 5
     conn = sqlite3.connect('db.sqlite3')
     conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
-    
-    
     cursor = conn.cursor()
 
-    cursor.execute("SELECT file_hash, extention_id, date, score FROM reports ORDER BY date desc limit 5;")
-    
+    cursor.execute("SELECT COUNT(*) FROM reports;")
+    total = cursor.fetchone()[0]
+
+    offset = (page - 1) * per_page
+    cursor.execute("""
+        SELECT file_hash, extention_id, date, score
+        FROM reports
+        ORDER BY date DESC
+        LIMIT ? OFFSET ?;
+    """, (per_page, offset))
     rows = cursor.fetchall()
+    conn.close()
 
     reports = [
         {
@@ -170,8 +180,22 @@ def history(request):
         for row in rows
     ]
 
-    conn.close()
-    return render(request, "history.html", {"reports": reports})
+    total_pages = math.ceil(total / per_page)
+    has_prev = page > 1
+    has_next = page < total_pages
+
+    context = {
+        "reports": reports,
+        "page": page,
+        "has_prev": has_prev,
+        "has_next": has_next,
+        "total_pages": total_pages,
+        "total": total,
+        "start_index": offset + 1 if total > 0 else 0,
+        "end_index": min(offset + per_page, total),
+    }
+    #conn.close()
+    return render(request, "history.html", context)
 
 @login_required
 def results(request):

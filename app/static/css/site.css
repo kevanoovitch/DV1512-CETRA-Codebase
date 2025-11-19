@@ -426,3 +426,157 @@ input[type="text"]:focus {
     transform: translateY(0);
   }
 }
+
+.loader {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #38bdf8;
+  animation: spin 0.7s linear infinite;
+  margin: 10px 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.inline-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.status-text {
+  color: #e5f1ff;
+  font-size: 0.95rem;
+}
+
+.status-text.is-hidden {
+  display: none;
+}
+
+/* --- Pure CSS Loading Spinner --- */
+.loader {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #38bdf8;
+  animation: spin 0.7s linear infinite;
+  margin: 10px 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+
+/* Disable styling for the button */
+.disabled-btn {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Fade-in for status row */
+.inline-status {
+  opacity: 0;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.inline-status.active {
+  opacity: 1;
+}
+
+/* Inline loader status text */
+.status-text {
+  color: #e5f1ff;
+  font-size: 0.95rem;
+}
+
+.status-text.is-hidden {
+  display: none;
+}
+
+
+/* Disable ALL children except the tooltip trigger on the button */
+.disabled-section {
+  opacity: 0.4;
+  position: relative;
+}
+
+.disabled-section *:not(#submit-btn) {
+  pointer-events: none;    /* Disable select, text input, file input */
+}
+
+.disabled-section {
+  opacity: 0.4;
+  position: relative;    /* needed for tooltip positioning */
+}
+
+/* Disable all children inputs/buttons */
+.disabled-section * {
+  pointer-events: none;
+}
+
+/* Re-enable pointer-events on ROW so hover works */
+.disabled-section {
+  pointer-events: auto;
+}
+
+.disabled-section::after {
+  content: "Wait for the analysis to finish.";
+  position: absolute;
+  top: 115%;
+  left: 100%;
+  transform: translateX(-50%) translateY(-4px);
+
+  background: #475569;     
+  color: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+
+  opacity: 0;
+  pointer-events: none;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  transition: opacity .2s ease-out, transform .2s ease-out;
+  z-index: 200;
+}
+
+/* Tooltip arrow */
+.disabled-section::before {
+  content: "";
+  position: absolute;
+  top: calc(115% - 4px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px);
+
+  border-style: solid;
+  border-width: 5px;
+  border-color: transparent transparent #475569 transparent;
+
+  opacity: 0;
+  transition: opacity .2s ease-out, transform .2s ease-out;
+  z-index: 201;
+}
+
+/* Show tooltip when hovering the submit-row */
+.disabled-section:hover::after,
+.disabled-section:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
