@@ -47,7 +47,8 @@ class TestExtensionIDConveter(TestCase):
             tf.write(zbytes)
         try:
             got = ExtensionIDConverter().convert_file_to_id(p)
-            self.assertEqual(got, _chrome_id_from_bytes(key))
+            # Raw zips are no longer supported for ID derivation; expect None.
+            self.assertIsNone(got)
         finally:
             p.unlink(missing_ok=True)
 
@@ -57,8 +58,8 @@ class TestExtensionIDConveter(TestCase):
         with tempfile.NamedTemporaryFile(delete=False, suffix=".zip") as tf:
             p = Path(tf.name); tf.write(zbytes)
         try: 
-            with self.assertRaisesRegex(ValueError, r"manifest\.json has no 'key'"):
-                ExtensionIDConverter().convert_file_to_id(p)
+            got = ExtensionIDConverter().convert_file_to_id(p)
+            self.assertIsNone(got)
         finally:    
             p.unlink(missing_ok=True)
 

@@ -1,4 +1,4 @@
-import base64, hashlib, io, json, zipfile, struct
+import base64, hashlib, io, json, zipfile, struct, logging
 from pathlib import Path
 from typing import Optional
 
@@ -6,46 +6,54 @@ MAGIC_ZIP        = b"PK\x03\x04"
 MAGIC_CRX        = b"Cr24"     # real-world CRX (v2 and v3)
 MAGIC_CRX3_ALT   = b"CrX3"    
 
+logger = logging.getLogger(__name__)
+
 class ExtensionIDConverter:
 
     def convert_file_to_id(self, file_path: str | Path) -> Optional[str]:
             p = Path(file_path)
             if not p.exists():
+                logger.warning("ExtensionIDConverter: file does not exist: %s", p)
                 return None
 
+            logger.info("ExtensionIDConverter: converting %s", p)
             kind = self._detect_file_type(p)
+            logger.debug("ExtensionIDConverter: detected type=%s", kind)
 
-            if kind == "zip":
-                # _convert_zip_to_id already returns Optional[str]
-                return self._convert_zip_to_id(p)
+            try:
+                if kind in ("crx2", "crx3"):
+                    try:
+                        zip_bytes = self._convert_crx_to_zip(p)
+                    except Exception as e:
+                        logger.warning("ExtensionIDConverter: invalid CRX header for %s: %s", p, e)
+                        raise ValueError(f"Invalid CRX header: {e}")
 
-            if kind in ("crx2", "crx3"):
-                try:
-                    zip_bytes = self._convert_crx_to_zip(p)
-                except Exception as e:
-                    raise ValueError(f"Invalid CRX header: {e}")
+                    # Try manifest key inside the embedded ZIP first
+                    try:
+                        return self._convert_zip_to_id(zip_bytes)
+                    except ValueError as e:
+                        logger.info("ExtensionIDConverter: manifest-based ID failed for %s (%s), falling back to header", p, e)
 
-                # Try manifest key inside the embedded ZIP first
-                try:
-                    return self._convert_zip_to_id(zip_bytes)
-                except ValueError:
-                    # fall through to header-based derivation
-                    pass
+                    if kind == "crx3":
+                        cid = self._extension_id_from_crx3_header(p)
+                        if cid:
+                            return cid
+                        raise ValueError("Could not derive extension ID")
+                    else:  # crx2
+                        der = self._extract_crx2_pubkey_der(p)
+                        if der:
+                            return self._extension_id_from_der_pubkey(der)
+                        raise ValueError("Could not derive extension ID")
 
-                if kind == "crx3":
-                    cid = self._extension_id_from_crx3_header(p)
-                    if cid:
-                        return cid
-                    raise ValueError("Could not derive extension ID")
-                else:  # crx2
-                    der = self._extract_crx2_pubkey_der(p)
-                    if der:
-                        return self._extension_id_from_der_pubkey(der)
-                    raise ValueError("Could not derive extension ID")
+                if kind == "zip":
+                    logger.warning("ExtensionIDConverter: raw ZIP without manifest key is unsupported; supply a CRX instead (%s)", p)
+                    return None
 
-
-            # unknown or unsupported file type
-            return None
+                logger.warning("ExtensionIDConverter: unsupported file type for %s (magic=%s)", p, kind)
+                return None
+            except Exception:
+                logger.exception("ExtensionIDConverter: failed to derive ID for %s", p)
+                raise
 
 
     def _detect_file_type(self, file_path: Path) -> str:
@@ -136,15 +144,18 @@ class ExtensionIDConverter:
                         manifest = json.load(fh)
         except KeyError:
             # manifest.json missing entirely
+            logger.warning("ExtensionIDConverter: manifest.json missing in zip")
             raise ValueError("manifest.json has no 'key'")
 
         key_b64 = manifest.get("key")
         if not key_b64:
+            logger.warning("ExtensionIDConverter: manifest.json missing 'key' entry")
             raise ValueError("manifest.json has no 'key'")
 
         try:
             der = base64.b64decode(key_b64, validate=True)
         except Exception as e:
+            logger.warning("ExtensionIDConverter: invalid base64 in manifest key: %s", e)
             raise ValueError(f"manifest.json 'key' is not valid base64: {e}")
 
         return self._extension_id_from_der_pubkey(der)
