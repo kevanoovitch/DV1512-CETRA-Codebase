@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 from app.backend.api import apiCaller
+from app.backend.mitreFolder.mitre import mitreCall
 import sqlite3
 import json
 import zipfile
@@ -203,24 +204,25 @@ def settings(request):
 
 @login_required
 def mitre_attack(request):
-    # --- Hämta Reports ---
+    mitre_error = request.session.pop("mitre_error", None)
+    mitre_temp_block = request.session.pop("mitre_temp_block", None)
+
+    # Fetch reports
     conn = sqlite3.connect("db.sqlite3")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-
     cursor.execute("""
-        SELECT file_hash, extention_id, date
+        SELECT file_hash, date
         FROM reports
         ORDER BY date DESC;
     """)
     reports = cursor.fetchall()
     conn.close()
 
-    # --- Hämta MITRE ---
+    # Fetch MITRE rows
     conn = sqlite3.connect("db.sqlite3")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-
     cursor.execute("""
         SELECT file_hash
         FROM mitre;
@@ -228,16 +230,12 @@ def mitre_attack(request):
     mitre_rows = cursor.fetchall()
     conn.close()
 
-    # --- Mappa MITRE-hashar till snabb lookup ---
     mitre_map = {row["file_hash"]: True for row in mitre_rows}
 
-    # --- Bygg merged-lista ---
     merged = []
     for r in reports:
         filehash = r["file_hash"]
-        date = r["date"]
 
-        # Bestäm MITRE-status
         if filehash in mitre_map:
             status = "done"
         else:
@@ -245,11 +243,59 @@ def mitre_attack(request):
 
         merged.append({
             "filehash": filehash,
-            "date": date,
+            "date": r["date"],
             "mitre_status": status
         })
 
-    return render(request, "mitre_attack.html", {"rows": merged})
+    return render(request, "mitre_attack.html", {
+        "rows": merged,
+        "mitre_error": mitre_error,
+        "mitre_temp_block": mitre_temp_block,
+    })
+
+@login_required
+def mitre_analyze(request, filehash):
+# Check if already analyzed
+    conn = sqlite3.connect("db.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("SELECT file_hash FROM mitre WHERE file_hash=?", (filehash,))
+    exists = cursor.fetchone()
+    conn.close()
+
+    if exists:
+        return redirect("mitre_attack")
+
+    # Run MITRE analysis
+    result = mitreCall(filehash)
+
+    # If MITRE has no data -> show message + TEMPORARILY hide analyze button
+    if result.get("success") is False:
+        request.session["mitre_error"] = result.get("message")
+        request.session["mitre_temp_block"] = filehash
+        return redirect("mitre_attack")
+
+    return redirect("mitre_attack")
+
+
+@login_required
+def mitre_view(request, filehash):
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT sandbox, tactics, techniques, date
+        FROM mitre
+        WHERE file_hash=?
+    """, (filehash,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    return render(request, "mitreresult.html", {
+        "filehash": filehash,
+        "entries": rows
+    })
+
 
 
 def login_view(request):

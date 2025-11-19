@@ -4,9 +4,9 @@
 {% block content %}
 <h1>MITRE ATT&CK Analysis</h1>
 
-<div class="card home-card">
-  <p>This page shows MITRE ATT&CK mapping availability for each analyzed extension.</p>
-</div>
+{% if mitre_error %}
+  <p class="status-banner error">{{ mitre_error }}</p>
+{% endif %}
 
 <div class="card top-list">
   <h2>MITRE Status Overview</h2>
@@ -17,50 +17,33 @@
         <tr>
           <th>File Hash</th>
           <th>Date</th>
-          <th>MITRE Status</th>
+          <th>MITRE Analysis</th>
         </tr>
       </thead>
 
       <tbody>
+        {% for r in rows %}
+          <tr>
+            <td class="mono">{{ r.filehash }}</td>
+            <td>{{ r.date }}</td>
 
-        {% if rows %}
-          {% for r in rows %}
-            <tr>
-              <td class="mono">{{ r.filehash }}</td>
-              <td>{{ r.date }}</td>
+            <td>
+              {% if mitre_temp_block == r.filehash %}
+                  <span class="badge bg-danger">Not Available</span>
 
-              <td>
-                {% if r.mitre_status == "none" %}
+              {% elif r.mitre_status == "none" %}
                   <span class="badge bg-secondary">Not Started</span>
-                  <a href="/mitre/analyze/{{ r.filehash }}" class="btn-pill btn-accent btn-sm ms-2">Analyze</a>
+                  <a href="/mitre/analyze/{{ r.filehash }}"
+                    class="btn-pill btn-accent btn-sm ms-2">Analyze</a>
 
-                {% elif r.mitre_status == "done" %}
+              {% elif r.mitre_status == "done" %}
                   <span class="badge bg-success">Completed</span>
-                  <a href="/mitre/view/{{ r.filehash }}" class="btn-pill btn-accent btn-sm ms-2">View</a>
-
-                {% elif r.mitre_status == "running" %}
-                  <span class="badge bg-warning text-dark">Running…</span>
-                  <button class="btn-pill btn-disabled btn-sm ms-2" disabled>Processing</button>
-
-                {% elif r.mitre_status == "error" %}
-                  <span class="badge bg-danger">Error</span>
-                  <a href="/mitre/analyze/{{ r.filehash }}" class="btn-pill btn-accent btn-sm ms-2">Retry</a>
-                {% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-
-        {% else %}
-          {% for _ in "1234567" %}
-            <tr class="skeleton">
-              <td><div class="skeleton-bar w-60"></div></td>
-              <td><div class="skeleton-bar w-40"></div></td>
-              <td><div class="skeleton-bar w-30"></div></td>
-              <td><div class="skeleton-bar w-25"></div></td>
-            </tr>
-          {% endfor %}
-        {% endif %}
-
+                  <a href="/mitre-attack/{{ r.filehash }}"
+                    class="btn-pill btn-accent btn-sm ms-2">View</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

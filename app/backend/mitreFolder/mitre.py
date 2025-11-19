@@ -2,7 +2,7 @@
 # from app.backend.report_generator import file_hash  
 
 #get curl command
-import mitreDatabaseOperations
+from app.backend.mitreFolder import mitreDatabaseOperations
 import json
 import requests
 import os
@@ -26,6 +26,13 @@ def print_mitre(parsed: dict):
 
 
 def mitre_report(filehash: str, response):
+    # Fallback if MITRE data missing
+    if "data" not in response or not response["data"]:
+        print(f"[MITRE] No MITRE data found for {filehash}")
+        parsed = {"file_hash": filehash}
+        mitreDatabaseOperations.mitreDatabaseOperations(parsed)
+        return
+    
     parsed = {
         "file_hash": filehash, 
         
@@ -63,14 +70,20 @@ headers = {
 
 
 def mitreCall(filehash: str):
-  url = f"https://www.virustotal.com/api/v3/files/{filehash}/behaviour_mitre_trees"
+    url = f"https://www.virustotal.com/api/v3/files/{filehash}/behaviour_mitre_trees"
+    response = requests.get(url, headers=headers)
+    json_resp = response.json()
+
+    if "data" not in json_resp or not json_resp["data"]:
+        return {
+            "success": False,
+            "message": f"No MITRE behaviour is available for this file ({filehash})."
+        }
+
+    # otherwise → normal flow
+    mitre_report(filehash, json_resp)
+    return { "success": True }
   
-  response = requests.get(url, headers=headers)
-
-  #print(response.status_code)
-  #print(response.json())
-
-  mitre_report(filehash, response.json())
 
 #exists = requests.get(f"https://www.virustotal.com/api/v3/files/{hash}", headers=headers)
 #print(exists.status_code)
