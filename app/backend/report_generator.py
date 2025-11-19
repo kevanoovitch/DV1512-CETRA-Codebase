@@ -6,28 +6,39 @@ import logging
 from app.backend.utils import Ai_Helper
 
 logger = logging.getLogger(__name__)
+
+responseTemplate = {
+  "summary": "Write an approximately 100-word summary of the Chrome extension. Use the extension ID to identify the extension, its name, purpose, and main functionality. Include relevant context such as common user feedback or sentiment (especially if there are notable negative reviews). Briefly mention any potential concerns or risks, but do not over-focus on them.",
+  
+  "permissions": "In short, free-text form, analyze the permissions requested by the extension. Explain whether the permissions match the extension's purpose, whether any permissions appear excessive, and what these permissions allow the extension to do or access.",
+  
+  "risk_types": "Describe the potential risks associated with this extension, based on its permissions, behavior, reputation, or user reports. Discuss high-level risk categories without over-explaining.",
+  
+  "malware_types": "If applicable, describe what types of malware or malicious behavior this extension could be associated with based on available data. Keep this section concise and focused on risk classification (e.g., spyware, adware, data harvesting)."
+}
+
+
 def generate_report(result) -> dict: 
     logger.info("Generating Report...")
     score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]])
-    description = result["SA"]["descriptions"]
-
-    summery = Ai_Helper(
-        request="please analyse the description, this is summery from a chrome extension, check the data key in this dict",
-        response="respond in free text fashion, no md, just normal text explaining to a user what this does, if you think it's asking for too much more than what it needs, don't make it too long.",
-        data=result["SA"]["descriptions"]
-    )
-
-    if summery is not None:
-        description = summery
-    
     permissions = result["permissions"]
     risks = result["SA"]["risk_types"]
     malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
     with open(result["file_path"], "rb") as f:
         file_hash = hashlib.file_digest(f, hashlib.sha256).hexdigest()
+
     extension_id = result["extension_id"]
     verdict = label_from_score(score)
+    description = result["SA"]["descriptions"]
 
+    """
+    calling_AI = Ai_Helper(
+        request="please analyse the data field, check the data key in this dict, if the data key is empty return the string 'UNAVAILABLE', and please respond in a dict fashion, as in the response template sent to you in the response key, you are being called by a script please dont respond in  any other way than this",
+        response=responseTemplate,
+        data={"generalData":description,"extension_id":extension_id,"permissions":permissions,"malware_risk_types": malware_types+risks}
+    )       
+    print(calling_AI)
+    """
 
     report = {
         "score": score,
