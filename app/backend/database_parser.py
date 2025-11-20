@@ -1,33 +1,16 @@
 import json
 import sqlite3
 import datetime
-import os
-
-directory = os.path.dirname(os.path.abspath(__file__))
-root_parent = os.path.dirname(directory)
-root_grandparent = os.path.dirname(root_parent)
 import logging
+
+try:
+    from app.backend.db_initializer import ensure_tables, DB_PATH
+except ImportError:
+    # Support running as a script from the backend directory
+    from db_initializer import ensure_tables, DB_PATH
+
 logger = logging.getLogger(__name__)
-# SQL statements
 
-delete_reports_table = """
-DROP TABLE IF EXISTS reports;
-"""
-
-create_reports_table = """
-CREATE TABLE IF NOT EXISTS reports (
-    file_hash varchar(50) NOT NULL PRIMARY KEY, 
-    score INTEGER,
-    verdict varcar(20), 
-    description TEXT,
-    permissions TEXT,
-    risks TEXT,
-    malware_types TEXT,
-    extention_id varchar(32),
-    behaviour TEXT,
-    date varchar(20)
-);
-    """
 def add_report(conn, report):
     # insert table statement
     insert = f"""
@@ -63,15 +46,13 @@ def ParseReport(report :dict):
     logger.info("Writing report to database")
     
     try:
-        with sqlite3.connect(os.path.join(root_grandparent, "db.sqlite3")) as conn:  
-            cursor = conn.cursor()
-            cursor.execute(create_reports_table)
-                  
+        ensure_tables()
+        with sqlite3.connect(DB_PATH) as conn:
             success = add_report(conn, report)
             if success:
-                print("Report added successfully.")
-    except sqlite3.Error as e:
-        print(e)
+                logger.info("Report added successfully.")
+    except sqlite3.Error:
+        logger.exception("Failed to write report to database")
 
 
 dummyreport = {

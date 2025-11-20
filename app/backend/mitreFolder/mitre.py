@@ -6,29 +6,30 @@ from app.backend.mitreFolder import mitreDatabaseOperations
 import json
 import requests
 import os
+import logging
 from dotenv import load_dotenv
 load_dotenv()
 
-#filehash = "0efc314b1b7f6c74e772eb1f8f207ed50c2e702aed5e565081cbcf8f28f0fe26"
+logger = logging.getLogger(__name__)
 
 def print_mitre(parsed: dict):
-    print(f"File Hash: {parsed['file_hash']}\n")
+    logger.info("File Hash: %s", parsed["file_hash"])
 
     for sandbox, tactics in parsed.items():
         if sandbox == "file_hash":
             continue
-        print(f"Sandbox: {sandbox}")
+        logger.info("Sandbox: %s", sandbox)
         for tactic in tactics:
-            print(f"  Tactic: {tactic['tactic_name']} ({tactic['tactic_id']})")
+            logger.info("  Tactic: %s (%s)", tactic['tactic_name'], tactic['tactic_id'])
             for technique in tactic["techniques"]:
-                print(f"    Technique: {technique['technique_name']} ({technique['technique_id']})")
-        print()
+                logger.info("    Technique: %s (%s)", technique['technique_name'], technique['technique_id'])
+        logger.info("")
 
 
 def mitre_report(filehash: str, response):
     # Fallback if MITRE data missing
     if "data" not in response or not response["data"]:
-        print(f"[MITRE] No MITRE data found for {filehash}")
+        logger.warning("[MITRE] No MITRE data found for %s", filehash)
         parsed = {"file_hash": filehash}
         mitreDatabaseOperations.mitreDatabaseOperations(parsed)
         return
@@ -56,8 +57,7 @@ def mitre_report(filehash: str, response):
 
             parsed[sandbox_name].append(tactic_entry)
 
-    print(json.dumps(parsed, indent=2))
-    # print_mitre(parsed)
+    logger.debug("Parsed MITRE response: %s", json.dumps(parsed, indent=2))
     mitreDatabaseOperations.mitreDatabaseOperations(parsed)
     pass
 
@@ -84,11 +84,6 @@ def mitreCall(filehash: str):
     mitre_report(filehash, json_resp)
     return { "success": True }
   
-
-#exists = requests.get(f"https://www.virustotal.com/api/v3/files/{hash}", headers=headers)
-#print(exists.status_code)
-#print(exists.json())
-
 if __name__ == "__main__":
     test_hash = "0efc314b1b7f6c74e772eb1f8f207ed50c2e702aed5e565081cbcf8f28f0fe26"
     mitreCall(test_hash)
