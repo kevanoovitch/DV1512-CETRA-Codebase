@@ -18,6 +18,19 @@ def home(request):
     error = None
     status_message = None
 
+    def handle_not_on_store(request, api_result, load_top_reports):
+        """
+        Checks the return value of the apiCaller() and stops and displays an error if invalid
+        """
+        if api_result == -1:
+                return render(request, "home.html", {
+                    "error": "This extension is not on the Chrome Web Store and thus is not supported.",
+                    "status_message": None, 
+                    "top_reports": load_top_reports(),
+                })
+        return None
+
+
     def load_top_reports():
         conn = sqlite3.connect('db.sqlite3')
         conn.row_factory = sqlite3.Row
@@ -79,7 +92,13 @@ def home(request):
                     "top_reports": load_top_reports(),
                 })
 
-            apiCaller(file_path, "file")
+            result = apiCaller(file_path, "file")
+            response = handle_not_on_store(request, result, load_top_reports)
+            if response:
+                return response
+           
+
+          
 
             status_message = "Analysis finished. See the History tab for full results."
 
@@ -111,7 +130,11 @@ def home(request):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
 
-            apiCaller(webstore_id, "id")
+            result = apiCaller(webstore_id, "id")
+            response = handle_not_on_store(request, result, load_top_reports)
+            if response:
+                return response
+           
 
             status_message = "Analysis finished. See the History tab for full results."
 

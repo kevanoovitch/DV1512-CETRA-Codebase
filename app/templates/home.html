@@ -37,6 +37,12 @@
             <p class="status-banner success">{{ status_message }}</p>
         {% endif %}
 
+        {% if unsupported_extension %}
+            <p class="status-banner unsupported">
+              This extension is not on the Chrome Web Store and thus is not supported.
+            </p>
+        {% endif %}
+
         {% if error %}
             <p class="status-banner error">{{ error }}</p>
         {% endif %}

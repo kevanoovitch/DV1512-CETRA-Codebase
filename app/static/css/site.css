@@ -395,6 +395,12 @@ input[type="text"]:focus {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.status-banner.unsupported {
+        background: #331a00;
+        color: #ffd7a3;
+        box-shadow: 0 0 18px rgba(251, 146, 60, 0.45);
+    }
+
 /* Dölj via klass istället för inline-style */
 .status-banner.is-hidden {
   display: none;
