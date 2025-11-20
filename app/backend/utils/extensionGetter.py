@@ -27,7 +27,7 @@ def download_crx(extension_id):
 
         if response.status_code != 200:
             logger.error("Download failed with status code %s", response.status_code)
-            return None
+            return -1
 
         with open(output_file, "wb") as f:
             f.write(response.content)
