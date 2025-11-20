@@ -1,43 +1,47 @@
 @startuml
-title System Architecture
+title C4 Component Diagram - Extension Analysis Platform
 
- 
+skinparam backgroundColor White
+skinparam componentStyle uml2
 
-' Define components
-package "Frontend" #LightBlue {
-    [Web App] as frontend
-    note right of frontend
-    Frontend should handle:
-    - Extension input
-    - Verdict output
-    - Visualization (score, heatmap, tables)
-    end note
-
+rectangle "Frontend Container\n(Web UI)" as frontend #LightBlue {
+  component "Upload + Results UI" as ui
 }
 
-package "Backend" #LightCoral {
-    [API Service] as backend
-    note right of backend
-    Backend should handle:
-    - Fetching data 
-    - Parsing/Normalizing
-    - Risk Scoring
-    - ATT&CK mapping
-    - etc
-    end note
+rectangle "Backend Container\n(Django API)" as backend #LightCoral {
+  component "API Router\n(apiCaller())" as api
+  component "ExtensionIDConverter" as converter
+  component "Report Generator" as report
+  component "VT Interface" as vt
+  component "SecureAnnex Interface" as sa
+  component "OPSWAT Interface" as opswat
+  component "database parser" as db_mod
+  database "SQLite DB" as db
 }
 
-database "Database" as db
+rectangle "External Systems" as externals #CornflowerBlue {
+  component "\nVirusTotal" as vt_ext
+  component "SecureAnnex API" as sa_ext
+  component "OPSWAT MetaDefender" as ops_ext
+}
 
-rectangle "External Services"  as external #CornflowerBlue 
-note top of external
-Such as Virus Total 
-    or CRXcavator
-end note
+' Relationships (C4 semantics)
+ui --> api : POST / scan request
 
-' Relations
-frontend --> backend : Upload Extension / Request Score
-backend --> db : Stores Analysis Results
-backend --> external : API Queries
+api --> converter : derive extension ID
+api --> vt : file scan
+api --> sa : ID-based scan
+api --> opswat : file scan
+api --> report : assemble scores, risks, permissions
+
+vt --> vt_ext : Analyze extension
+sa --> sa_ext : Analyze extension
+opswat --> ops_ext : Analyze extension
+
+report --> db_mod : Convert dict to json
+db_mod --> db : persist results
+
+ui <-- db : Fetches reports
+
 
 @enduml
