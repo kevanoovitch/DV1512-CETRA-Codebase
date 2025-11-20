@@ -4,6 +4,7 @@ import zipfile
 import json
 import logging
 logger = logging.getLogger(__name__)
+
 def extension_retriver(file_name: str):
     try:
         logger.info("Retreiving permission info")

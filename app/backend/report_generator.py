@@ -1,7 +1,6 @@
 import os
 import re
 from typing import  Any
-import hashlib
 import logging
 from app.backend.utils import Ai_Helper
 
@@ -24,22 +23,32 @@ def generate_report(result) -> dict:
     permissions = result["permissions"]
     risks = result["SA"]["risk_types"]
     malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
-    with open(result["file_path"], "rb") as f:
-        file_hash = hashlib.file_digest(f, hashlib.sha256).hexdigest()
-
     extension_id = result["extension_id"]
     verdict = label_from_score(score)
     description = result["SA"]["descriptions"]
+    file_hash = result["file_hash"]
+
+    
+    behaviour_summary = None
+    if result["VT"]["behaviour"] is not None:
+        behaviour_summary = Ai_Helper(
+            request="analyse the data key, this is sandbox behaviour analyses from virustotal, and asnwer as asked for in the response",
+            response="please respond in freetext manner, no point or dhashes normal freetext, describing how this extension behaves, approximitly 100 words, see if its doing something millicios talk about the security aspects",
+            data=result["VT"]["behaviour"]
+        )
+    if behaviour_summary is None:
+        behaviour_summary = "Unavailable"
 
     """
-    calling_AI = Ai_Helper(
-        request="please analyse the data field, check the data key in this dict, if the data key is empty return the string 'UNAVAILABLE', and please respond in a dict fashion, as in the response template sent to you in the response key, you are being called by a script please dont respond in  any other way than this",
-        response=responseTemplate,
-        data={"generalData":description,"extension_id":extension_id,"permissions":permissions,"malware_risk_types": malware_types+risks}
-    )       
-    print(calling_AI)
+        calling_AI = Ai_Helper(
+            request="please analyse the data field, check the data key in this dict, if the data key is empty return the string 'UNAVAILABLE', and please respond in a dict fashion, as in the response template sent to you in the response key, you are being called by a script please dont respond in  any other way than this",
+            response=responseTemplate,
+            data={"generalData":description,"extension_id":extension_id,"permissions":permissions,"malware_risk_types": malware_types+risks}
+        )       
+        print(calling_AI)
     """
-
+    #FIXME: print?
+    print(behaviour_summary)
     report = {
         "score": score,
         "verdict": verdict,
@@ -48,7 +57,8 @@ def generate_report(result) -> dict:
         "risks": risks,
         "malware_types": malware_types,
         "extension_id": extension_id,
-        "file_hash": file_hash
+        "file_hash": file_hash,
+        "behaviour": behaviour_summary
     }
 
     logger.info("Generated report succesfully!")
