@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}MITRE Report – CETRA{% endblock %}
+
+{% block content %}
+<h1>MITRE ATT&CK Report</h1>
+
+<div class="card report-card" style="overflow-wrap: break-word; word-break: break-word;">
+
+  <div class="report-header">
+    <div class="report-main">
+      <h2 class="report-title mono">{{ filehash }}</h2>
+      <div class="report-meta">
+        <span class="muted">MITRE ATT&CK Behaviour Mapping (VirusTotal)</span>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  {% for row in entries %}
+  <div class="report-section">
+
+    <h3>Sandbox</h3>
+    <p><strong>{{ row.sandbox }}</strong></p>
+
+    <h3>Date</h3>
+    <p>{{ row.date }}</p>
+
+    <h3>Tactics</h3>
+    {% if row.tactics %}
+      <ul class="report-list">
+        {% for tactic in row.tactics %}
+          <li>{{ tactic }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No tactics detected.</p>
+    {% endif %}
+
+    <h3>Techniques</h3>
+    {% if row.techniques %}
+      <ul class="report-list">
+        {% for group in row.techniques %}
+          {% for technique in group %}
+            <li>{{ technique }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No techniques detected.</p>
+    {% endif %}
+
+  </div>
+
+  <hr>
+  {% endfor %}
+
+  <div class="report-footer footer-bottom">
+      <a href="/mitre-attack/" class="btn-pill btn-accent">Back</a>
+  </div>
+  </div>  
+
+{% endblock %}

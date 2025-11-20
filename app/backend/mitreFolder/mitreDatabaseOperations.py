@@ -1,25 +1,20 @@
-import os
 import sqlite3
 import datetime
 import json
+import logging
 
-directory = os.path.dirname(os.path.abspath(__file__))
-root_parent = os.path.dirname(directory)
-root_uncle = os.path.dirname(root_parent)
-root_grandparent = os.path.dirname(root_uncle)
+try:
+    from app.backend.db_initializer import ensure_tables, DB_PATH
+except ImportError:
+    from ..db_initializer import ensure_tables, DB_PATH
+
+logger = logging.getLogger(__name__)
 
 delete_mitre_table = """
 DROP TABLE IF EXISTS mitre;
 """
 
-create_mitre_table = """
-CREATE TABLE IF NOT EXISTS mitre (
-    file_hash varchar(50) NOT NULL, 
-    sandbox varchar(50),
-    tactics TEXT,
-    techniques TEXT,
-    date varchar(20)
-); """
+
 def addMitreResults(conn, report: dict, reportHash: str):
     # insert table statement
     insert = f"""
@@ -44,12 +39,17 @@ def addMitreResults(conn, report: dict, reportHash: str):
     # commit the changes
     conn.commit()
 
+    # if primary key contraint fails, set answer to False
+    answer = True
+    if cur.rowcount != 1:
+        answer = False
+    
     # get the id of the last inserted row
-    return True
+    return answer
 
 
 def mitreDatabaseOperations(report: dict):
-    print("\n Storing in Database...\n")
+    logger.info("Storing MITRE data in database")
     
     input_data = report
     
@@ -85,31 +85,68 @@ def mitreDatabaseOperations(report: dict):
 
     
     try:
-        with sqlite3.connect(os.path.join(root_grandparent, "db.sqlite3")) as conn:  
-            cursor = conn.cursor()
-            
-            cursor.execute(delete_mitre_table)
-            
-            # create mitre table
-            cursor.execute(create_mitre_table)
-            
+        ensure_tables()
+        with sqlite3.connect(DB_PATH) as conn:
             reportHash = report.get("file_hash")
             i = 0
                   
             for sandbox in mitre_reports:
                 i = i + 1
-                print(sandbox)
                 success = addMitreResults(conn, sandbox, reportHash)
                 if success:
-                    print(f"Sandbox report number {i} added successfully.")
-    except sqlite3.Error as e:
-        print(e)
-        
+                    logger.debug("Stored sandbox data: %s", sandbox)
+                    logger.info("Sandbox report number %s added successfully.", i)
+    except sqlite3.Error:
+        logger.exception("Failed to store MITRE data in database")
+
 dummy_mitre_report = {
-    "file_hash": "dummyhash123",
-    "sandbox": "sandbox_name",
-    "tactics": ["tactic1","tactic2"],
-    "techniques": [["techniqueId, techniqueName", "techniqueId2, techniqueName2"], ["techniqueId3, techniqueName3", "techniqueId4, techniqueName4"]]
+  "file_hash": "0efc314b1b7f6c74e772eb1f8f207ed50c2e702aed5e565081cbcf8f28f0fe26",
+  "Sandbox 1": [
+    {
+      "tactic_id": "tacticid1",
+      "tactic_name": "tacticname1",
+      "techniques": [
+        {
+          "technique_id": "techniqueid1",
+          "technique_name": "techniquename1"
+        }
+      ]
+    }
+  ],
+  "Sandbox 2": [
+    {
+      "tactic_id": "tacticid2",
+      "tactic_name": "tacticname2",
+      "techniques": [
+        {
+          "technique_id": "tecniqueid2",
+          "technique_name": "techniquename2"
+        }
+      ]
+    },
+    {
+      "tactic_id": "tacticid2.1",
+      "tactic_name": "tacticname2.1",
+      "techniques": [
+        {
+          "technique_id": "tecniqueid2.1",
+          "technique_name": "tecniquename2.1"
+        },
+        {
+          "technique_id": "tecniqueid2.11",
+          "technique_name": "techniquename2.11"
+        },
+        {
+          "technique_id": "tecniqueid2.12",
+          "technique_name": "techniquename2.12"
+        },
+        {
+          "technique_id": "tecniqueid2.13",
+          "technique_name": "techniquename2.13"
+        }
+      ]
+    }
+  ],
 }
 
 if __name__ == "__main__":

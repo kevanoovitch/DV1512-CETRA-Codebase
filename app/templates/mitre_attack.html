@@ -2,22 +2,52 @@
 {% block title %}MITRE ATT&CK – CETRA{% endblock %}
 
 {% block content %}
-<h1>MITRE ATT&CK</h1>
+<h1>MITRE ATT&CK Analysis</h1>
 
-<div class="card mitre-card">
-  <p>Submit a Chrome Extension ID to see MITRE mapping.</p>
+{% if mitre_error %}
+  <p class="status-banner error">{{ mitre_error }}</p>
+{% endif %}
 
-  <form action="{% url 'mitre_attack' %}" method="post" class="submit-form">
-    {% csrf_token %}
-    <div class="submit-row">
-      <input type="text" name="extension_id" placeholder="Enter Chrome Web Store ID" required>
-      <button type="submit" class="btn-accent">Lookup</button>
-    </div>
-  </form>
+<div class="card top-list">
+  <h2>MITRE Status Overview</h2>
 
-  {% if error %}
-    <p class="error">{{ error }}</p>
-  {% endif %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>File Hash</th>
+          <th>Date</th>
+          <th>MITRE Analysis</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td class="mono">{{ r.filehash }}</td>
+            <td>{{ r.date }}</td>
+
+            <td>
+              {% if mitre_temp_block == r.filehash %}
+                  <span class="badge bg-danger">Not Available</span>
+
+              {% elif r.mitre_status == "none" %}
+                  <span class="badge bg-secondary">Not Started</span>
+                  <a href="/mitre/analyze/{{ r.filehash }}"
+                    class="btn-pill btn-accent btn-sm ms-2">Analyze</a>
+
+              {% elif r.mitre_status == "done" %}
+                  <span class="badge bg-success">Completed</span>
+                  <a href="/mitre-attack/{{ r.filehash }}"
+                    class="btn-pill btn-accent btn-sm ms-2">View</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
+
 {% endblock %}
 

@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 from app.backend.api import apiCaller
+from app.backend.mitreFolder.mitre import mitreCall
 import sqlite3
 import json
 import zipfile
@@ -221,34 +222,113 @@ def history(request):
     return render(request, "history.html", context)
 
 @login_required
-def results(request):
-    return render(request, "results.html")
-
-@login_required
 def settings(request):
     return render(request, "settings.html")
 
 @login_required
 def mitre_attack(request):
-    error = None
+    mitre_error = request.session.pop("mitre_error", None)
+    mitre_temp_block = request.session.pop("mitre_temp_block", None)
 
-    if request.method == "POST":
-        extension_id = (request.POST.get("extension_id") or "").strip()
+    # Fetch reports
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT file_hash, date
+        FROM reports
+        ORDER BY date DESC;
+    """)
+    reports = cursor.fetchall()
+    conn.close()
 
-        if not (len(extension_id) == 32 and extension_id.isalpha() and extension_id.islower()):
-            error = "Extension ID must be 32 lowercase letters (a–z)."
-            return render(request, "mitre_attack.html", {"error": error})
+    # Fetch MITRE rows
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT file_hash
+        FROM mitre;
+    """)
+    mitre_rows = cursor.fetchall()
+    conn.close()
 
-        #report = Report.objects.filter(extension_id=extension_id).first()
-        #if not report:
-        #    error = "Extension not found in database."
-        #    return render(request, "mitre_attack.html", {"error": error})
+    mitre_map = {row["file_hash"]: True for row in mitre_rows}
 
-        # Finns -> redirect till rapport-sida
-        
-        return redirect("mitre_report", extension_id=extension_id)
+    merged = []
+    for r in reports:
+        filehash = r["file_hash"]
 
-    return render(request, "mitre_attack.html", {"error": error})
+        if filehash in mitre_map:
+            status = "done"
+        else:
+            status = "none"
+
+        merged.append({
+            "filehash": filehash,
+            "date": r["date"],
+            "mitre_status": status
+        })
+
+    return render(request, "mitre_attack.html", {
+        "rows": merged,
+        "mitre_error": mitre_error,
+        "mitre_temp_block": mitre_temp_block,
+    })
+
+@login_required
+def mitre_analyze(request, filehash):
+# Check if already analyzed
+    conn = sqlite3.connect("db.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("SELECT file_hash FROM mitre WHERE file_hash=?", (filehash,))
+    exists = cursor.fetchone()
+    conn.close()
+
+    if exists:
+        return redirect("mitre_attack")
+
+    # Run MITRE analysis
+    result = mitreCall(filehash)
+
+    # If MITRE has no data -> show message + TEMPORARILY hide analyze button
+    if result.get("success") is False:
+        request.session["mitre_error"] = result.get("message")
+        request.session["mitre_temp_block"] = filehash
+        return redirect("mitre_attack")
+
+    return redirect("mitre_attack")
+
+
+@login_required
+def mitre_view(request, filehash):
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT sandbox, tactics, techniques, date
+        FROM mitre
+        WHERE file_hash=?
+    """, (filehash,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    parsed = []
+
+    for row in rows:
+        parsed.append({
+            "sandbox": row["sandbox"],
+            "date": row["date"],
+            "tactics": json.loads(row["tactics"]) if row["tactics"] else [],
+            "techniques": json.loads(row["techniques"]) if row["techniques"] else []
+        })
+
+    return render(request, "mitreresult.html", {
+        "filehash": filehash,
+        "entries": parsed
+    })
+
 
 def login_view(request):
     error = ""
@@ -288,3 +368,22 @@ def report_view(request, sha256=None):
 
     conn.close()
     return render(request, "result.html", {"report": result})
+
+def mitre_report_view(request, sha256=None):
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
+    
+    
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM mitre WHERE file_hash=?;", (sha256,))
+    
+    row = cursor.fetchall()
+
+    if row:
+        result = dict(row)  # Convert sqlite3.Row to dict
+    else:
+        print("No record found.") 
+
+    conn.close()
+    return render(request, "mitre_result.html", {"mitre_report": result})
