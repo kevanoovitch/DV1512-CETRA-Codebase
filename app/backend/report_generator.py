@@ -27,11 +27,15 @@ def generate_report(result) -> dict:
     verdict = label_from_score(score)
     description = result["SA"]["descriptions"]
     file_hash = result["file_hash"]
-    behaviour_summary = Ai_Helper(
-        request="analyse the data key, this is sandbox behaviour analyses from virustotal, and asnwer as asked for in the response",
-        response="please respond in freetext manner, no point or dhashes normal freetext, describing how this extension behaves, approximitly 100 words, see if its doing something millicios talk about the security aspects",
-        data=result["VT"]["behaviour"]
-    )
+
+    
+    behaviour_summary = None
+    if result["VT"]["behaviour"] is not None:
+        behaviour_summary = Ai_Helper(
+            request="analyse the data key, this is sandbox behaviour analyses from virustotal, and asnwer as asked for in the response",
+            response="please respond in freetext manner, no point or dhashes normal freetext, describing how this extension behaves, approximitly 100 words, see if its doing something millicios talk about the security aspects",
+            data=result["VT"]["behaviour"]
+        )
     if behaviour_summary is None:
         behaviour_summary = "Unavailable"
 
@@ -43,6 +47,7 @@ def generate_report(result) -> dict:
         )       
         print(calling_AI)
     """
+    #FIXME: print?
     print(behaviour_summary)
     report = {
         "score": score,

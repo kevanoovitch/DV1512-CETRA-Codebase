@@ -140,7 +140,7 @@ def get_vt_behaviour_summary(file_hash: str):
 def scan_file(file_path: str, file_hash:str) -> dict:
 
     logger.info("FILEPATH: %s",file_path)
-    output = {"malware_types": [], "score": -1, "raw": {}, "behavior": {}}
+    output = {"malware_types": [], "score": -1, "raw": {}, "behaviour": None}
 
     try:
         if not VT_API_KEY:
@@ -158,7 +158,7 @@ def scan_file(file_path: str, file_hash:str) -> dict:
         analysis_id = None
 
         
-        logger.info("Getting file behavior report from virustotal")
+        logger.info("Getting file behaviour report from virustotal")
         
 
         behavior = get_vt_behaviour_summary(file_hash)
