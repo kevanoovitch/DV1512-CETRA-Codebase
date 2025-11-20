@@ -291,11 +291,20 @@ def mitre_view(request, filehash):
     rows = cursor.fetchall()
     conn.close()
 
+    parsed = []
+
+    for row in rows:
+        parsed.append({
+            "sandbox": row["sandbox"],
+            "date": row["date"],
+            "tactics": json.loads(row["tactics"]) if row["tactics"] else [],
+            "techniques": json.loads(row["techniques"]) if row["techniques"] else []
+        })
+
     return render(request, "mitreresult.html", {
         "filehash": filehash,
-        "entries": rows
+        "entries": parsed
     })
-
 
 
 def login_view(request):

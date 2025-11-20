@@ -574,9 +574,20 @@ input[type="text"]:focus {
   z-index: 201;
 }
 
-/* Show tooltip when hovering the submit-row */
 .disabled-section:hover::after,
 .disabled-section:hover::before {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.report-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.footer-bottom {
+    margin-top: auto;
+    padding-top: 1rem;
+    text-align: left;
 }
