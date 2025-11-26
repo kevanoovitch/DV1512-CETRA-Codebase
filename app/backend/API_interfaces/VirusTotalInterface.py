@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import requests
 import logging
 import hashlib
+from app.backend.utils import analyze_label
 
 logger = logging.getLogger(__name__)
 
@@ -64,31 +65,20 @@ def _analyse_data(result: dict, output:dict) -> dict:
             ):
                 malware_types.append(verdict)
 
-        score = _calculate_malicious_score(stats)
-        logger.info("Final score=%d, malware types=%s", score, malware_types)
         output["malware_types"] = malware_types
-        output["score"] = score
-        output["raw"] = result
-        return output
+
+        findings = []
+        for malware in malware_types:
+            result = analyze_label(malware)
+            findings.append(result)
+            logger.info("Finding: ", result)
+
+        return findings
 
     except Exception as e:
         logger.exception("Failed to analyze data: %s", e)
         return output
 
-def _calculate_malicious_score(stats: dict) -> int:
-    malicious = stats.get("malicious", 0)
-    suspicious = stats.get("suspicious", 0)
-    undetected = stats.get("undetected", 0)
-    harmless = stats.get("harmless", 0)
-
-    total = malicious + suspicious + undetected + harmless
-    if total == 0:
-        logger.info("Total engines=0, returning score=0.")
-        return 0
-
-    score = (2 * malicious + 1 * suspicious) / (2 * total) * 100
-    logger.info("Computed score=%.2f (malicious=%d, suspicious=%d, total=%d)",score, malicious, suspicious, total)
-    return round(score)
 
 def get_vt_behaviours(file_hash: str):
     logger.info("Attempting to retrieve DETAILED dynamic analysis (behaviours) for hash: %s", file_hash)
@@ -113,34 +103,10 @@ def get_vt_behaviours(file_hash: str):
     except Exception as e:
         logger.exception("Failed to retrieve or print VT detailed behaviours: %s", e)
 
-def get_vt_behaviour_summary(file_hash: str):
-    logger.info("Attempting to retrieve SUMMARY dynamic analysis (behaviour_summary) for hash: %s", file_hash)
-    url = f"{VT_API_URL}/files/{file_hash}/behaviour_summary"
-    headers = {
-        "x-apikey": VT_API_KEY,
-        "Accept": "application/json"
-    }
-
-    try:
-        response = requests.get(url, headers=headers, timeout=30)
-        response.raise_for_status()  # raises if non-2xx
-        
-        return response.json()
-
-    except requests.exceptions.HTTPError as http_err:
-        if response.status_code == 404:
-            logger.warning("No behaviour summary found for file hash %s.", file_hash)
-        elif response.status_code == 401:
-            logger.error("Unauthorized: Check if your API key supports summary reports (Private API required).")
-        else:
-            logger.error("HTTP error retrieving behaviour summary (%s): %s", response.status_code, http_err)
-    except Exception as e:
-        logger.exception("Failed to retrieve or print VT behaviour summary: %s", e)
-
 def scan_file(file_path: str, file_hash:str) -> dict:
 
     logger.info("FILEPATH: %s",file_path)
-    output = {"malware_types": [], "score": -1, "raw": {}, "behaviour": None}
+    output = []
 
     try:
         if not VT_API_KEY:
