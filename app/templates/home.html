@@ -50,6 +50,44 @@
   </div>
 </div>
 
+{% if existing_report %}
+<div class="card info-card" style="
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    padding: 25px;
+">
+
+    <h3 style="margin-bottom: 10px;">Existing Report Found</h3>
+    <p>A report for this extension already exists.</p>
+
+    <p style="margin-top: 10px;">
+        <strong>Date:</strong> {{ report_date }}<br>
+        <strong>Hash:</strong> {{ hash }}
+    </p>
+
+    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+        <!-- Open existing report -->
+        <a class="btn btn-sm btn-accent btn-pill" href="{% url 'report' %}{{ hash }}">
+            Open Report
+        </a>
+
+        <!-- Force new analysis -->
+        <form action="{% url 'home' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="force" value="true">
+            <input type="hidden" name="submit_type" value="{{ submit_type }}">
+            <input type="hidden" name="submission_value" value="{{ extention_id }}">
+            <button class="btn btn-sm btn-accent btn-pill">
+                Run New Analysis
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endif %}
+
+
 <div class="card top-list">
   <h2>Top 5 Highest Scores</h2>
   <div class="table-wrap">
@@ -121,9 +159,7 @@
     const row = document.getElementById('submit-row');
     row.classList.add('disabled-section');
     submitBtn.classList.add('disabled-tooltip');
-    
-});
-
+  });
 </script>
 
 {% endblock %}

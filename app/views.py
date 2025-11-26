@@ -7,6 +7,7 @@ from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 from app.backend.api import apiCaller
 from app.backend.mitreFolder.mitre import mitreCall
+from app.backend.utils.Checkfileidindb import check_existing_report 
 import sqlite3
 import json
 import zipfile
@@ -91,14 +92,22 @@ def home(request):
                     "error": error,
                     "top_reports": load_top_reports(),
                 })
+            
+            check = check_existing_report(file_path=file_path)
+            if check["exists"]:
+                # Show message instead of running analysis
+                return render(request, "home.html", {
+                    "existing_report": True,
+                    "hash": check["hash"],
+                    "extention_id": check.get("extention_id"),
+                    "report_date": check["date"],
+                    "top_reports": load_top_reports(),
+                })
 
             result = apiCaller(file_path, "file")
             response = handle_not_on_store(request, result, load_top_reports)
             if response:
                 return response
-           
-
-          
 
             status_message = "Analysis finished. See the History tab for full results."
 
@@ -129,6 +138,17 @@ def home(request):
             if fs.exists(txt_name):
                 fs.delete(txt_name)
             fs.save(txt_name, ContentFile(webstore_id + "\n"))
+
+            check = check_existing_report(ext_id=webstore_id)
+
+            if check["exists"]:
+                return render(request, "home.html", {
+                    "existing_report": True,
+                    "hash": check["hash"],
+                    "extention_id": webstore_id,
+                    "report_date": check["date"],
+                    "top_reports": load_top_reports(),
+                })
 
             result = apiCaller(webstore_id, "id")
             response = handle_not_on_store(request, result, load_top_reports)
