@@ -56,8 +56,7 @@
     margin-bottom: 20px;
     text-align: center;
     padding: 25px;
-">
-
+  ">
     <h3 style="margin-bottom: 10px;">Existing Report Found</h3>
     <p>A report for this extension already exists.</p>
 
@@ -66,25 +65,20 @@
         <strong>Hash:</strong> {{ hash }}
     </p>
 
-    <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
-        <!-- Open existing report -->
+    <div style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
         <a class="btn btn-sm btn-accent btn-pill" href="{% url 'report' %}{{ hash }}">
             Open Report
         </a>
-
-        <!-- Force new analysis -->
-        <form action="{% url 'home' %}" method="post">
+        <form method="post" action="{% url 'home' %}">
             {% csrf_token %}
             <input type="hidden" name="force" value="true">
-            <input type="hidden" name="submit_type" value="{{ submit_type }}">
-            <input type="hidden" name="submission_value" value="{{ extention_id }}">
-            <button class="btn btn-sm btn-accent btn-pill">
-                Run New Analysis
-            </button>
+            <input type="hidden" name="extention_id" value="{{ extention_id }}">
+            <input type="hidden" name="file_path" value="{{ file_path }}">
+            <button class="btn btn-sm btn-accent btn-pill">Run New Analysis</button>
         </form>
-    </div>
 
-</div>
+    </div>
+  </div>
 {% endif %}
 
 

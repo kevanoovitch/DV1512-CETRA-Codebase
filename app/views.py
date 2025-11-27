@@ -7,7 +7,9 @@ from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 from app.backend.api import apiCaller
 from app.backend.mitreFolder.mitre import mitreCall
-from app.backend.utils.Checkfileidindb import check_existing_report 
+from app.backend.utils.Checkfileidindb import delete_report_by_hash, delete_report_by_id, check_existing_report
+from app.backend.api import compute_file_hash
+
 import sqlite3
 import json
 import zipfile
@@ -19,19 +21,7 @@ def home(request):
     error = None
     status_message = None
 
-    def handle_not_on_store(request, api_result, load_top_reports):
-        """
-        Checks the return value of the apiCaller() and stops and displays an error if invalid
-        """
-        if api_result == -1:
-                return render(request, "home.html", {
-                    "error": "This extension is not on the Chrome Web Store and thus is not supported.",
-                    "status_message": None, 
-                    "top_reports": load_top_reports(),
-                })
-        return None
-
-
+    # Load top 5 reports
     def load_top_reports():
         conn = sqlite3.connect('db.sqlite3')
         conn.row_factory = sqlite3.Row
@@ -45,135 +35,121 @@ def home(request):
         """)
         rows = cursor.fetchall()
         conn.close()
-        return [
-            {
-                "file_hash": row["file_hash"],
-                "extention_id": row["extention_id"],
-                "date": row["date"],
-                "score": row["score"],
-            }
-            for row in rows
-        ]
+        return [{
+            "file_hash": row["file_hash"],
+            "extention_id": row["extention_id"],
+            "date": row["date"],
+            "score": row["score"],
+        } for row in rows]
 
     if request.method == "POST":
         submit_type = request.POST.get("submit_type")
+        force = request.POST.get("force") == "true"
+
+        ext_id = request.POST.get("extention_id") or ""
+        file_path = request.POST.get("file_path") or ""
+
         fs = FileSystemStorage()
 
-        # --- Case 1: ZIP or CRX upload ---
-        if submit_type in ["zip", "crx"]:
-            upload = request.FILES.get("submission_file")
-            if not upload:
-                error = f"Please select a valid .{submit_type} file."
+        if force:
+            if file_path:
+                try:
+                    filehash = compute_file_hash(file_path)
+                except:
+                    return render(request, "home.html", {
+                        "error": "Could not open stored file for re-analysis.",
+                        "top_reports": load_top_reports(),
+                    })
+
+                delete_report_by_hash(filehash)
+                apiCaller(file_path, "file")
+
                 return render(request, "home.html", {
-                    "error": error,
+                    "status_message": "A new analysis has been created.",
                     "top_reports": load_top_reports(),
                 })
 
-            name = upload.name.lower()
-            if submit_type == "zip" and not name.endswith(".zip"):
-                error = "Uploaded file must be a .zip file."
+            if ext_id:
+                delete_report_by_id(ext_id)
+                apiCaller(ext_id, "id")
+
                 return render(request, "home.html", {
-                    "error": error,
+                    "status_message": "A new analysis has been created.",
                     "top_reports": load_top_reports(),
                 })
-            if submit_type == "crx" and not name.endswith(".crx"):
-                error = "Uploaded file must be a .crx file."
+
+            # Nothing to force
+            return render(request, "home.html", {
+                "error": "Could not determine original submission type.",
+                "top_reports": load_top_reports()
+            })
+
+        if submit_type in ["zip", "crx"]:
+            upload = request.FILES.get("submission_file")
+
+            if not upload:
                 return render(request, "home.html", {
-                    "error": error,
+                    "error": f"Please select a valid .{submit_type} file.",
                     "top_reports": load_top_reports(),
                 })
-            
+
             filename = fs.save(upload.name, upload)
             file_path = fs.path(filename)
 
             if not check_zip(file_path):
-                error = "manifest.json not found inside the uploaded file. Not an Extension package."
                 return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-            
-            check = check_existing_report(file_path=file_path)
-            if check["exists"]:
-                # Show message instead of running analysis
-                return render(request, "home.html", {
-                    "existing_report": True,
-                    "hash": check["hash"],
-                    "extention_id": check.get("extention_id"),
-                    "report_date": check["date"],
+                    "error": "manifest.json not found inside archive.",
                     "top_reports": load_top_reports(),
                 })
 
-            result = apiCaller(file_path, "file")
-            response = handle_not_on_store(request, result, load_top_reports)
-            if response:
-                return response
-
-            status_message = "Analysis finished. See the History tab for full results."
-
-            return render(request, "home.html", {
-                "error": None,
-                "status_message": status_message,
-                "top_reports": load_top_reports(),
-            })
-
-        # --- Case 2: Webstore ID ---
-        elif submit_type == "id":
-            webstore_id = (request.POST.get("submission_value") or "").strip()
-            if not webstore_id:
-                error = "Please enter an Extension ID."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-
-            if not (len(webstore_id) == 32 and webstore_id.isalpha() and webstore_id.islower()):
-                error = "Webstore ID must be 32 lowercase letters (a–z)."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-
-            txt_name = "webstore_id.txt"
-            if fs.exists(txt_name):
-                fs.delete(txt_name)
-            fs.save(txt_name, ContentFile(webstore_id + "\n"))
-
-            check = check_existing_report(ext_id=webstore_id)
-
-            if check["exists"]:
+            # DB lookup based on hash
+            result = check_existing_report(file_path=file_path)
+            if result["exists"]:
                 return render(request, "home.html", {
                     "existing_report": True,
-                    "hash": check["hash"],
-                    "extention_id": webstore_id,
-                    "report_date": check["date"],
+                    "hash": result["hash"],
+                    "extention_id": result["extention_id"],
+                    "file_path": file_path,
+                    "report_date": result["date"],
                     "top_reports": load_top_reports(),
                 })
 
-            result = apiCaller(webstore_id, "id")
-            response = handle_not_on_store(request, result, load_top_reports)
-            if response:
-                return response
-           
-
-            status_message = "Analysis finished. See the History tab for full results."
-
+            # New analysis
+            apiCaller(file_path, "file")
             return render(request, "home.html", {
-                "error": None,
-                "status_message": status_message,
-                "top_reports": load_top_reports(),
+                "status_message": "Analysis complete.",
+                "top_reports": load_top_reports()
             })
 
-        # --- Case 3: unknown type ---
-        else:
-            error = "Invalid submission type."
+        if submit_type == "id":
+            ext_id = request.POST.get("submission_value").strip()
+
+            result = check_existing_report(ext_id=ext_id)
+            if result["exists"]:
+                return render(request, "home.html", {
+                    "existing_report": True,
+                    "hash": result["hash"],
+                    "extention_id": ext_id,
+                    "file_path": "",     # IDs have no file
+                    "report_date": result["date"],
+                    "top_reports": load_top_reports(),
+                })
+
+            apiCaller(ext_id, "id")
             return render(request, "home.html", {
-                "error": error,
-                "top_reports": load_top_reports(),
+                "status_message": "Analysis complete.",
+                "top_reports": load_top_reports()
             })
 
-    return render(request, "home.html", {"top_reports": load_top_reports()})
+        # Invalid
+        return render(request, "home.html", {
+            "error": "Invalid submission type.",
+            "top_reports": load_top_reports()
+        })
 
+    return render(request, "home.html", {
+        "top_reports": load_top_reports(),
+    })
 
 def check_zip(file_path: str) -> bool:
     """

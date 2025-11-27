@@ -1,5 +1,5 @@
 import sqlite3
-from app.backend.api import compute_file_hash  # <--- använder original funktionen
+from app.backend.api import compute_file_hash
 
 def check_existing_report(file_path=None, ext_id=None):
     """
@@ -10,7 +10,6 @@ def check_existing_report(file_path=None, ext_id=None):
         {"exists": True/False, "hash": "...", "date": "...", "extention_id": "..."}
     """
 
-    # Compute hash if file was provided
     file_hash = None
     if file_path:
         file_hash = compute_file_hash(file_path)
@@ -18,7 +17,6 @@ def check_existing_report(file_path=None, ext_id=None):
     conn = sqlite3.connect("db.sqlite3")
     cursor = conn.cursor()
 
-    # ---- CASE 1: File upload (hash lookup) ----
     if file_hash:
         cursor.execute("""
             SELECT file_hash, date, extention_id
@@ -37,14 +35,13 @@ def check_existing_report(file_path=None, ext_id=None):
                 "extention_id": row[2],
             }
 
-        # No recent report → delete older ones
+        # No recent report, delete older ones
         cursor.execute("DELETE FROM reports WHERE file_hash = ?", (file_hash,))
         conn.commit()
         conn.close()
 
         return { "exists": False, "hash": file_hash }
 
-    # ---- CASE 2: Webstore ID upload ----
     if ext_id:
         cursor.execute("""
             SELECT file_hash, date, extention_id
@@ -72,3 +69,17 @@ def check_existing_report(file_path=None, ext_id=None):
 
     conn.close()
     return { "exists": False }
+
+def delete_report_by_hash(filehash):
+    conn = sqlite3.connect("db.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM reports WHERE file_hash=?", (filehash,))
+    conn.commit()
+    conn.close()
+
+def delete_report_by_id(ext_id):
+    conn = sqlite3.connect("db.sqlite3")
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM reports WHERE extention_id=?", (ext_id,))
+    conn.commit()
+    conn.close()
