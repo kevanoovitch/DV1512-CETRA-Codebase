@@ -3,7 +3,7 @@ from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex
 from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 import app.backend.API_interfaces.VirusTotalInterface as vt
 from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
-from app.backend.utils import ExtensionIDConverter, extension_retriver, download_crx
+from app.backend.utils import ExtensionIDConverter, extract_extension_manifest, download_crx
 from app.backend.report_generator import generate_report
 from app.backend.database_parser import ParseReport
 import hashlib
@@ -62,7 +62,11 @@ def apiCaller(value,submission_type):
         logger.info("Calling OWASP")
         api_result.findings.extend(opswat_scan_file(api_result.file_format.filePath))
 
-    logger.info("Getting file behaviour report from virustotal")
+    logger.info("Retreiving Manifestdata")
+    result["manifest"] = extract_extension_manifest(fileFormat.filePath)
+    result["extension_id"] = fileFormat.ID
+    if fileFormat.ID is None:
+        logger.warning("Extension ID is empty")
 
     api_result.behaviour_summary = vt.get_vt_behaviour_summary(api_result.file_hash)
 
