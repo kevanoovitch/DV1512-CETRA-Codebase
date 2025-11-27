@@ -5,7 +5,6 @@ import app.backend.API_interfaces.VirusTotalInterface as vt
 from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
 from app.backend.utils import ExtensionIDConverter, extension_retriver, download_crx
 from app.backend.report_generator import generate_report
-from app.backend.database_parser import ParseReport
 import hashlib
 from app import constants
 from pathlib import Path
@@ -23,14 +22,9 @@ class FileFormat:
 
 def apiCaller(value,submission_type):
     
-    # In case it's missing an ID SA won't be called but the result strucuture still needs to be there
-    result={
-        "SA": {"score": -1, "descriptions": [], "risk_types": []},
-        "VT": {"malware_types": [], "score": -1, "raw": {}},
-        "OWASP": {"score": -1, "malware_type": []},
-    }
-
-    #instanstiate a FileFormat object to store both path and ID
+    # In case it's missing an ID SA won't be called but the result structure still needs to be there
+    result = []
+    #instantiate a FileFormat object to store both path and ID
     fileFormat = FileFormat()
 
 
@@ -54,31 +48,44 @@ def apiCaller(value,submission_type):
 
     filehash = compute_file_hash(fileFormat.filePath)
 
-    if(fileFormat.ID is not None):
+    if fileFormat.ID is not None:
         logger.info("Calling Secure-Annex")
-        SA = preform_secure_annex_scan(fileFormat.ID)
-        if SA is not None :
-            result["SA"] = SA   
+        sa_findings = preform_secure_annex_scan(fileFormat.ID)
+        result.extend(sa_findings)
     else:
         logger.warning("Skipping Secure-Annex")
   
     #VT returns {"malware_types:[], score:int,"raw":{}"}
     if fileFormat.filePath != None:
         logger.info("Calling VirusTotal")
-        result["VT"] = vt.scan_file(fileFormat.filePath,filehash)
-        logger.info("Calling OWASP")
-        result["OWASP"]=opswat_scan_file(fileFormat.filePath)
+        VT_findings = vt.scan_file(fileFormat.filePath,filehash)
 
-    logger.info("Retreiving permissions")
-    result["permissions"] = extension_retriver(fileFormat.filePath)
-    result["extension_id"] = fileFormat.ID
+        result.extend(VT_findings)
+
+        
+        opswat_findings=opswat_scan_file(fileFormat.filePath)
+
+        #TODO: remove following line when opswat refactoring is done:
+        logger.warning("Hotfixing opswat result")
+        opswat_findings = []
+
+        result.extend(opswat_findings)
+
+
+    logger.info("Retrieving permissions")
+    
+    #FIXME: Properly refactor extension retriever!!!
+    #result["permissions"] = extension_retriver(fileFormat.filePath)
+    #result["extension_id"] = fileFormat.ID
     if fileFormat.ID is None:
         logger.warning("Extension ID is empty")
 
-    result["file_path"] = fileFormat.filePath
-    result["file_hash"] = filehash
+    #result["file_path"] = fileFormat.filePath
+    #result["file_hash"] = filehash
     logger.info("Generating report")
+
     report = generate_report(result)
+
     logger.info("Saving the report")
     ParseReport(report)
 

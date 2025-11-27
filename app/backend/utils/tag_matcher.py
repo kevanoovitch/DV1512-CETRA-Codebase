@@ -670,7 +670,7 @@ def _pick_best_type(candidates: Dict[str, Set[str]]) -> Tuple[str, str]:
 # ============================================================
 
 
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 @dataclass
 class Finding:
@@ -722,4 +722,4 @@ def analyze_label(label: str) -> Dict[str, Any]:
 
     res = Finding(tag=best_tag, type=best_type, category=category, score=score, family=None)
 
-    return res 
+    return asdict(res) 

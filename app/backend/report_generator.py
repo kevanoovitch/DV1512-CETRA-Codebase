@@ -61,7 +61,7 @@ def generate_report(result) -> dict:
         "behaviour": behaviour_summary
     }
 
-    logger.info("Generated report succesfully!")
+    logger.info("Generated report successfully!")
 
     return report
 
