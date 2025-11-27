@@ -669,6 +669,18 @@ def _pick_best_type(candidates: Dict[str, Set[str]]) -> Tuple[str, str]:
 # PUBLIC API
 # ============================================================
 
+
+from dataclasses import dataclass
+
+@dataclass
+class Finding:
+    tag: str
+    type: str
+    category: str
+    score: float
+    family: str = None
+
+
 def analyze_label(label: str) -> Dict[str, Any]:
     """
     Analyze VirusTotal/OPSWAT-style label and return:
@@ -708,9 +720,6 @@ def analyze_label(label: str) -> Dict[str, Any]:
     if best_tag is not None:
         best_tag = best_tag.strip().lower()
 
-    return {
-        "tag": best_tag,
-        "type": best_type,
-        "category": category,
-        "score": score,
-    }
+    res = Finding(tag=best_tag, type=best_type, category=category, score=score, family=None)
+
+    return res 
