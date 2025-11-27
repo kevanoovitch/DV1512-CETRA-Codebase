@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load hash_filters %}
 {% block title %}Home – CETRA{% endblock %}
 
 {% block content %}
@@ -58,7 +59,7 @@
     padding: 25px;
   ">
     <h3 style="margin-bottom: 10px;">Existing Report Found</h3>
-    <p>A report for this extension already exists.</p>
+    <p>A report from the last 30 days already exists.</p>
 
     <p style="margin-top: 10px;">
         <strong>Date:</strong> {{ report_date }}<br>
@@ -99,8 +100,8 @@
           {% for r in top_reports %}
             <tr>
               <td><div class="score"><span class="score-text">{{ r.score}}</span></div></td>
-              <td class="mono">{{ r.file_hash }}</td>
-              <td class="mono">{{ r.extention_id }}</td>
+              <td>{{ r.file_hash|short_hash }}</td>
+              <td>{{ r.extention_id }}</td>
               <td>{{ r.date}}</td>
             </tr>
           {% endfor %}
