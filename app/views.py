@@ -407,6 +407,7 @@ def logout_view(request):
     logout(request)
     return redirect("login") 
 
+@login_required
 def report_view(request, sha256=None):
     conn = sqlite3.connect('db.sqlite3')
     conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
@@ -426,6 +427,7 @@ def report_view(request, sha256=None):
     conn.close()
     return render(request, "result.html", {"report": result})
 
+@login_required
 def mitre_report_view(request, sha256=None):
     conn = sqlite3.connect('db.sqlite3')
     conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
@@ -444,3 +446,14 @@ def mitre_report_view(request, sha256=None):
 
     conn.close()
     return render(request, "mitre_result.html", {"mitre_report": result})
+
+@login_required
+def download_json(request, filehash):
+    # NEED FUNCTIONALITY TO GET RIGHT DATA
+    data = ""
+
+    json_data = json.dumps(data, indent=4)
+
+    response = HttpResponse(json_data, content_type="application/json")
+    response["Content-Disposition"] = f'attachment; filename="{filehash}.json"'
+    return response
