@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from app import constants
 from app.backend.utils.tag_matcher import analyze_label
-#from app.backend.utils.
+from app.backend.utils import tag_matcher
 
 logging.basicConfig(
     level=logging.INFO,
@@ -83,7 +83,7 @@ def scan_file(file_path):
 ### analysera threats
         analyzed_threats = []
         for label in raw_threats:
-            print(label)
+            #print(label)
             finding = analyze_label(label)
             analyzed_threats.append(finding)
 
@@ -98,6 +98,6 @@ def scan_file(file_path):
         return summary
 
 
-#if __name__ == "__main__":
-    #result = scan_file("app/tests/test_crx/mil.crx")
+if __name__ == "__main__":
+    result = scan_file("app/tests/test_crx/mil.crx")
     #print("Scan result:", result)

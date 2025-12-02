@@ -613,7 +613,7 @@ def _collect_candidates_by_name(normalized_label: str) -> Dict[str, Set[str]]:
     if "all_urls" in normalized_label:
         candidates.setdefault("all_urls_access", set()).add(normalized_label)
 
-    if "scripting" in normalized_label:
+    if "scripting" in normalized_label or "script" in normalized_label:
         candidates.setdefault("scripting_access", set()).add(normalized_label)
 
     if "tabs" in normalized_label:
