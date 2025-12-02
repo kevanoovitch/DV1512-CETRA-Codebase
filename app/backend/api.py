@@ -50,13 +50,13 @@ def apiCaller(value,submission_type):
 
     if(api_result.file_format.ID is not None):
         api_result.extension_id = api_result.file_format.ID
-        logger.info("Calling Secure-Annex")
-        logger.info(f"This is input {api_result.file_format.ID}")
-        SA = preform_secure_annex_scan(api_result.file_format.ID)
-        if SA is not None :
-            api_result.findings.extend(SA)   
+        logger.info("Calling Secure-Annex", extra={"extension_id": api_result.file_format.ID})
+        sa_client = Interface_Secure_Annex()
+        sa_findings = sa_client.perform_scan_and_interpret(api_result.file_format.ID)
+        if sa_findings:
+            api_result.findings.extend(sa_findings)
         else:
-            logger.warning("Skipping Secure-Annex response is empty")
+            logger.warning("Secure-Annex returned no findings", extra={"extension_id": api_result.file_format.ID})
     else:
         logger.warning("Skipping Secure-Annex couldnt retreive ID")
   
@@ -71,33 +71,18 @@ def apiCaller(value,submission_type):
 
     api_result.behaviour_summary = vt.get_vt_behaviour_summary(api_result.file_hash)
 
-    logger.info("Retreiving permissions")
+    logger.info("Retrieving permissions")
     api_result.permissions = extension_retriver(api_result.file_format.filePath)
 
-
+    #FIXME: uncomment and refactore report generator and parser
     logger.info("Generating report")
+    
     #report = generate_report(api_result)
     logger.info("Saving the report")
     
     #ParseReport(report)
 
     return 0
-
-
-def preform_secure_annex_scan(input):
-    #Helper function to query SA and build json file
-    client = Interface_Secure_Annex()
-    interpreter = SecureAnnex_interpretator()
-    path = Path(constants.SA_OUTPUT_FILE)
-
-    client.perform_scan(input,path)
-
-    #Parse the output
-    parsed = interpreter.interpret_output()
-
-    #Deliver verdict from SA also returns findings for later use
-    return parsed
-
 def compute_file_hash(file_path, algorithm='sha256'):
     hash_func = hashlib.new(algorithm)
     
