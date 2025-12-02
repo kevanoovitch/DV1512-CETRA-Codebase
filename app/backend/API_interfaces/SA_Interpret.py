@@ -111,20 +111,19 @@ class SecureAnnex_interpretator:
             category=risk.category,
             score=risk.score,
             family=None,
+            api=constants.FINDINGS_API_NAMES["SA"]
         )
-
+    #TODO: this is wrong it should return a default finding no?
     def _failure_finding(self) -> dict:
         """Sentinel finding to mark SA failure; allows downstream code to distinguish errors."""
-        return {
-            "source": "secure_annex",
-            "label": self.failure_reason or "sa_failure",
-            "detail": (self.failure_reason or "sa_failure").replace("_", " "),
-            "severity": None,
-            "tag": None,
-            "type": None,
-            "category": "unknown",
-            "score": -1,
-        }
+        return Finding(
+            tag=None,
+            type=None,
+            category=None,
+            score=-1,
+            family=None,
+            api=constants.FINDINGS_API_NAMES["SA"]
+        )
 
     def _interpret_manifest(self, items: List[Dict[str, Any]]) -> None:
         """

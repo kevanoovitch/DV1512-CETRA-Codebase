@@ -670,7 +670,7 @@ def _pick_best_type(candidates: Dict[str, Set[str]]) -> Tuple[str, str]:
 # PUBLIC API
 # ============================================================
 
-def analyze_label(label: str) -> Finding:
+def analyze_label(label: str, who:str) -> Finding:
 
     if not isinstance(label, str) or not label.strip():
         return Finding(tag=None, type=None, category="unknown", score=0, family=None)

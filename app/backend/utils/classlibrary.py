@@ -15,9 +15,10 @@ class ApiResult:
         self.file_format = FileFormat()
 
 class Finding:
-    def __init__(self, tag, type, category, score, family=None):
+    def __init__(self, tag, type, category, score, family=None, api=None):
         self.tag = tag
         self.type = type
         self.category = category
         self.score = score
         self.family = family
+        self.api = api

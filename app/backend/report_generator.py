@@ -3,6 +3,8 @@ import re
 from typing import  Any
 import logging
 from app.backend.utils import Ai_Helper
+from app.backend.utils.classlibrary import ApiResult, Finding
+from app.constants import FINDINGS_API_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +17,19 @@ responseTemplate = {
 
   "malware_types": "If applicable, describe what types of malware or malicious behavior this extension could be associated with based on available data. Keep this section concise and focused on risk classification (e.g., spyware, adware, data harvesting)."
 }
+# TODO: remove this shit
+# class ApiResult:
+#     def __init__(self):
+#         self.findings = []
+#         self.permissions = []
+#         self.file_hash=None
+#         self.extension_id=None
+#         self.file_format = FileFormat()
+#         self.behaviour_summary= None
 
-
-def generate_report(result) -> dict:
+def generate_report(result: ApiResult) -> dict:
     logger.info("Generating Report...")
-    score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]])
+    score = calculate_final_score(result.findings)
     permissions = result["permissions"]
     risks = result["SA"]["risk_types"]
     malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
@@ -52,12 +62,10 @@ def generate_report(result) -> dict:
     report = {
         "score": score,
         "verdict": verdict,
-        "description": description,
-        "permissions": permissions,
-        "risks": risks,
-        "malware_types": malware_types,
-        "extension_id": extension_id,
-        "file_hash": file_hash,
+        "Findings": [], # A list of Findings
+        "Summery": None, # text
+        "Permissions": [],
+        "Targets": None, #Text
         "behaviour": behaviour_summary
     }
 
@@ -73,25 +81,38 @@ def label_from_score(s):
     if s<=80: return "Malicious"
     return "Highly malicious"
 
-def calculate_final_score(scores: list[int]) -> int:
+def calculate_final_score(findings: list[Finding]) -> int:
 
-    sum = 0
-    count = 0
-    logger.info("Calculating score...")
-    for s in scores:
-        if s == None:
-            s = -1 #Treat none as missing data
-        if isinstance(s,float):
-            s = round(s,0)
+    sa_scores = []
+    vt_scores = []
+    op_scores = []
+    # create three sublist based on the findings
+    for finding in findings:
 
-        if s != -1:
-            sum += s
-            count += 1 #only count valid values
+        if finding.score is None:
+            #case where a finding couldn't map properly
+            continue
+        if finding.api == FINDINGS_API_NAMES["SA"]:
+            sa_scores.append(finding.score)
+        elif finding.api == FINDINGS_API_NAMES["VT"]:
+            vt_scores.append(finding.score)
+        elif finding.api == FINDINGS_API_NAMES["OP"]:
+            op_scores.append(finding.score)
+        
+    logging.info("Organizing score based on findings input")
 
-    if count == 0:
-        return 0
+    sa_total = sum(sa_scores) if sa_scores else None
+    vt_total = sum(vt_scores) if vt_scores else None
+    op_total = sum(op_scores) if op_scores else None
 
-    average = sum / count
-    logger.info("Calculated score %d from the scores: %s", average, scores)
+    logging.info(f"Organization result VT: {vt_total} SA: {sa_total} OP: {op_total}")
 
-    return round(average)
+    totals = [sa_total, vt_total, op_total]
+
+    valid_totals = [x for x in totals if x is not None]
+
+    final_score = sum(valid_totals) / len(valid_totals)
+
+    logging.info(f"Calculated final aggregated score={final_score} from {valid_totals}")
+
+    return round(final_score)

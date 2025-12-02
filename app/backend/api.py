@@ -58,7 +58,7 @@ def apiCaller(value,submission_type):
         else:
             logger.warning("Secure-Annex returned no findings", extra={"extension_id": api_result.file_format.ID})
     else:
-        logger.warning("Skipping Secure-Annex couldnt retreive ID")
+        logger.warning("Skipping Secure-Annex couldn't retrieve ID")
   
     if api_result.file_format.filePath != None:
         logger.info("Calling VirusTotal")
