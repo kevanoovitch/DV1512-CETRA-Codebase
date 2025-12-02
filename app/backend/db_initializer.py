@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS findings(
     type TEXT, 
     category TEXT 
     score int,
-    family TEXT
+    family TEXT,
     FOREIGN KEY (file_hash) REFERENCES reports(file_hash)
 ); """
 
