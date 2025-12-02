@@ -11,22 +11,10 @@ from pathlib import Path
 import re
 import os
 import logging
-
+from app.backend.API_interfaces.utils import classlibrary
 logger = logging.getLogger(__name__)
 
-#function that gather both inputs ID and filepath in one object
-class FileFormat:
-    def __init__(self):
-        filePath = None
-        ID = None
 
-class ApiResult:
-    def __init__(self):
-        self.findings = []
-        self.permissions = []
-        self.file_hash=None
-        self.extension_id=None
-        self.file_format = FileFormat()
 
 def apiCaller(value,submission_type):
     api_result = ApiResult()

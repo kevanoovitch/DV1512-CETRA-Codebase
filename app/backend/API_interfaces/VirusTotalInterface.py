@@ -6,6 +6,7 @@ import requests
 import logging
 import hashlib
 from app.backend.utils import analyze_label, infer_attribution
+from app.backend.API_interfaces.utils import classlibrary
 
 logger = logging.getLogger(__name__)
 

@@ -16,6 +16,7 @@ Return format:
         "score": <0-100 int>
     }
 """
+from app.backend.API_interfaces.utils import classlibrary
 
 import re
 from typing import Dict, List, Set, Any, Tuple
@@ -670,30 +671,10 @@ def _pick_best_type(candidates: Dict[str, Set[str]]) -> Tuple[str, str]:
 # ============================================================
 
 
-from dataclasses import dataclass, asdict
 
-@dataclass
-class Finding:
-    tag: str
-    type: str
-    category: str
-    score: float
-    family: str = None
 
 
 def analyze_label(label: str) -> Dict[str, Any]:
-    """
-    Analyze VirusTotal/OPSWAT-style label and return:
-
-        {
-            "tag": <specific matched term>,
-            "type": <canonical type>,
-            "category": <broad category>,
-            "score": <0-100>
-        }
-
-    If nothing matches, returns safe default.
-    """
     if not isinstance(label, str) or not label.strip():
         return {"tag": None, "type": None, "category": "unknown", "score": 0}
 
