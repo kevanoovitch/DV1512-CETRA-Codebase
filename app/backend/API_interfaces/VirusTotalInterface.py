@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import requests
 import logging
 import hashlib
-from app.backend.utils import analyze_label
+from app.backend.utils import analyze_label, infer_attribution
 
 logger = logging.getLogger(__name__)
 
@@ -65,20 +65,20 @@ def _analyse_data(result: dict, output:dict) -> dict:
             ):
                 malware_types.append(verdict)
 
-        output["malware_types"] = malware_types
-
         findings = []
+        
         for malware in malware_types:
             result = analyze_label(malware)
+            attribution = infer_attribution(malware_types)
+            result["family"] = attribution
             findings.append(result)
             logger.info("Finding: ", result)
-
+        
         return findings
 
     except Exception as e:
         logger.exception("Failed to analyze data: %s", e)
         return output
-
 
 def get_vt_behaviours(file_hash: str):
     logger.info("Attempting to retrieve DETAILED dynamic analysis (behaviours) for hash: %s", file_hash)

@@ -20,73 +20,62 @@ class FileFormat:
         filePath = None
         ID = None
 
+class ApiResult:
+    def __init__(self):
+        self.findings = []
+        self.permissions = []
+        self.file_hash=None
+        self.extension_id=None
+        self.file_format = FileFormat()
+
 def apiCaller(value,submission_type):
-    
-    # In case it's missing an ID SA won't be called but the result structure still needs to be there
-    result = []
-    #instantiate a FileFormat object to store both path and ID
-    fileFormat = FileFormat()
+    api_result = ApiResult()
 
-
+    #Check submission type
     if submission_type == "file":
         logger.info("Received a file, retreiving the Id ouf of the file")
-        fileFormat.filePath = value
+        api_result.file_format.filePath = value
         try:
-            fileFormat.ID = ExtensionIDConverter().convert_file_to_id(value)
+            api_result.file_format.ID = ExtensionIDConverter().convert_file_to_id(value)
         except ValueError:
-            # Converter now returns None for unsupported inputs (e.g., raw ZIP without key);
-            # keep ID empty and continue with file-based scanners.
-            fileFormat.ID = None
+            file_format.ID = None
             logger.warning("Unable to derive extension ID from file %s; continuing without ID", value)
-    if submission_type == "id":
+    elif submission_type == "id":
         logger.info("Received a ID, Downloading the file...")
-        fileFormat.ID = value
-        fileFormat.filePath = download_crx(value)
-
-    if fileFormat.filePath == -1:
+        api_result.file_format.ID = value
+        api_result.file_format.filePath = download_crx(value)
+        if api_result.file_format.filePath == None:
+            return -1
+    else:
         return -1
 
-    filehash = compute_file_hash(fileFormat.filePath)
+    api_result.file_hash = compute_file_hash(api_result.file_format.filePath)
 
-    if fileFormat.ID is not None:
+    if(api_result.file_format.ID is not None):
+        api_result.extension_id = file_format.ID
         logger.info("Calling Secure-Annex")
-        sa_findings = preform_secure_annex_scan(fileFormat.ID)
-        result.extend(sa_findings)
+        SA = preform_secure_annex_scan(api_result.file_format.ID)
+        if SA is not None :
+            api_result.findings.extend(SA)   
+        else:
+            logger.warning("Skipping Secure-Annex response is empty")
     else:
-        logger.warning("Skipping Secure-Annex")
+        logger.warning("Skipping Secure-Annex couldnt retreive ID")
   
-    #VT returns {"malware_types:[], score:int,"raw":{}"}
-    if fileFormat.filePath != None:
+    if api_result.file_format.filePath != None:
         logger.info("Calling VirusTotal")
-        VT_findings = vt.scan_file(fileFormat.filePath,filehash)
+        api_result.findings.extend(vt.scan_file(api_result.file_format.filePath,api_result.file_hash))
+        logger.info("Calling OWASP")
+        api_result.findings.extend(opswat_scan_file(api_result.file_format.filePath))
 
-        result.extend(VT_findings)
-
-        
-        opswat_findings=opswat_scan_file(fileFormat.filePath)
-
-        #TODO: remove following line when opswat refactoring is done:
-        logger.warning("Hotfixing opswat result")
-        opswat_findings = []
-
-        result.extend(opswat_findings)
+    logger.info("Retreiving permissions")
+    api_result.permissions = extension_retriver(api_result.file_format.filePath)
 
 
-    logger.info("Retrieving permissions")
-    
-    #FIXME: Properly refactor extension retriever!!!
-    #result["permissions"] = extension_retriver(fileFormat.filePath)
-    #result["extension_id"] = fileFormat.ID
-    if fileFormat.ID is None:
-        logger.warning("Extension ID is empty")
-
-    #result["file_path"] = fileFormat.filePath
-    #result["file_hash"] = filehash
     logger.info("Generating report")
-
-    report = generate_report(result)
-
+    report = generate_report(api_result)
     logger.info("Saving the report")
+    
     ParseReport(report)
 
     return 0

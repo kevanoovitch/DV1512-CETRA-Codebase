@@ -2,7 +2,7 @@ import json
 import sqlite3
 import datetime
 import logging
-
+from app.backend.API_interfaces.main_api import ApiResult
 try:
     from app.backend.db_initializer import ensure_tables, DB_PATH
 except ImportError:
@@ -54,21 +54,3 @@ def ParseReport(report :dict):
     except sqlite3.Error:
         logger.exception("Failed to write report to database")
 
-
-dummyreport = {
-        "score": 85,
-        "verdict": "malicious",
-        "description": ["Blabla", "Albalb", "hhhhhhh"],
-        "permissions": ["read_contacts", "send_sms", "etc."],
-        "risks": ["data_leak", "financial_loss", "etc."],
-        "malware_types": ["trojan", "ransomware", "etc."],
-        "extension_id": "ext123",
-        "file_hash": "abc123",
-        "behaviour": "bad stuff"
-        }
-
-"""
-if __name__ == "__main__":
-    
-    ParseReport()
-"""
