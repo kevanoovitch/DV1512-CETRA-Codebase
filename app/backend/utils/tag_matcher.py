@@ -5,7 +5,7 @@ Module for mapping VirusTotal/OPSWAT labels or internal strings
 to normalized risk "types" and scores.
 
 Public API:
-    analyze_label(label: str) -> dict
+    analyze_label(label: str) -> Finding
 
 Return format:
     {
@@ -16,7 +16,7 @@ Return format:
         "score": <0-100 int>
     }
 """
-from app.backend.API_interfaces.utils import classlibrary
+from app.backend.utils.classlibrary import Finding
 
 import re
 from typing import Dict, List, Set, Any, Tuple
@@ -669,18 +669,6 @@ def _pick_best_type(candidates: Dict[str, Set[str]]) -> Tuple[str, str]:
 # ============================================================
 # PUBLIC API
 # ============================================================
-
-
-
-#TODO: Move this to class lib
-@dataclass
-class Finding:
-    tag: str
-    type: str
-    category: str
-    score: float
-    family: str = None
-
 
 def analyze_label(label: str) -> Finding:
 
