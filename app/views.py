@@ -449,11 +449,38 @@ def mitre_report_view(request, sha256=None):
 
 @login_required
 def download_json(request, filehash):
-    # NEED FUNCTIONALITY TO GET RIGHT DATA
-    data = ""
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
 
+    # Fetch all MITRE rows for this filehash
+    cursor.execute("SELECT sandbox, tactics, techniques, date FROM mitre WHERE file_hash=?;", (filehash,))
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    # Convert DB rows into exportable JSON format
+    mitre_entries = []
+
+    for row in rows:
+        mitre_entries.append({
+            "sandbox": row["sandbox"],
+            "date": row["date"],
+            "tactics": json.loads(row["tactics"]) if row["tactics"] else [],
+            "techniques": json.loads(row["techniques"]) if row["techniques"] else []
+        })
+
+    # Final JSON object structure
+    data = {
+        "file_hash": filehash,
+        "mitre_analysis": mitre_entries,
+        "analysis_count": len(mitre_entries)
+    }
+
+    # Convert to JSON string
     json_data = json.dumps(data, indent=4)
 
+    # Build download response
     response = HttpResponse(json_data, content_type="application/json")
-    response["Content-Disposition"] = f'attachment; filename="{filehash}.json"'
+    response["Content-Disposition"] = f'attachment; filename=\"{filehash}.json\"'
     return response
