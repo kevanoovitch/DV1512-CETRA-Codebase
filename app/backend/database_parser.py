@@ -2,7 +2,6 @@ import json
 import sqlite3
 import datetime
 import logging
-from app.backend.API_interfaces.main_api import ApiResult
 try:
     from app.backend.db_initializer import ensure_tables, DB_PATH
 except ImportError:

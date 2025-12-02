@@ -8,6 +8,8 @@ from rich import box
 
 console = Console()
 
+#FIXME: Nuke this file
+
 def map_score_to_verdict(score: int) -> Tuple[str, str]:
     """
     Map numeric score to (verdict, color).

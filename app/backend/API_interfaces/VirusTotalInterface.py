@@ -6,7 +6,7 @@ import requests
 import logging
 import hashlib
 from app.backend.utils import analyze_label, infer_attribution
-from app.backend.API_interfaces.utils import classlibrary
+from app.backend.utils.tag_matcher import Finding
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ def _upload_file_large(file_path: str, headers: dict) -> str:
     with open(file_path, "rb") as f:
         files = {"file": (os.path.basename(file_path), f)}
         response = requests.post(upload_url, headers=headers, files=files, timeout=300) # Increased timeout for large file
-    
+
     response.raise_for_status()
     return response.json()["data"]["id"]
 
@@ -67,14 +67,14 @@ def _analyse_data(result: dict, output:dict) -> dict:
                 malware_types.append(verdict)
 
         findings = []
-        
+
         for malware in malware_types:
-            result = analyze_label(malware)
+            finding = analyze_label(malware)
             attribution = infer_attribution(malware_types)
-            result["family"] = attribution
+            finding.family = attribution
             findings.append(result)
             logger.info("Finding: ", result)
-        
+
         return findings
 
     except Exception as e:
@@ -104,6 +104,30 @@ def get_vt_behaviours(file_hash: str):
     except Exception as e:
         logger.exception("Failed to retrieve or print VT detailed behaviours: %s", e)
 
+def get_vt_behaviour_summary(file_hash: str):
+    logger.info("Attempting to retrieve SUMMARY dynamic analysis (behaviour_summary) for hash: %s", file_hash)
+    url = f"{VT_API_URL}/files/{file_hash}/behaviour_summary"
+    headers = {
+        "x-apikey": VT_API_KEY,
+        "Accept": "application/json"
+    }
+
+    try:
+        response = requests.get(url, headers=headers, timeout=30)
+        response.raise_for_status()  # raises if non-2xx
+
+        return response.json()
+
+    except requests.exceptions.HTTPError as http_err:
+        if response.status_code == 404:
+            logger.warning("No behaviour summary found for file hash %s.", file_hash)
+        elif response.status_code == 401:
+            logger.error("Unauthorized: Check if your API key supports summary reports (Private API required).")
+        else:
+            logger.error("HTTP error retrieving behaviour summary (%s): %s", response.status_code, http_err)
+    except Exception as e:
+        logger.exception("Failed to retrieve or print VT behaviour summary: %s", e)
+
 def scan_file(file_path: str, file_hash:str) -> dict:
 
     logger.info("FILEPATH: %s",file_path)
@@ -123,13 +147,6 @@ def scan_file(file_path: str, file_hash:str) -> dict:
 
         headers = {"x-apikey": VT_API_KEY}
         analysis_id = None
-
-        
-        logger.info("Getting file behaviour report from virustotal")
-        
-
-        behavior = get_vt_behaviour_summary(file_hash)
-        output["behaviour"] = behavior
 
         if file_size > MAX_STANDARD_SIZE_BYTES:
             analysis_id = _upload_file_large(file_path, headers)
@@ -166,3 +183,4 @@ def scan_file(file_path: str, file_hash:str) -> dict:
     except Exception as e:
         logger.exception("Unexpected error: %s", e)
         return output
+

@@ -5,6 +5,7 @@ import app.backend.API_interfaces.VirusTotalInterface as vt
 from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
 from app.backend.utils import ExtensionIDConverter, extension_retriver, download_crx
 from app.backend.report_generator import generate_report
+from app.backend.database_parser import ParseReport
 import hashlib
 from app import constants
 from pathlib import Path
@@ -15,6 +16,14 @@ from app.backend.API_interfaces.utils import classlibrary
 logger = logging.getLogger(__name__)
 
 
+class ApiResult:
+    def __init__(self):
+        self.findings = []
+        self.permissions = []
+        self.file_hash=None
+        self.extension_id=None
+        self.file_format = FileFormat()
+        self.behaviour_summary= None
 
 def apiCaller(value,submission_type):
     api_result = ApiResult()
@@ -26,7 +35,7 @@ def apiCaller(value,submission_type):
         try:
             api_result.file_format.ID = ExtensionIDConverter().convert_file_to_id(value)
         except ValueError:
-            file_format.ID = None
+            api_result.file_format.ID = None
             logger.warning("Unable to derive extension ID from file %s; continuing without ID", value)
     elif submission_type == "id":
         logger.info("Received a ID, Downloading the file...")
@@ -40,8 +49,9 @@ def apiCaller(value,submission_type):
     api_result.file_hash = compute_file_hash(api_result.file_format.filePath)
 
     if(api_result.file_format.ID is not None):
-        api_result.extension_id = file_format.ID
+        api_result.extension_id = api_result.file_format.ID
         logger.info("Calling Secure-Annex")
+        logger.info(f"This is input {api_result.file_format.ID}")
         SA = preform_secure_annex_scan(api_result.file_format.ID)
         if SA is not None :
             api_result.findings.extend(SA)   
@@ -54,17 +64,22 @@ def apiCaller(value,submission_type):
         logger.info("Calling VirusTotal")
         api_result.findings.extend(vt.scan_file(api_result.file_format.filePath,api_result.file_hash))
         logger.info("Calling OWASP")
-        api_result.findings.extend(opswat_scan_file(api_result.file_format.filePath))
+        #FIXME: this
+        #api_result.findings.extend(opswat_scan_file(api_result.file_format.filePath))
+
+    logger.info("Getting file behaviour report from virustotal")
+
+    api_result.behaviour_summary = vt.get_vt_behaviour_summary(api_result.file_hash)
 
     logger.info("Retreiving permissions")
     api_result.permissions = extension_retriver(api_result.file_format.filePath)
 
 
     logger.info("Generating report")
-    report = generate_report(api_result)
+    #report = generate_report(api_result)
     logger.info("Saving the report")
     
-    ParseReport(report)
+    #ParseReport(report)
 
     return 0
 

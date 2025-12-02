@@ -1,5 +1,5 @@
 from app import constants
-from app.backend.utils.tag_matcher import analyze_label
+from app.backend.utils.tag_matcher import analyze_label, Finding
 
 import logging
 from typing import Any, Dict, List, Optional
@@ -13,7 +13,7 @@ class SecureAnnex_interpretator:
 
     def __init__(self):
         self.report_path = constants.SA_OUTPUT_FILE
-        self.findings: List[Dict[str, Any]] = []
+        self.findings: List[Finding] = []
         self.failed = False
         self.failure_reason: Optional[str] = None
 
@@ -72,15 +72,46 @@ class SecureAnnex_interpretator:
                     len(self.findings), len(manifest_items), len(signature_items), len(url_items), len(analysis_items))
         return self.findings
 
-    def _make_finding(self, source: str, label: str, detail: str, severity: Optional[int] = None) -> dict:
-        analysis = analyze_label(label)
-        return {
-            "source": source,
-            "label": label,
-            "detail": detail,
-            "severity": severity,
-            **analysis,
-        }
+    def _make_finding(
+        self,
+        source: str,
+        label: str,
+        detail: str,
+        severity: Optional[int] = None,
+    ) -> Finding:
+
+        risk = analyze_label(label)
+
+        context_parts = []
+        if source:
+            context_parts.append(f"source={source}")
+        if severity is not None:
+            context_parts.append(f"sev={severity}")
+        if detail:
+
+            short_detail = detail.replace("\n", " ")
+            if len(short_detail) > 160:
+                short_detail = short_detail[:157] + "...."
+            context_parts.append(f"detail={short_detail}")
+
+        context = " | ".join(context_parts) if context_parts else "no context"
+        logger.debug(
+            "SA finding generated: label=%s tag=%s type=%s category=%s score=%s (%s)",
+            label,
+            risk.tag,
+            risk.type,
+            risk.category,
+            risk.score,
+            context,
+        )
+
+        return Finding(
+            tag=risk.tag,
+            type=risk.type,
+            category=risk.category,
+            score=risk.score,
+            family=None,
+        )
 
     def _failure_finding(self) -> dict:
         """Sentinel finding to mark SA failure; allows downstream code to distinguish errors."""

@@ -672,11 +672,21 @@ def _pick_best_type(candidates: Dict[str, Set[str]]) -> Tuple[str, str]:
 
 
 
+#TODO: Move this to class lib
+@dataclass
+class Finding:
+    tag: str
+    type: str
+    category: str
+    score: float
+    family: str = None
 
 
-def analyze_label(label: str) -> Dict[str, Any]:
+def analyze_label(label: str) -> Finding:
+
     if not isinstance(label, str) or not label.strip():
-        return {"tag": None, "type": None, "category": "unknown", "score": 0}
+        return Finding(tag=None, type=None, category="unknown", score=0, family=None)
+
 
     normalized = _normalize_label(label)
 
@@ -693,7 +703,7 @@ def analyze_label(label: str) -> Dict[str, Any]:
     best_type, best_tag = _pick_best_type(candidates)
 
     if best_type is None:
-        return {"tag": None, "type": None, "category": "unknown", "score": 0}
+        return Finding(tag=None, type=None, category="unknown", score=0, family=None)
 
     score = TAG_SCORES.get(best_type, 0)
     category = TYPE_CATEGORY.get(best_type, "unknown")
@@ -703,4 +713,4 @@ def analyze_label(label: str) -> Dict[str, Any]:
 
     res = Finding(tag=best_tag, type=best_type, category=category, score=score, family=None)
 
-    return asdict(res) 
+    return res
