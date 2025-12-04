@@ -7,6 +7,7 @@ import logging
 import hashlib
 from app.backend.utils import analyze_label, infer_attribution
 from app.backend.utils.tag_matcher import Finding
+from app.constants import FINDINGS_API_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,6 @@ def _upload_file_large(file_path: str, headers: dict) -> str:
 def _analyse_data(result: dict, output:dict) -> dict:
     try:
         attrs = result.get("attributes", {})
-        stats = attrs.get("stats", {})
         results = attrs.get("results", {})
 
         malware_types = []
@@ -69,10 +69,10 @@ def _analyse_data(result: dict, output:dict) -> dict:
         findings = []
 
         for malware in malware_types:
-            finding = analyze_label(malware)
+            finding = analyze_label(malware, FINDINGS_API_NAMES["VT"])
             attribution = infer_attribution(malware_types)
             finding.family = attribution
-            findings.append(result)
+            #findings.append(result)
             logger.info("Finding: ", result)
 
         return findings

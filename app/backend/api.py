@@ -12,18 +12,12 @@ from pathlib import Path
 import re
 import os
 import logging
-from app.backend.utils.classlibrary import FileFormat
+from app.backend.utils.classlibrary import FileFormat, ApiResult
 logger = logging.getLogger(__name__)
 
 
-class ApiResult:
-    def __init__(self):
-        self.findings = []
-        self.permissions = []
-        self.file_hash=None
-        self.extension_id=None
-        self.file_format = FileFormat()
-        self.behaviour_summary= None
+
+
 
 def apiCaller(value,submission_type):
     api_result = ApiResult()
@@ -77,12 +71,14 @@ def apiCaller(value,submission_type):
     #FIXME: uncomment and refactore report generator and parser
     logger.info("Generating report")
     
-    #report = generate_report(api_result)
+    report = generate_report(api_result)
+    print(report)
     logger.info("Saving the report")
     
     #ParseReport(report)
 
     return 0
+
 def compute_file_hash(file_path, algorithm='sha256'):
     hash_func = hashlib.new(algorithm)
     

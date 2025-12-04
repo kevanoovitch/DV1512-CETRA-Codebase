@@ -17,34 +17,21 @@ responseTemplate = {
 
   "malware_types": "If applicable, describe what types of malware or malicious behavior this extension could be associated with based on available data. Keep this section concise and focused on risk classification (e.g., spyware, adware, data harvesting)."
 }
-# TODO: remove this shit
-# class ApiResult:
-#     def __init__(self):
-#         self.findings = []
-#         self.permissions = []
-#         self.file_hash=None
-#         self.extension_id=None
-#         self.file_format = FileFormat()
-#         self.behaviour_summary= None
 
 def generate_report(result: ApiResult) -> dict:
     logger.info("Generating Report...")
     score = calculate_final_score(result.findings)
-    permissions = result["permissions"]
-    risks = result["SA"]["risk_types"]
-    malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
-    extension_id = result["extension_id"]
+    permissions = result.permissions
+    extension_id = result.extension_id
     verdict = label_from_score(score)
-    description = result["SA"]["descriptions"]
-    file_hash = result["file_hash"]
+    #description = result["SA"]["descriptions"]
+    file_hash = result.file_hash
 
 
     behaviour_summary = None
-    if result["VT"]["behaviour"] is not None:
+    if result.behavior is not None:
         behaviour_summary = Ai_Helper(
-            request="analyse the data key, this is sandbox behaviour analyses from virustotal, and asnwer as asked for in the response",
-            response="please respond in freetext manner, no point or dhashes normal freetext, describing how this extension behaves, approximitly 100 words, see if its doing something millicios talk about the security aspects",
-            data=result["VT"]["behaviour"]
+            #TODO: Refractor this
         )
     if behaviour_summary is None:
         behaviour_summary = "Unavailable"
@@ -81,6 +68,10 @@ def label_from_score(s):
     if s<=80: return "Malicious"
     return "Highly malicious"
 
+
+def avg(lst):
+    return sum(lst) / len(lst) if lst else None
+
 def calculate_final_score(findings: list[Finding]) -> int:
 
     sa_scores = []
@@ -88,22 +79,22 @@ def calculate_final_score(findings: list[Finding]) -> int:
     op_scores = []
     # create three sublist based on the findings
     for finding in findings:
-
-        if finding.score is None:
-            #case where a finding couldn't map properly
-            continue
-        if finding.api == FINDINGS_API_NAMES["SA"]:
-            sa_scores.append(finding.score)
-        elif finding.api == FINDINGS_API_NAMES["VT"]:
-            vt_scores.append(finding.score)
-        elif finding.api == FINDINGS_API_NAMES["OP"]:
-            op_scores.append(finding.score)
+        print(finding)
+        if finding.score is not -1:
+            if finding.api == FINDINGS_API_NAMES["SA"]:
+                sa_scores.append(finding.score)
+            elif finding.api == FINDINGS_API_NAMES["VT"]:
+                vt_scores.append(finding.score)
+            elif finding.api == FINDINGS_API_NAMES["OP"]:
+                op_scores.append(finding.score)
         
     logging.info("Organizing score based on findings input")
+    
+    sa_total = avg(sa_scores)
+    vt_total = avg(vt_scores)
+    op_total = avg(op_scores)
 
-    sa_total = sum(sa_scores) if sa_scores else None
-    vt_total = sum(vt_scores) if vt_scores else None
-    op_total = sum(op_scores) if op_scores else None
+    
 
     logging.info(f"Organization result VT: {vt_total} SA: {sa_total} OP: {op_total}")
 

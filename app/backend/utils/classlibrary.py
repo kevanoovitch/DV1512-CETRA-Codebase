@@ -12,13 +12,17 @@ class ApiResult:
         self.permissions = []
         self.file_hash=None
         self.extension_id=None
+        self.behavior = None 
         self.file_format = FileFormat()
 
 class Finding:
-    def __init__(self, tag, type, category, score, family=None, api=None):
+    def __init__(self, tag, type, category, score=-1, family=None, api=None):
         self.tag = tag
         self.type = type
         self.category = category
         self.score = score
         self.family = family
         self.api = api
+    
+    def __repr__(self):
+        return f"TAG: {self.tag} TYPE: {self.type} cat: {self.category} score: {self.score} family {self.family} api {self.api} \n" 

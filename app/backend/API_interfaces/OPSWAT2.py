@@ -80,15 +80,15 @@ def scan_file(file_path):
         ]
         raw_threats = list(set(raw_threats))
         summary["raw_threats"] = raw_threats
-### analysera threats
+        
+        # analyse threats
         analyzed_threats = []
         for label in raw_threats:
             #print(label)
-            finding = analyze_label(label)
+            finding = analyze_label(label, constants.FINDINGS_API_NAMES["OP"] )
             analyzed_threats.append(finding)
 
-
-
+            print("Någon sträng: ", finding)
 
         logger.info(f"OPSWAT: summary: {analyzed_threats}")
         return analyzed_threats

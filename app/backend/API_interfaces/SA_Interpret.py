@@ -73,14 +73,16 @@ class SecureAnnex_interpretator:
         return self.findings
 
     def _make_finding(
-        self,
-        source: str,
-        label: str,
-        detail: str,
-        severity: Optional[int] = None,
-    ) -> Finding:
+            self,
+            source: str,
+            label: str,
+            detail: str,
+            severity: Optional[int] = None,
+            family: Optional[str] = None,
+            api: str = constants.FINDINGS_API_NAMES["SA"],
+        ) -> Finding:
 
-        risk = analyze_label(label)
+        risk = analyze_label(label, api=constants.FINDINGS_API_NAMES["SA"])
 
         context_parts = []
         if source:
