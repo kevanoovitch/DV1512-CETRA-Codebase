@@ -46,12 +46,13 @@ def _upload_file_large(file_path: str, headers: dict) -> str:
     response.raise_for_status()
     return response.json()["data"]["id"]
 
-def _analyse_data(result: dict, output:dict) -> dict:
+def _analyse_data(result: dict):
     try:
         attrs = result.get("attributes", {})
         results = attrs.get("results", {})
-
+        findings = []
         malware_types = []
+
         for engine, details in results.items():
             # Safely access keys
             category = details.get("category")
@@ -66,20 +67,17 @@ def _analyse_data(result: dict, output:dict) -> dict:
             ):
                 malware_types.append(verdict)
 
-        findings = []
-
         for malware in malware_types:
-            finding = analyze_label(malware, FINDINGS_API_NAMES["VT"])
+            finding = analyze_label(label=malware, api=FINDINGS_API_NAMES["VT"])
             attribution = infer_attribution(malware_types)
             finding.family = attribution
-            #findings.append(result)
-            logger.info("Finding: ", result)
-
+            findings.append(finding)
+            
         return findings
 
     except Exception as e:
         logger.exception("Failed to analyze data: %s", e)
-        return output
+        return []
 
 def get_vt_behaviours(file_hash: str):
     logger.info("Attempting to retrieve DETAILED dynamic analysis (behaviours) for hash: %s", file_hash)
@@ -128,19 +126,16 @@ def get_vt_behaviour_summary(file_hash: str):
     except Exception as e:
         logger.exception("Failed to retrieve or print VT behaviour summary: %s", e)
 
-def scan_file(file_path: str, file_hash:str) -> dict:
-
+def scan_file(file_path: str, file_hash:str):
     logger.info("FILEPATH: %s",file_path)
-    output = []
-
     try:
         if not VT_API_KEY:
             logger.error("VT_API_KEY is missing (not set in environment).")
-            return output
+            return []
 
         if not os.path.isfile(file_path):
             logger.error("File not found: %s", file_path)
-            return output
+            return []
 
         file_size = os.path.getsize(file_path)
         logger.info("Sending file: %s (%d bytes) to virustotal api", file_path, file_size)
@@ -170,17 +165,17 @@ def scan_file(file_path: str, file_hash:str) -> dict:
             logger.info("Analysis status=%s", status)
             if status == "completed":
                 logger.info("Analysis completed.")
-                analysed = _analyse_data(data["data"],output)
+                analysed = _analyse_data(data["data"])
                 return analysed
             time.sleep(sleep_seconds)
 
         logger.warning("Analysis timed out after %s seconds.", timeout_seconds)
-        return output
+        return []
     except requests.RequestException as e:
         # Include stack trace and the exception message
         logger.exception("HTTP error during upload/poll: %s", e)
-        return output
+        return []
     except Exception as e:
         logger.exception("Unexpected error: %s", e)
-        return output
+        return []
 

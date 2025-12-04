@@ -88,7 +88,7 @@ def scan_file(file_path):
             finding = analyze_label(label, constants.FINDINGS_API_NAMES["OP"] )
             analyzed_threats.append(finding)
 
-            print("Någon sträng: ", finding)
+            #print("Någon sträng: ", finding)
 
         logger.info(f"OPSWAT: summary: {analyzed_threats}")
         return analyzed_threats

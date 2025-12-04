@@ -74,16 +74,18 @@ def avg(lst):
 
 def calculate_final_score(findings: list[Finding]) -> int:
 
+    print(findings)
+
     sa_scores = []
     vt_scores = []
     op_scores = []
     # create three sublist based on the findings
     for finding in findings:
-        print(finding)
         if finding.score is not -1:
             if finding.api == FINDINGS_API_NAMES["SA"]:
                 sa_scores.append(finding.score)
             elif finding.api == FINDINGS_API_NAMES["VT"]:
+                print("FOUND VT! ", finding.api)
                 vt_scores.append(finding.score)
             elif finding.api == FINDINGS_API_NAMES["OP"]:
                 op_scores.append(finding.score)
@@ -103,7 +105,5 @@ def calculate_final_score(findings: list[Finding]) -> int:
     valid_totals = [x for x in totals if x is not None]
 
     final_score = sum(valid_totals) / len(valid_totals)
-
-    logging.info(f"Calculated final aggregated score={final_score} from {valid_totals}")
 
     return round(final_score)
