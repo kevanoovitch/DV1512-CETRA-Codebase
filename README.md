@@ -11,7 +11,8 @@ High-level view of the system components and their interactions:
 
 ## Threat Model
 Threat modeling made in ThreatDragon for the system:
-![Threat Model](docs/diagrams/CetraThreatModel.svg)
+
+![Threat Model](docs/diagrams/CetraThreatModel.png)
 
 
 ## Dependencies
