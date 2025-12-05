@@ -38,15 +38,42 @@ def add_report(conn, report):
     # get the id of the last inserted row
     return True
 
+def add_findings(conn, findings):
+    insert = f"""
+    INSERT INTO findings
+    (file_hash, tag, type, category, score, family, api)
+    VALUES
+    (?,?,?,?,?,?,?);
+    """
+    cur = conn.cursor()
+    for finding in findings:
+        finding_hash = finding.get("file_hash")
+        finding_tag = finding.get("tag")
+        finding_type = finding.get("type")
+        finding_category = finding.get("category")
+        finding_score = finding.get("score")
+        finding_family = finding.get("family")
+        finding_api = finding.get("api")
+
+        cur.execute(insert, (finding_hash, finding_tag, finding_type, finding_category, finding_score, finding_family, finding_api))
+    
+    conn.commit()
+    return True
+
 def ParseReport(report :dict):
     logger.info("Writing report to database")
+    
+    findings = report.get("findings")
     
     try:
         ensure_tables()
         with sqlite3.connect(DB_PATH) as conn:
             success = add_report(conn, report)
+            success2 = add_findings(conn, findings)
             if success:
                 logger.info("Report added successfully.")
+            if success2:
+                logger.info("Findings added successfully.")
     except sqlite3.Error:
         logger.exception("Failed to write report to database")
 
