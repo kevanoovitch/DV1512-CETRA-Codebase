@@ -105,6 +105,9 @@ def calculate_final_score(findings: list[Finding]) -> int:
 
     valid_totals = [x for x in totals if x is not None]
 
+    if not valid_totals:
+        return -1
+
     final_score = sum(valid_totals) / len(valid_totals)
 
     return round(final_score)
