@@ -115,6 +115,18 @@ class SecureAnnex_interpretator:
             family=None,
             api=constants.FINDINGS_API_NAMES["SA"]
         )
+
+    def _add_finding(self, finding: Finding) -> None:
+        """Append finding only when it has a meaningful score."""
+        if finding.score == -1:
+            logger.debug(
+                "SA finding skipped (score -1): tag=%s type=%s category=%s",
+                finding.tag,
+                finding.type,
+                finding.category,
+            )
+            return
+        self.findings.append(finding)
     #TODO: this is wrong it should return a default finding no?
     def _failure_finding(self) -> dict:
         """Sentinel finding to mark SA failure; allows downstream code to distinguish errors."""
@@ -148,7 +160,7 @@ class SecureAnnex_interpretator:
             label = (it.get("risk_type") or "").strip()
             detail = f"{description} in {snip or '<no snippet provided>'}" if description else (snip or "<no snippet provided>")
             sev = it.get("severity")
-            self.findings.append(self._make_finding("manifest", label, detail, severity=sev))
+            self._add_finding(self._make_finding("manifest", label, detail, severity=sev))
             logger.debug("SA manifest finding added: label=%s detail=%s", label, detail)
 
             rtype_upper = label.upper()
@@ -162,11 +174,11 @@ class SecureAnnex_interpretator:
                 has_webrequest = True
 
         if has_all_urls and has_scripting:
-            self.findings.append(self._make_finding("manifest", "all_urls_access", "Scripting + <all_urls> significantly increases risk.", severity=None))
+            self._add_finding(self._make_finding("manifest", "all_urls_access", "Scripting + <all_urls> significantly increases risk.", severity=None))
             logger.info("SA manifest synergy finding added: scripting + all_urls_access")
 
         if has_webrequest and (has_all_urls or has_cs_all_urls):
-            self.findings.append(self._make_finding("manifest", "webrequest_surveillance", "webRequest + broad URL scope enables wide observation.", severity=None))
+            self._add_finding(self._make_finding("manifest", "webrequest_surveillance", "webRequest + broad URL scope enables wide observation.", severity=None))
             logger.info("SA manifest synergy finding added: webrequest + broad URL")
 
     def _interpret_urls(self, urls: List[Dict[str, Any]]):
@@ -194,7 +206,7 @@ class SecureAnnex_interpretator:
             if bad and (url or domain):
                 detail = f"malicious url: {url or domain} from this file {file_path}"
                 label_for_tag = url_label or (url or domain)
-                self.findings.append(self._make_finding("urls", label_for_tag, detail, severity=severity))
+                self._add_finding(self._make_finding("urls", label_for_tag, detail, severity=severity))
                 logger.info("SA url finding added: label=%s detail=%s sev=%s", label_for_tag, detail, severity)
 
     def _interpret_analysis(self, rows: List[Dict[str, Any]]) -> None:
@@ -204,19 +216,19 @@ class SecureAnnex_interpretator:
             text_l = text.lower()
 
             if "content security policy" in text_l or "csp" in text_l:
-                self.findings.append(self._make_finding("analysis", "csp_disabled", "CSP Risk", severity=8))
+                self._add_finding(self._make_finding("analysis", "csp_disabled", "CSP Risk", severity=8))
                 logger.info("SA analysis finding added: csp_disabled")
 
             if "remote config" in text_l:
-                self.findings.append(self._make_finding("analysis", "remote_script_dependency", "Remote configuration", severity=6))
+                self._add_finding(self._make_finding("analysis", "remote_script_dependency", "Remote configuration", severity=6))
                 logger.info("SA analysis finding added: remote_script_dependency")
 
             if "xss" in text_l:
-                self.findings.append(self._make_finding("analysis", "xss", "XSS risk", severity=6))
+                self._add_finding(self._make_finding("analysis", "xss", "XSS risk", severity=6))
                 logger.info("SA analysis finding added: xss")
 
             if "data theft" in text_l or "exfil" in text_l:
-                self.findings.append(self._make_finding("analysis", "data_exfiltration", "Data exfil risk", severity=6))
+                self._add_finding(self._make_finding("analysis", "data_exfiltration", "Data exfil risk", severity=6))
                 logger.info("SA analysis finding added: data_exfiltration")
 
     def _interpret_signatures(self, sigs: List[Dict[str, Any]]) -> None:
@@ -228,5 +240,5 @@ class SecureAnnex_interpretator:
             sev_num = sev_map.get(sev_text, 4)
             label = s.get("name") or s.get("rule") or sev_text
             detail = f"Signature matched: {label}"
-            self.findings.append(self._make_finding("signatures", label, detail, severity=sev_num))
+            self._add_finding(self._make_finding("signatures", label, detail, severity=sev_num))
             logger.info("SA signature finding added: label=%s sev=%s", label, sev_num)
