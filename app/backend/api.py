@@ -57,6 +57,7 @@ def apiCaller(value,submission_type):
     if api_result.file_format.filePath != None:
         logger.info("Calling VirusTotal")
         vt_findings= vt.scan_file(api_result.file_format.filePath,api_result.file_hash)
+        api_result.behavior = vt.get_vt_behaviour_summary(api_result.file_hash)
         api_result.findings.extend(vt_findings)
         logger.info("Calling OWASP")
         api_result.findings.extend(opswat_scan_file(api_result.file_format.filePath))

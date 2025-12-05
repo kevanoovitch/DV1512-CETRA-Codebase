@@ -25,4 +25,14 @@ class Finding:
         self.api = api
     
     def __repr__(self):
-        return f"TAG: {self.tag} TYPE: {self.type} cat: {self.category} score: {self.score} family {self.family} api {self.api} \n" 
+        return f"TAG: {self.tag} TYPE: {self.type} cat: {self.category} score: {self.score} family {self.family} api {self.api} \n"
+
+    def to_dict(self):
+        return {
+            "tag": self.tag,
+            "type": self.type,
+            "category": self.category,
+            "score": self.score,
+            "family": self.family,
+            "api" : self.api
+        } 
