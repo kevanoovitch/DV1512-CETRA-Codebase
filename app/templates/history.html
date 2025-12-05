@@ -33,6 +33,7 @@
               </td>
               <td class="align-right">
                 <a class="btn btn-sm" href="{% url 'report' %}{{ r.file_hash }}">View</a>
+                <a class="btn btn-sm" href="{% url 'download_json' r.file_hash %}">JSON</a>
               </td>
             </tr>
           {% endfor %}

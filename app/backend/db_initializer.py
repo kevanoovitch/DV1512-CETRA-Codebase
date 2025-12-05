@@ -10,12 +10,9 @@ CREATE TABLE IF NOT EXISTS reports (
     file_hash varchar(50) NOT NULL PRIMARY KEY, 
     score INTEGER,
     verdict varcar(20), 
-    description TEXT,
-    permissions TEXT,
-    risks TEXT,
-    malware_types TEXT,
-    extention_id varchar(32),
+    summary TEXT,
     behaviour TEXT,
+    extention_id varchar(32),
     date varchar(20)
 );
     """
@@ -39,6 +36,7 @@ CREATE TABLE IF NOT EXISTS findings(
     category TEXT 
     score int,
     family TEXT,
+    api TEXT,
     FOREIGN KEY (file_hash) REFERENCES reports(file_hash)
 ); """
 
