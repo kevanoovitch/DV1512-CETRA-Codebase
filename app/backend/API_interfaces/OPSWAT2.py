@@ -98,6 +98,6 @@ def scan_file(file_path):
         return summary
 
 
-if __name__ == "__main__":
-    result = scan_file("app/tests/test_crx/mil.crx")
+#if __name__ == "__main__":
+    #result = scan_file("app/tests/test_crx/mil.crx")
     #print("Scan result:", result)

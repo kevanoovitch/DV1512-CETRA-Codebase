@@ -49,11 +49,12 @@ def generate_report(result: ApiResult) -> dict:
     report = {
         "score": score,
         "verdict": verdict,
-        "Findings": [], # A list of Findings
+        "Findings": result.findings, # A list of Findings
         "Summery": None, # text
-        "Permissions": [],
-        "Targets": None, #Text
-        "behaviour": behaviour_summary
+        "Permissions": result.permissions,
+        "behaviour": behaviour_summary,
+        "extension_id" : result.extension_id,
+        "file_hash" : result.file_hash
     }
 
     logger.info("Generated report successfully!")
