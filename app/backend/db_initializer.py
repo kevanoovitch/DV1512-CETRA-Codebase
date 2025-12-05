@@ -9,10 +9,10 @@ create_reports_table = """
 CREATE TABLE IF NOT EXISTS reports (
     file_hash varchar(50) NOT NULL PRIMARY KEY, 
     score INTEGER,
-    verdict varcar(20),
+    verdict varcar(20), 
     summary TEXT,
     behaviour TEXT,
-    extensionid TEXT,
+    extention_id varchar(32),
     date varchar(20)
 );
     """
