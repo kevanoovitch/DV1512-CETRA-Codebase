@@ -470,9 +470,44 @@ def download_json(request, filehash):
             "techniques": json.loads(row["techniques"]) if row["techniques"] else []
         })
 
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT file_hash, score, verdict, description,
+               permissions, risks, malware_types,
+               extention_id, behaviour, date
+        FROM reports
+        WHERE file_hash = ?;
+    """, (filehash,))
+    
+    report_row = cursor.fetchone()
+    conn.close()
+
+    # Convert DB rows into exportable JSON format
+    report_entries = []
+    
+    report_entries.append({
+        #"file_hash": report_row["file_hash"],
+        "score": report_row["score"],
+        "verdict": report_row["verdict"],
+        "description": report_row["description"],
+        "permissions": json.loads(report_row["permissions"]) if report_row["permissions"] else [],
+        "risks": json.loads(report_row["risks"]) if report_row["risks"] else [],
+        "malware_types": json.loads(report_row["malware_types"]) if report_row["malware_types"] else [],
+        "behaviour": report_row["behaviour"] if report_row["behaviour"] else "",
+        "extention_id": report_row["extention_id"],
+        "date": report_row["date"]
+    })
+
+    
+    findings_entries = []
+
     # Final JSON object structure
     data = {
         "file_hash": filehash,
+        "report": report_entries,
         "mitre_analysis": mitre_entries,
         "analysis_count": len(mitre_entries)
     }
