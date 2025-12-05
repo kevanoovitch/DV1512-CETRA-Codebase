@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS reports (
     verdict varcar(20),
     summary TEXT,
     behaviour TEXT,
+    permission TEXT,
     extention_id varchar(32),
     date varchar(20)
 );
@@ -33,7 +34,7 @@ CREATE TABLE IF NOT EXISTS findings(
     file_hash varchar(50) NOT NULL,
     tag TEXT,
     type TEXT, 
-    category TEXT 
+    category TEXT, 
     score int,
     family TEXT,
     api TEXT,
