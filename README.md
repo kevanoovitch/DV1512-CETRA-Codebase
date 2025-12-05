@@ -2,33 +2,47 @@
 
 The fullstack code base for the software security project in DV1512.
 
-The goal of this project is to develop an app that analyzes Chrome extensions to detect potential malicious behavior.
+The goal of this project is to develop an app that analyzes Chrome extensions, to detect potential malicious behavior.
 
 ## System Architecture
 High-level view of the system components and their interactions:
 
 ![System Architecture](docs/diagrams/architecture.svg)
 
+## Threat Model
+Threat modeling made in ThreatDragon for the system:
+![Threat Model](docs/diagrams/CetraThreatModel.svg)
+
+
+## Dependencies
+- Linux OS (either by default, WSL or a virtual machine)
+- Pip installed
+- Installed .txt-files
 
 ### Django instructions 
 
-#### To run the program 
-```
-python manage.py 
-```
-
-#### To run the tests 
+#### Install requirements.txt, in terminal:
 ``` bash
-pyton manage.py test
+pip install -r requirements.txt
 ```
 
-#### To create a a user run 
+#### To run the tests, in terminal:
+``` bash
+python manage.py test
+```
+
+#### To create a user run, in terminal: 
 ``` bash
 python manage.py createsuperuser --username=joe --email=joe@example.com
 ```
 
-- Follow the cli instruction
-- Bypass password strength validation
-- Log in with that user (duh)
+#### To run the program, in terminal:
+```
+python manage.py runserver
+```
+##### Complete by:
+- Follow the terminals instructions.
+- Bypass password strength validation.
+- Log in with the user created.
 
 
