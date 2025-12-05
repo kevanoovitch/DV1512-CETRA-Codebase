@@ -17,7 +17,7 @@ Threat modeling made in ThreatDragon for the system:
 ## Dependencies
 - Linux OS (either by default, WSL or a virtual machine)
 - Pip installed
-- Installed .txt-files
+- requirements.txt
 
 ### Django instructions 
 
@@ -40,9 +40,10 @@ python manage.py createsuperuser --username=joe --email=joe@example.com
 ```
 python manage.py runserver
 ```
-##### Complete by:
+#### To complete program setup:
 - Follow the terminals instructions.
 - Bypass password strength validation.
+- Open localhost website
 - Log in with the user created.
 
 
