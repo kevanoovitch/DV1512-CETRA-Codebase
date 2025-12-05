@@ -2,6 +2,8 @@ import json
 import sqlite3
 import datetime
 import logging
+from app.backend.utils.classlibrary import Finding
+
 try:
     from app.backend.db_initializer import ensure_tables, DB_PATH
 except ImportError:
@@ -48,12 +50,12 @@ def add_findings(conn, findings):
     cur = conn.cursor()
     for finding in findings:
         finding_hash = finding.get("file_hash")
-        finding_tag = finding.get("tag")
-        finding_type = finding.get("type")
-        finding_category = finding.get("category")
-        finding_score = finding.get("score")
-        finding_family = finding.get("family")
-        finding_api = finding.get("api")
+        finding_tag = finding.tag
+        finding_type = finding.type
+        finding_category = finding.category
+        finding_score = finding.score
+        finding_family = finding.family
+        finding_api = finding.api
 
         cur.execute(insert, (finding_hash, finding_tag, finding_type, finding_category, finding_score, finding_family, finding_api))
     
@@ -77,3 +79,54 @@ def ParseReport(report :dict):
     except sqlite3.Error:
         logger.exception("Failed to write report to database")
 
+
+dummy_findings = [
+    {
+        "tag": "suspicious_network",
+        "type": "network",
+        "category": "communication",
+        "score": 70,
+        "family": "generic_network_anomaly",
+        "api": "chrome.webRequest"
+    },
+    {
+        "tag": "dangerous_file_access",
+        "type": "file",
+        "category": "filesystem",
+        "score": 90,
+        "family": "unauthorized_write",
+        "api": "chrome.fileSystem"
+    },
+    {
+        "tag": "high_risk_permissions",
+        "type": "permission",
+        "category": "privacy",
+        "score": 85,
+        "family": "sensitive_permissions",
+        "api": "chrome.permissions"
+    },
+    {
+        "tag": "suspicious_code_injection",
+        "type": "js",
+        "category": "execution",
+        "score": 95,
+        "family": "script_injection",
+        "api": "chrome.tabs.executeScript"
+    }
+]
+
+dummyreport = {
+    "file_hash": "abc123",
+    "score": 85,
+    "findings": dummy_findings,
+    "verdict": "malicious",
+    "summary": "This extension exhibits multiple malicious behaviors, including data exfiltration and script injection.",
+    "behaviour": "Injects JS into active tabs, monitors URLs, modifies requests.",
+    "extention_id": "ext123"
+}
+
+
+"""
+if __name__ == "__main__":
+    ParseReport(dummyreport)
+"""
