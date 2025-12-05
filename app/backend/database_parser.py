@@ -14,17 +14,14 @@ def add_report(conn, report):
     # insert table statement
     insert = f"""
     INSERT INTO reports
-    (file_hash, score, verdict, description, permissions, risks, malware_types, extention_id, behaviour ,date)
+    (file_hash, score, verdict, summary, extention_id, behaviour ,date)
     VALUES
     (?,?,?,?,?,?,?,?,?,?);
     """
     report_hash = report.get("file_hash")
     report_score = report.get("score")
     report_verdict = report.get("verdict")
-    report_description = report.get("description")
-    report_permissions = report.get("permissions")
-    report_risks = report.get("risks")
-    report_malware_types = report.get("malware_types")
+    report_summary = report.get("summary")
     report_ExtentionID = report.get("extension_id")
     report_behaviour = report.get("behaviour")
     report_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -33,7 +30,7 @@ def add_report(conn, report):
     cur = conn.cursor()
 
     # execute the INSERT statement
-    cur.execute(insert, (report_hash, report_score, report_verdict, json.dumps(report_description), json.dumps(report_permissions), json.dumps(report_risks), json.dumps(report_malware_types), report_ExtentionID, report_behaviour ,report_date))
+    cur.execute(insert, (report_hash, report_score, report_verdict, report_summary, report_ExtentionID, report_behaviour ,report_date))
 
     # commit the changes
     conn.commit()
