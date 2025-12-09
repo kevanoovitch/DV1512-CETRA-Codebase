@@ -350,24 +350,68 @@ def logout_view(request):
     logout(request)
     return redirect("login") 
 
-def report_view(request, sha256=None):
+@login_required
+def report_view(request, filehash):
     conn = sqlite3.connect('db.sqlite3')
-    conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
-    
-    
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM reports WHERE file_hash=?;", (sha256,))
-    
-    row = cursor.fetchone()
+    # --- Get Report Row ---
+    cursor.execute("""
+        SELECT file_hash, score, verdict, summary, behaviour,
+               permission, extention_id, date
+        FROM reports
+        WHERE file_hash = ?;
+    """, (filehash,))
+    report_row = cursor.fetchone()
 
-    if row:
-        result = dict(row)  # Convert sqlite3.Row to dict
-    else:
-        print("No record found.") 
+    if not report_row:
+        conn.close()
+        return HttpResponse("No report found for this hash.", status=404)
 
+    # Parse permissions JSON → Python list
+    try:
+        permissions = json.loads(report_row["permission"]) if report_row["permission"] else []
+    except:
+        permissions = []
+
+    # --- Get Findings rows ---
+    cursor.execute("""
+        SELECT tag, type, category, score, family, api
+        FROM findings
+        WHERE file_hash = ?;
+    """, (filehash,))
+    findings_rows = cursor.fetchall()
     conn.close()
-    return render(request, "result.html", {"report": result})
+
+    findings = [
+        {
+            "tag": f["tag"],
+            "type": f["type"],
+            "category": f["category"],
+            "score": f["score"],
+            "family": f["family"],
+            "api": f["api"]
+        }
+        for f in findings_rows
+    ]
+
+    # Prepare report dict in Python format for HTML
+    report = {
+        "file_hash": report_row["file_hash"],
+        "score": report_row["score"],
+        "verdict": report_row["verdict"],
+        "summary": report_row["summary"],
+        "behaviour": report_row["behaviour"],
+        "extention_id": report_row["extention_id"],
+        "date": report_row["date"]
+    }
+
+    return render(request, "result.html", {
+        "report": report,
+        "permissions": permissions,
+        "findings": findings
+    })
 
 def mitre_report_view(request, sha256=None):
     conn = sqlite3.connect('db.sqlite3')

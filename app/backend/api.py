@@ -75,7 +75,7 @@ def apiCaller(value,submission_type):
     print(report)
     logger.info("Saving the report")
     
-    #ParseReport(report)
+    ParseReport(report)
 
     return 0
 
