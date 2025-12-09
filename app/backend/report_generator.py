@@ -5,14 +5,10 @@ import logging
 from app.backend.utils import Ai_Helper
 from app.backend.utils.classlibrary import ApiResult, Finding
 from app.constants import FINDINGS_API_NAMES
+import json
 
 logger = logging.getLogger(__name__)
-"""
-summery_and_behaviour_prompt = {
-    request: ""
-    
-}
-"""
+
 
 def generate_report(result: ApiResult) -> dict:
     logger.info("Generating Report...")
@@ -27,34 +23,88 @@ def generate_report(result: ApiResult) -> dict:
     behaviour = None
 
     summery_and_behaviour_prompt = {
-        "request":"request how the prmpt is",
-        "response":"how teh response should be",
+        "request": (
+            "You will receive an object called 'prompt_data' containing:\n"
+            "- score: numeric risk score\n"
+            "- verdict: overall classification\n"
+            "- Findings: list of findings\n"
+            "- behaviour: behavior report text\n"
+            "- Permissions: list of permissions\n"
+            "- extension_id: extension identifier\n\n"
+            "Your task:\n"
+            "1. Analyze all fields.\n"
+            "2. Produce a human-readable EXTENSION SUMMARY describing:\n"
+            "   - What the extension does.\n"
+            "   - Whether it is malicious/suspicious/benign.\n"
+            "   - Any dangerous or high-risk permissions.\n"
+            "   - Any privacy or security concerns.\n"
+            "   - Any context inferred from provided data.\n"
+            "3. Produce a FILE BEHAVIOR SUMMARY describing:\n"
+            "   - What the extension/file does at runtime based on the 'behaviour' field.\n"
+            "   - Any malicious patterns such as persistence, injection, data exfiltration, etc.\n"
+            "   - Interpret the findings and behavior into a readable explanation.\n\n"
+            "Return ONLY a JSON dict using this exact schema:\n"
+            "{\n"
+            '  \"extension_summary\": string,\n'
+            '  \"file_behavior_summary\": string\n'
+            "}\n\n"
+            "Important:\n"
+            "- DO NOT output anything outside the JSON.\n"
+            "- DO NOT restate the prompt_data raw.\n"
+            "- DO NOT add extra fields.\n"
+            "- Only provide interpreted summaries."
+        ),
+        "response": (
+            "The response MUST be exactly:\n"
+            "{\n"
+            '  \"extension_summary\": \"...\",\n'
+            '  \"file_behavior_summary\": \"...\"\n'
+            "}\n"
+            "Return NOTHING else."
+        ),
         "prompt_data": {
             "score": score,
             "verdict": verdict,
-            "Findings":result.findings, # A list of Findings
-            "behaviour": result.behavior, # text
+            "Findings": result.findings,
+            "behaviour": result.behavior,
             "Permissions": result.permissions,
             "extension_id": result.extension_id
         }
     }
-    print(summery_and_behaviour_prompt)
 
-    """
+
+    
     if result.behavior is not None or summery:
         calling_AI = Ai_Helper(
-            request="",
-            response="",
-            data={}
+            request=summery_and_behaviour_prompt["request"],
+            response=summery_and_behaviour_prompt["response"],
+            data=summery_and_behaviour_prompt["prompt_data"]
         )
-    """
+        print(calling_AI)
+        match = re.search(r'\{.*\}', calling_AI, re.DOTALL)
+
+        if match:
+            clean_json = match.group(0)
+            try:
+                data = json.loads(clean_json)
+            except json.JSONDecodeError:
+                # Fallback if regex matched but JSON is still broken
+                print("Error: Extracted string is not valid JSON.")
+                return None
+        else:
+            # Fallback if no JSON structure was found at all
+            print("Error: No JSON object found in AI response.")
+            return None
+
+        summary = data["extension_summary"]
+        behavior = data["file_behavior_summary"]
 
     report = {
         "score": score,
         "verdict": verdict,
         "Findings":result.findings, # A list of Findings
-        "Summary": None, # text
-        "behaviour": None, # text
+        "Summary": summary, # text
+        "behaviour": behavior, # text
         "Permissions": result.permissions,
         "extension_id": result.extension_id
     }
@@ -75,9 +125,6 @@ def avg(lst):
     return sum(lst) / len(lst) if lst else None
 
 def calculate_final_score(findings: list[Finding]) -> int:
-
-
-
     sa_scores = []
     vt_scores = []
     op_scores = []
@@ -87,7 +134,7 @@ def calculate_final_score(findings: list[Finding]) -> int:
             if finding.api == FINDINGS_API_NAMES["SA"]:
                 sa_scores.append(finding.score)
             elif finding.api == FINDINGS_API_NAMES["VT"]:
-                print("FOUND VT! ", finding.api)
+                #print("FOUND VT! ", finding.api)
                 vt_scores.append(finding.score)
             elif finding.api == FINDINGS_API_NAMES["OP"]:
                 op_scores.append(finding.score)
