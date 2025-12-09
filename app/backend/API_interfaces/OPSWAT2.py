@@ -76,25 +76,20 @@ def scan_file(file_path):
             if result.get("threat_found")
         ]
         raw_threats = list(set(raw_threats))
-        emptyList["raw_threats"] = raw_threats
+        
         
         # analyse threats
         analyzed_threats = []
         for label in raw_threats:
-            #print(label)
+            logger.info("Mapping raw_threats to findings list")
             finding = analyze_label(label, constants.FINDINGS_API_NAMES["OP"] )
             analyzed_threats.append(finding)
 
-            #print("Någon sträng: ", finding)
+           
 
-        logger.info(f"OPSWAT: emptyList: {analyzed_threats}")
+        logger.info(f"OPSWAT: summary: {analyzed_threats}")
         return analyzed_threats
-
+    
     except Exception as e:
         logger.exception(f"OPSWAT: Something went wrong during the scanning: {e}")
         return emptyList
-
-
-#if __name__ == "__main__":
-    #result = scan_file("app/tests/test_crx/mil.crx")
-    #print("Scan result:", result)
