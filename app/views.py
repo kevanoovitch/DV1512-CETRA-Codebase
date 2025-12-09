@@ -14,6 +14,7 @@ import sqlite3
 import json
 import zipfile
 import math
+import datetime
 
     
 @login_required
@@ -492,73 +493,91 @@ def mitre_report_view(request, sha256=None):
 
 @login_required
 def download_json(request, filehash):
-    conn = sqlite3.connect('db.sqlite3')
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-
-    # Fetch all MITRE rows for this filehash
-    cursor.execute("SELECT sandbox, tactics, techniques, date FROM mitre WHERE file_hash=?;", (filehash,))
-    rows = cursor.fetchall()
-
-    conn.close()
-
-    # Convert DB rows into exportable JSON format
-    mitre_entries = []
-
-    for row in rows:
-        mitre_entries.append({
-            "sandbox": row["sandbox"],
-            "date": row["date"],
-            "tactics": json.loads(row["tactics"]) if row["tactics"] else [],
-            "techniques": json.loads(row["techniques"]) if row["techniques"] else []
-        })
 
     conn = sqlite3.connect("db.sqlite3")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT file_hash, score, verdict, description,
-               permissions, risks, malware_types,
-               extention_id, behaviour, date
+        SELECT score, verdict, summary, behaviour,
+               permission, extention_id, date
         FROM reports
         WHERE file_hash = ?;
     """, (filehash,))
-    
     report_row = cursor.fetchone()
-    conn.close()
 
-    # Convert DB rows into exportable JSON format
-    report_entries = []
-    
-    report_entries.append({
-        #"file_hash": report_row["file_hash"],
+    if not report_row:
+        conn.close()
+        return HttpResponse("No report found for this file hash.", status=404)
+
+    try:
+        permissions = json.loads(report_row["permission"]) if report_row["permission"] else []
+    except:
+        permissions = []
+
+    report_data = {
+        "extension_id": report_row["extention_id"],
+        "date": report_row["date"],
         "score": report_row["score"],
         "verdict": report_row["verdict"],
-        "description": report_row["description"],
-        "permissions": json.loads(report_row["permissions"]) if report_row["permissions"] else [],
-        "risks": json.loads(report_row["risks"]) if report_row["risks"] else [],
-        "malware_types": json.loads(report_row["malware_types"]) if report_row["malware_types"] else [],
-        "behaviour": report_row["behaviour"] if report_row["behaviour"] else "",
-        "extention_id": report_row["extention_id"],
-        "date": report_row["date"]
-    })
-
-    
-    findings_entries = []
-
-    # Final JSON object structure
-    data = {
-        "file_hash": filehash,
-        "report": report_entries,
-        "mitre_analysis": mitre_entries,
-        "analysis_count": len(mitre_entries)
+        "summary": report_row["summary"],
+        "behaviour": report_row["behaviour"],
+        "permissions": permissions
     }
 
-    # Convert to JSON string
-    json_data = json.dumps(data, indent=4)
+    cursor.execute("""
+        SELECT tag, type, category, score, family, api
+        FROM findings
+        WHERE file_hash = ?;
+    """, (filehash,))
+    findings_rows = cursor.fetchall()
 
-    # Build download response
-    response = HttpResponse(json_data, content_type="application/json")
-    response["Content-Disposition"] = f'attachment; filename=\"{filehash}.json\"'
+    findings = [
+        {
+            "tag": f["tag"],
+            "type": f["type"],
+            "category": f["category"],
+            "score": f["score"],
+            "family": f["family"],
+            "source_api": f["api"]
+        }
+        for f in findings_rows
+    ]
+
+    cursor.execute("""
+        SELECT sandbox, tactics, techniques, date
+        FROM mitre
+        WHERE file_hash = ?;
+    """, (filehash,))
+    mitre_rows = cursor.fetchall()
+
+    mitre = []
+    for m in mitre_rows:
+        mitre.append({
+            "sandbox": m["sandbox"],
+            "date": m["date"],
+            "tactics": json.loads(m["tactics"]) if m["tactics"] else [],
+            "techniques": json.loads(m["techniques"]) if m["techniques"] else []
+        })
+
+    conn.close()
+
+    final_json = {
+        "file_hash": filehash,
+        "report": report_data,
+        "findings": findings,
+        "mitre_analysis": mitre,
+        "meta": {
+            "generated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "finding_count": len(findings),
+            "mitre_count": len(mitre)
+        }
+    }
+
+    # Encode JSON
+    json_string = json.dumps(final_json, indent=4)
+
+    # Return as downloaded .json file
+    response = HttpResponse(json_string, content_type="application/json")
+    response["Content-Disposition"] = f'attachment; filename="{filehash}.json"'
     return response
