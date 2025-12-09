@@ -10,7 +10,7 @@ UPLOADED_PATH = "../uploaded/"
 
 
 FINDINGS_API_NAMES = {
-    "VT" : "Virus Total",
-    "SA": "Secure annex",
+    "VT" : "VirusTotal",
+    "SA": "Secure Annex",
     "OP" : "Opswat"
 }

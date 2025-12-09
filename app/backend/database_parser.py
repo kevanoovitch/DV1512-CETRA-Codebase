@@ -17,7 +17,7 @@ def normalize_backend_report(raw: dict) -> dict:
     database schema and internal structure.
     """
 
-    summary = raw.get("Summery") or ""
+    summary = raw.get("Summary") or ""
     behaviour = raw.get("behaviour") or ""
     permissions = raw.get("Permissions") or []
     extention_id = raw.get("extension_id") or None
@@ -50,7 +50,7 @@ def add_report(conn, report):
         report["summary"],
         report["behaviour"],
         json.dumps(report["permissions"]),
-        report["extention_id"],
+        report["extension_id"],
         datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     ))
 
@@ -82,10 +82,10 @@ def add_findings(conn, file_hash, findings):
     return True
 
 
-def ParseReport(raw_report: dict):
+def ParseReport(report: dict):
     logger.info("Normalizing incoming backend report")
 
-    report = normalize_backend_report(raw_report)
+    #report = normalize_backend_report(raw_report)
     findings = report["findings"]
     file_hash = report["file_hash"]
 
