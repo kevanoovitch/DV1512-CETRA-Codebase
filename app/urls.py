@@ -15,9 +15,7 @@ urlpatterns = [
     path("mitre-attack/", views.mitre_attack, name="mitre_attack"),
     path("mitre/analyze/<str:filehash>/", views.mitre_analyze, name="mitre_analyze"),
     path("mitre-attack/<str:filehash>/", views.mitre_view, name="mitre_view"),
-
-    #path("report/<str:sha256>/json/", views.report_json, name="report_json"),
-    #path("report/<str:sha256>/pdf/", views.report_pdf, name="report_pdf"),
+    path("report/json/<str:filehash>/", views.download_json, name="download_json"),
 ]
 
 

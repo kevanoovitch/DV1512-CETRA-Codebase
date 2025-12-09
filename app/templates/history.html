@@ -1,5 +1,5 @@
-
 {% extends "base.html" %}
+{% load hash_filters %}
 {% block title %}History – CETRA{% endblock %}
 
 {% block content %}
@@ -22,8 +22,8 @@
         {% if reports %}
           {% for r in reports %}
             <tr>
-              <td class="mono">{{ r.file_hash }}</td>
-              <td class="mono">{{ r.extention_id }}</td>
+              <td>{{ r.file_hash|short_hash }}</td>
+              <td>{{ r.extention_id }}</td>
               <td>{{ r.date }}</td>
               <td>
                 <div class="score">
@@ -33,6 +33,7 @@
               </td>
               <td class="align-right">
                 <a class="btn btn-sm" href="{% url 'report' %}{{ r.file_hash }}">View</a>
+                <a class="btn btn-sm" href="{% url 'download_json' r.file_hash %}">JSON</a>
               </td>
             </tr>
           {% endfor %}

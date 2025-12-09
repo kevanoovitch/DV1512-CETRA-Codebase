@@ -7,6 +7,9 @@ from django.contrib.auth import logout
 from django.core.files.base import ContentFile
 from app.backend.api import apiCaller
 from app.backend.mitreFolder.mitre import mitreCall
+from app.backend.utils.Checkfileidindb import delete_report_by_hash, delete_report_by_id, check_existing_report
+from app.backend.api import compute_file_hash
+
 import sqlite3
 import json
 import zipfile
@@ -18,19 +21,7 @@ def home(request):
     error = None
     status_message = None
 
-    def handle_not_on_store(request, api_result, load_top_reports):
-        """
-        Checks the return value of the apiCaller() and stops and displays an error if invalid
-        """
-        if api_result == -1:
-                return render(request, "home.html", {
-                    "error": "This extension is not on the Chrome Web Store and thus is not supported.",
-                    "status_message": None, 
-                    "top_reports": load_top_reports(),
-                })
-        return None
-
-
+    # Load Top 5 Reports
     def load_top_reports():
         conn = sqlite3.connect('db.sqlite3')
         conn.row_factory = sqlite3.Row
@@ -44,6 +35,7 @@ def home(request):
         """)
         rows = cursor.fetchall()
         conn.close()
+
         return [
             {
                 "file_hash": row["file_hash"],
@@ -54,105 +46,170 @@ def home(request):
             for row in rows
         ]
 
-    if request.method == "POST":
-        submit_type = request.POST.get("submit_type")
-        fs = FileSystemStorage()
+    def handle_not_on_store(api_result):
+        if api_result == -1:
+            return render(request, "home.html", {
+                "error": "This extension is not on the Chrome Web Store and thus is not supported.",
+                "status_message": None,
+                "top_reports": load_top_reports(),
+            })
+        return None
 
-        # --- Case 1: ZIP or CRX upload ---
-        if submit_type in ["zip", "crx"]:
-            upload = request.FILES.get("submission_file")
-            if not upload:
-                error = f"Please select a valid .{submit_type} file."
+    # ZIP/CRX manifest checker    
+    def check_zip(file_path: str) -> bool:
+        try:
+            with zipfile.ZipFile(file_path, 'r') as z:
+                return any(name.lower().endswith("manifest.json") for name in z.namelist())
+        except Exception:
+            return False
+
+    if request.method != "POST":
+        return render(request, "home.html", {"top_reports": load_top_reports()})
+
+    submit_type = request.POST.get("submit_type")
+    force = request.POST.get("force") == "true"
+    ext_id = request.POST.get("extention_id") or ""
+    file_path = request.POST.get("file_path") or ""
+
+    fs = FileSystemStorage()
+
+    # FORCE RE-ANALYSIS
+    if force:
+        # Force re-analysis for file
+        if file_path:
+            try:
+                filehash = compute_file_hash(file_path)
+            except:
                 return render(request, "home.html", {
-                    "error": error,
+                    "error": "Could not open stored file for re-analysis.",
                     "top_reports": load_top_reports(),
                 })
 
-            name = upload.name.lower()
-            if submit_type == "zip" and not name.endswith(".zip"):
-                error = "Uploaded file must be a .zip file."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-            if submit_type == "crx" and not name.endswith(".crx"):
-                error = "Uploaded file must be a .crx file."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-            
-            filename = fs.save(upload.name, upload)
-            file_path = fs.path(filename)
-
-            if not check_zip(file_path):
-                error = "manifest.json not found inside the uploaded file. Not an Extension package."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-
-            result = apiCaller(file_path, "file")
-            response = handle_not_on_store(request, result, load_top_reports)
-            if response:
-                return response
-           
-
-          
-
-            status_message = "Analysis finished. See the History tab for full results."
+            delete_report_by_hash(filehash)
+            apiCaller(file_path, "file")
 
             return render(request, "home.html", {
-                "error": None,
-                "status_message": status_message,
+                "status_message": "A new analysis has been created.",
                 "top_reports": load_top_reports(),
             })
 
-        # --- Case 2: Webstore ID ---
-        elif submit_type == "id":
-            webstore_id = (request.POST.get("submission_value") or "").strip()
-            if not webstore_id:
-                error = "Please enter an Extension ID."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-
-            if not (len(webstore_id) == 32 and webstore_id.isalpha() and webstore_id.islower()):
-                error = "Webstore ID must be 32 lowercase letters (a–z)."
-                return render(request, "home.html", {
-                    "error": error,
-                    "top_reports": load_top_reports(),
-                })
-
-            txt_name = "webstore_id.txt"
-            if fs.exists(txt_name):
-                fs.delete(txt_name)
-            fs.save(txt_name, ContentFile(webstore_id + "\n"))
-
-            result = apiCaller(webstore_id, "id")
-            response = handle_not_on_store(request, result, load_top_reports)
-            if response:
-                return response
-           
-
-            status_message = "Analysis finished. See the History tab for full results."
+        # Force re-analysis for webstore ID
+        if ext_id:
+            delete_report_by_id(ext_id)
+            apiCaller(ext_id, "id")
 
             return render(request, "home.html", {
-                "error": None,
-                "status_message": status_message,
+                "status_message": "A new analysis has been created.",
                 "top_reports": load_top_reports(),
             })
 
-        # --- Case 3: unknown type ---
-        else:
-            error = "Invalid submission type."
+        return render(request, "home.html", {
+            "error": "Could not determine original submission type.",
+            "top_reports": load_top_reports(),
+        })
+
+    # ZIP / CRX upload
+    if submit_type in ["zip", "crx"]:
+        upload = request.FILES.get("submission_file")
+
+        if not upload:
             return render(request, "home.html", {
-                "error": error,
+                "error": f"Please select a valid .{submit_type} file.",
                 "top_reports": load_top_reports(),
             })
 
-    return render(request, "home.html", {"top_reports": load_top_reports()})
+        # File extension check
+        if submit_type == "zip" and not upload.name.lower().endswith(".zip"):
+            return render(request, "home.html", {
+                "error": "Uploaded file must be a .zip file.",
+                "top_reports": load_top_reports(),
+            })
+
+        if submit_type == "crx" and not upload.name.lower().endswith(".crx"):
+            return render(request, "home.html", {
+                "error": "Uploaded file must be a .crx file.",
+                "top_reports": load_top_reports(),
+            })
+
+        # Save temporary file
+        filename = fs.save(upload.name, upload)
+        file_path = fs.path(filename)
+
+        # Validate extension archive
+        if not check_zip(file_path):
+            return render(request, "home.html", {
+                "error": "manifest.json not found inside the uploaded archive.",
+                "top_reports": load_top_reports(),
+            })
+
+        # If exists already
+        existing = check_existing_report(file_path=file_path)
+        if existing["exists"]:
+            return render(request, "home.html", {
+                "existing_report": True,
+                "hash": existing["hash"],
+                "extention_id": existing["extention_id"],
+                "file_path": file_path,
+                "report_date": existing["date"],
+                "top_reports": load_top_reports(),
+            })
+
+        # Perform new analysis
+        result = apiCaller(file_path, "file")
+        resp = handle_not_on_store(result)
+        if resp:
+            return resp
+
+        return render(request, "home.html", {
+            "status_message": "Analysis complete.",
+            "top_reports": load_top_reports(),
+        })
+
+    # Webstore ID submission
+    if submit_type == "id":
+        webstore_id = (request.POST.get("submission_value") or "").strip()
+
+        if not webstore_id:
+            return render(request, "home.html", {
+                "error": "Please enter an Extension ID.",
+                "top_reports": load_top_reports(),
+            })
+
+        # Validate
+        if not (len(webstore_id) == 32 and webstore_id.isalpha() and webstore_id.islower()):
+            return render(request, "home.html", {
+                "error": "Webstore ID must be exactly 32 lowercase letters (a–z).",
+                "top_reports": load_top_reports(),
+            })
+
+        # Existing?
+        existing = check_existing_report(ext_id=webstore_id)
+        if existing["exists"]:
+            return render(request, "home.html", {
+                "existing_report": True,
+                "hash": existing["hash"],
+                "extention_id": webstore_id,
+                "file_path": "",
+                "report_date": existing["date"],
+                "top_reports": load_top_reports(),
+            })
+
+        # New analysis
+        result = apiCaller(webstore_id, "id")
+        resp = handle_not_on_store(result)
+        if resp:
+            return resp
+
+        return render(request, "home.html", {
+            "status_message": "Analysis complete.",
+            "top_reports": load_top_reports(),
+        })
+
+    # Fallback invalid submission
+    return render(request, "home.html", {
+        "error": "Invalid submission type.",
+        "top_reports": load_top_reports(),
+    })
 
 
 def check_zip(file_path: str) -> bool:
@@ -413,6 +470,7 @@ def report_view(request, filehash):
         "findings": findings
     })
 
+@login_required
 def mitre_report_view(request, sha256=None):
     conn = sqlite3.connect('db.sqlite3')
     conn.row_factory = sqlite3.Row  # This allows fetching rows as dictionaries
@@ -431,3 +489,76 @@ def mitre_report_view(request, sha256=None):
 
     conn.close()
     return render(request, "mitre_result.html", {"mitre_report": result})
+
+@login_required
+def download_json(request, filehash):
+    conn = sqlite3.connect('db.sqlite3')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Fetch all MITRE rows for this filehash
+    cursor.execute("SELECT sandbox, tactics, techniques, date FROM mitre WHERE file_hash=?;", (filehash,))
+    rows = cursor.fetchall()
+
+    conn.close()
+
+    # Convert DB rows into exportable JSON format
+    mitre_entries = []
+
+    for row in rows:
+        mitre_entries.append({
+            "sandbox": row["sandbox"],
+            "date": row["date"],
+            "tactics": json.loads(row["tactics"]) if row["tactics"] else [],
+            "techniques": json.loads(row["techniques"]) if row["techniques"] else []
+        })
+
+    conn = sqlite3.connect("db.sqlite3")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT file_hash, score, verdict, description,
+               permissions, risks, malware_types,
+               extention_id, behaviour, date
+        FROM reports
+        WHERE file_hash = ?;
+    """, (filehash,))
+    
+    report_row = cursor.fetchone()
+    conn.close()
+
+    # Convert DB rows into exportable JSON format
+    report_entries = []
+    
+    report_entries.append({
+        #"file_hash": report_row["file_hash"],
+        "score": report_row["score"],
+        "verdict": report_row["verdict"],
+        "description": report_row["description"],
+        "permissions": json.loads(report_row["permissions"]) if report_row["permissions"] else [],
+        "risks": json.loads(report_row["risks"]) if report_row["risks"] else [],
+        "malware_types": json.loads(report_row["malware_types"]) if report_row["malware_types"] else [],
+        "behaviour": report_row["behaviour"] if report_row["behaviour"] else "",
+        "extention_id": report_row["extention_id"],
+        "date": report_row["date"]
+    })
+
+    
+    findings_entries = []
+
+    # Final JSON object structure
+    data = {
+        "file_hash": filehash,
+        "report": report_entries,
+        "mitre_analysis": mitre_entries,
+        "analysis_count": len(mitre_entries)
+    }
+
+    # Convert to JSON string
+    json_data = json.dumps(data, indent=4)
+
+    # Build download response
+    response = HttpResponse(json_data, content_type="application/json")
+    response["Content-Disposition"] = f'attachment; filename=\"{filehash}.json\"'
+    return response
