@@ -22,18 +22,15 @@ def scan_file(file_path):
     
     logger.info("OPSWAT: function scan_file called")
 
-    summary = {
-        "malware_types": [],
-        "analyzed_threats": []
-        }
+    emptyList = []
 
     if not API_KEY:
         logger.error("OPSWAT_API_KEY saknas i .env/environment")
-        return summary
+        return emptyList
 
     if not os.path.exists(file_path):
         logger.error(f"[ErrorOPSWAT] File '{file_path}' could not be found.")
-        return summary
+        return emptyList
 
     try:
         # 1. Ladda upp fil
@@ -53,7 +50,7 @@ def scan_file(file_path):
         file_id = response_data.get("data_id") or response_data.get("file_id")
         if not file_id:
             logger.error("OPSWAT: couldn't find file_id from MetaDefender response.")
-            return summary
+            return emptyList
 
         # 2. Poll resultat
         logger.info("OPSWAT: retrieving scan results...")
@@ -79,7 +76,7 @@ def scan_file(file_path):
             if result.get("threat_found")
         ]
         raw_threats = list(set(raw_threats))
-        summary["raw_threats"] = raw_threats
+        emptyList["raw_threats"] = raw_threats
         
         # analyse threats
         analyzed_threats = []
@@ -90,12 +87,12 @@ def scan_file(file_path):
 
             #print("Någon sträng: ", finding)
 
-        logger.info(f"OPSWAT: summary: {analyzed_threats}")
+        logger.info(f"OPSWAT: emptyList: {analyzed_threats}")
         return analyzed_threats
 
     except Exception as e:
         logger.exception(f"OPSWAT: Something went wrong during the scanning: {e}")
-        return summary
+        return emptyList
 
 
 #if __name__ == "__main__":
