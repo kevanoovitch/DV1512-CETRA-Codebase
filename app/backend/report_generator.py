@@ -2,7 +2,7 @@ import os
 import re
 from typing import  Any
 import logging
-from app.backend.utils import Ai_Helper
+from app.backend.utils import Ai_Helper, offline_analysis_from_components
 from app.backend.utils.classlibrary import ApiResult, Finding
 from app.constants import FINDINGS_API_NAMES
 import json
@@ -73,31 +73,50 @@ def generate_report(result: ApiResult) -> dict:
     }
 
 
-    
+
     if result.behavior is not None or summery:
+        """
         calling_AI = Ai_Helper(
             request=summery_and_behaviour_prompt["request"],
             response=summery_and_behaviour_prompt["response"],
             data=summery_and_behaviour_prompt["prompt_data"]
-        )
-        print(calling_AI)
-        match = re.search(r'\{.*\}', calling_AI, re.DOTALL)
+        )"""
+        calling_AI = None
 
-        if match:
-            clean_json = match.group(0)
-            try:
-                data = json.loads(clean_json)
-            except json.JSONDecodeError:
-                # Fallback if regex matched but JSON is still broken
-                print("Error: Extracted string is not valid JSON.")
-                return None
-        else:
-            # Fallback if no JSON structure was found at all
-            print("Error: No JSON object found in AI response.")
-            return None
+        if(calling_AI is not None):
+            match = re.search(r'\{.*\}', calling_AI, re.DOTALL)
 
-        summary = data["extension_summary"]
-        behavior = data["file_behavior_summary"]
+            if match:
+                clean_json = match.group(0)
+                try:
+                    data = json.loads(clean_json)
+                except json.JSONDecodeError:
+                    offline_analysis_from_components(result = offline_analysis_from_components(
+                        findings=result.findings,
+                        behaviour=result.behavior,
+                        score=score,
+                        verdict=verdict,
+                        permissions=result.permissions,
+                        extension_id=result.extension_id
+                    ))
+                    calling_AI = None
+            else:
+                calling_AI = None
+
+
+    if(calling_AI is None):
+        data = offline_analysis_from_components(result = offline_analysis_from_components(
+            findings=result.findings,
+            behaviour=result.behavior,
+            score=score,
+            verdict=verdict,
+            permissions=result.permissions,
+            extension_id=result.extension_id
+        ))
+            
+
+    summary = data["extension_summary"]
+    behavior = data["file_behavior_summary"]
 
     report = {
         "score": score,
