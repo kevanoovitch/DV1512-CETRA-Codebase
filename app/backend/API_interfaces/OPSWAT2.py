@@ -1,93 +1,103 @@
 import requests
-import json
 import time
 import os
 import logging
 from dotenv import load_dotenv
-from app import constants
 
+from app import constants
+from app.backend.utils.tag_matcher import analyze_label
+from app.backend.utils import tag_matcher
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
 logger = logging.getLogger(__name__)
 
-#print ("OPSWAT utanför scan_file")
-def scan_file(file_path):    
-    """Skannar en fil med OPSWAT MetaDefender och returnerar score + malware_type som dictionary."""
-    logger.info (" function scan_file called")
-    try:
-        summary = {"score": -1, "malware_type": []}
-        load_dotenv()
-        API_KEY = os.getenv("OPSWAT_API_KEY")
+load_dotenv()
+API_KEY = os.getenv("OPSWAT_API_KEY")
 
-        if not os.path.exists(file_path):
-            logger.exception(f"[ErrorOPSWAT] File '{file_path}' could not be found.")
-            return summary
 
-        url_upload = "https://api.metadefender.com/v4/file"
-        headers_upload = {
-            "apikey": API_KEY,
-            "Content-Type": "application/octet-stream"
+def scan_file(file_path):
+    
+    logger.info("OPSWAT: function scan_file called")
+
+    summary = {
+        "malware_types": [],
+        "analyzed_threats": []
         }
 
+    if not API_KEY:
+        logger.error("OPSWAT_API_KEY saknas i .env/environment")
+        return summary
+
+    if not os.path.exists(file_path):
+        logger.error(f"[ErrorOPSWAT] File '{file_path}' could not be found.")
+        return summary
+
+    try:
+        # 1. Ladda upp fil
+        logger.info("OPSWAT: uploading file for scanning...")
         with open(file_path, "rb") as f:
             payload = f.read()
 
-        logger.info ("uploading file for scanning...")
-        try:
-            response = requests.post(url_upload, headers=headers_upload, data=payload, timeout=15)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            logger.exception(f"could not load the file: {e}")
-            return summary
+        response = requests.post(
+            "https://api.metadefender.com/v4/file",
+            headers={"apikey": API_KEY, "Content-Type": "application/octet-stream"},
+            data=payload,
+            timeout=15
+        )
+        response.raise_for_status()
 
         response_data = response.json()
         file_id = response_data.get("data_id") or response_data.get("file_id")
         if not file_id:
-            logger.exception("couldn't find file_id from MetaDefender-response.")
+            logger.error("OPSWAT: couldn't find file_id from MetaDefender response.")
             return summary
 
-        logger.info ("retrieving scan results...")
+        # 2. Poll resultat
+        logger.info("OPSWAT: retrieving scan results...")
         url_result = f"https://api.metadefender.com/v4/file/{file_id}"
         headers_result = {"apikey": API_KEY}
 
         while True:
-            try:
-                response = requests.get(url_result, headers=headers_result, timeout=10)
-                response.raise_for_status()
-                data = response.json()
-            except requests.RequestException as e:
-                logger.exception(f"Could not retrieve scan results: {e}")
-                return summary
+            response = requests.get(url_result, headers=headers_result, timeout=10)
+            response.raise_for_status()
+            data = response.json()
 
             progress = data.get("scan_results", {}).get("progress_percentage", 0)
+            logger.info(f"OPSWAT: scan progress {progress}%")
             if progress == 100:
                 break
             time.sleep(3)
 
-        logger.info ("save scan results...")
-        try:
-            with open(constants.SCAN_RESULT_JSON, "w") as f:
-                json.dump(data, f, indent=4)
-        except Exception as e:
-            logger.warning(f"could not save scan result: {e}")
-
+        # 3. Extrahera threat_found
         scan_details = data["scan_results"]["scan_details"]
-        total_avs = len(scan_details)
-        detected_count = sum(1 for av in scan_details.values() if av.get("scan_result_i", 0) > 0)
-        score = int(round(detected_count / total_avs * 100, 0)) if total_avs else -1
+        raw_threats = [
+            result.get("threat_found")
+            for result in scan_details.values()
+            if result.get("threat_found")
+        ]
+        raw_threats = list(set(raw_threats))
+        summary["raw_threats"] = raw_threats
+        
+        # analyse threats
+        analyzed_threats = []
+        for label in raw_threats:
+            #print(label)
+            finding = analyze_label(label, constants.FINDINGS_API_NAMES["OP"] )
+            analyzed_threats.append(finding)
 
-        malware_type = data.get("malware_type", [])
-        if isinstance(malware_type, str):
-            malware_type = [malware_type]
+            #print("Någon sträng: ", finding)
 
-        summary = {"score": score, "malware_type": malware_type}
-
-        try:
-            with open(constants.SUMMARY_JSON, "w") as f:
-                json.dump(summary, f, indent=4)
-        except Exception as e:
-            logger.warning(f"could not save summary.json: {e}")
-
-        return summary
+        logger.info(f"OPSWAT: summary: {analyzed_threats}")
+        return analyzed_threats
 
     except Exception as e:
-        logger.exception(f"Something went wrong during the scanning: {e}")
+        logger.exception(f"OPSWAT: Something went wrong during the scanning: {e}")
         return summary
+
+
+#if __name__ == "__main__":
+    #result = scan_file("app/tests/test_crx/mil.crx")
+    #print("Scan result:", result)

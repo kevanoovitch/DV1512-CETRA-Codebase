@@ -3,66 +3,115 @@ import re
 from typing import  Any
 import logging
 from app.backend.utils import Ai_Helper
+from app.backend.utils.classlibrary import ApiResult, Finding
+from app.constants import FINDINGS_API_NAMES
+import json
 
 logger = logging.getLogger(__name__)
 
-responseTemplate = {
-  "summary": "Write an approximately 100-word summary of the Chrome extension. Use the extension ID to identify the extension, its name, purpose, and main functionality. Include relevant context such as common user feedback or sentiment (especially if there are notable negative reviews). Briefly mention any potential concerns or risks, but do not over-focus on them.",
-  
-  "permissions": "In short, free-text form, analyze the permissions requested by the extension. Explain whether the permissions match the extension's purpose, whether any permissions appear excessive, and what these permissions allow the extension to do or access.",
-  
-  "risk_types": "Describe the potential risks associated with this extension, based on its permissions, behavior, reputation, or user reports. Discuss high-level risk categories without over-explaining.",
-  
-  "malware_types": "If applicable, describe what types of malware or malicious behavior this extension could be associated with based on available data. Keep this section concise and focused on risk classification (e.g., spyware, adware, data harvesting)."
-}
 
-
-def generate_report(result) -> dict: 
+def generate_report(result: ApiResult) -> dict:
     logger.info("Generating Report...")
-    score = calculate_final_score([result["SA"]["score"],result["VT"]["score"],result["OWASP"]["score"]])
-    permissions = result["permissions"]
-    risks = result["SA"]["risk_types"]
-    malware_types = result["OWASP"]["malware_type"] + result["VT"]["malware_types"]
-    extension_id = result["extension_id"]
+    
+
+
+    score = calculate_final_score(result.findings)
     verdict = label_from_score(score)
-    description = result["SA"]["descriptions"]
-    file_hash = result["file_hash"]
+    file_hash = result.file_hash
+
+    summery = None
+    behaviour = None
+
+    summery_and_behaviour_prompt = {
+        "request": (
+            "You will receive an object called 'prompt_data' containing:\n"
+            "- score: numeric risk score\n"
+            "- verdict: overall classification\n"
+            "- Findings: list of findings\n"
+            "- behaviour: behavior report text\n"
+            "- Permissions: list of permissions\n"
+            "- extension_id: extension identifier\n\n"
+            "Your task:\n"
+            "1. Analyze all fields.\n"
+            "2. Produce a human-readable EXTENSION SUMMARY describing:\n"
+            "   - What the extension does.\n"
+            "   - Whether it is malicious/suspicious/benign.\n"
+            "   - Any dangerous or high-risk permissions.\n"
+            "   - Any privacy or security concerns.\n"
+            "   - Any context inferred from provided data.\n"
+            "3. Produce a FILE BEHAVIOR SUMMARY describing:\n"
+            "   - What the extension/file does at runtime based on the 'behaviour' field.\n"
+            "   - Any malicious patterns such as persistence, injection, data exfiltration, etc.\n"
+            "   - Interpret the findings and behavior into a readable explanation.\n\n"
+            "Return ONLY a JSON dict using this exact schema:\n"
+            "{\n"
+            '  \"extension_summary\": string,\n'
+            '  \"file_behavior_summary\": string\n'
+            "}\n\n"
+            "Important:\n"
+            "- DO NOT output anything outside the JSON.\n"
+            "- DO NOT restate the prompt_data raw.\n"
+            "- DO NOT add extra fields.\n"
+            "- Only provide interpreted summaries."
+        ),
+        "response": (
+            "The response MUST be exactly:\n"
+            "{\n"
+            '  \"extension_summary\": \"...\",\n'
+            '  \"file_behavior_summary\": \"...\"\n'
+            "}\n"
+            "Return NOTHING else."
+        ),
+        "prompt_data": {
+            "score": score,
+            "verdict": verdict,
+            "Findings": result.findings,
+            "behaviour": result.behavior,
+            "Permissions": result.permissions,
+            "extension_id": result.extension_id
+        }
+    }
+
 
     
-    behaviour_summary = None
-    if result["VT"]["behaviour"] is not None:
-        behaviour_summary = Ai_Helper(
-            request="analyse the data key, this is sandbox behaviour analyses from virustotal, and answer as asked for in the response",
-            response="please respond in freetext manner, no point or dhashes normal freetext, describing how this extension behaves, approximitly 100 words, see if its doing something millicios talk about the security aspects",
-            data=result["VT"]["behaviour"]
-        )
-    if behaviour_summary is None:
-        behaviour_summary = "Unavailable"
-
-    """
+    if result.behavior is not None or summery:
         calling_AI = Ai_Helper(
-            request="please analyse the data field, check the data key in this dict, if the data key is empty return the string 'UNAVAILABLE', and please respond in a dict fashion, as in the response template sent to you in the response key, you are being called by a script please dont respond in  any other way than this",
-            response=responseTemplate,
-            data={"generalData":description,"extension_id":extension_id,"permissions":permissions,"malware_risk_types": malware_types+risks}
-        )       
+            request=summery_and_behaviour_prompt["request"],
+            response=summery_and_behaviour_prompt["response"],
+            data=summery_and_behaviour_prompt["prompt_data"]
+        )
         print(calling_AI)
-    """
-    #FIXME: print?
-    print(behaviour_summary)
+        match = re.search(r'\{.*\}', calling_AI, re.DOTALL)
+
+        if match:
+            clean_json = match.group(0)
+            try:
+                data = json.loads(clean_json)
+            except json.JSONDecodeError:
+                # Fallback if regex matched but JSON is still broken
+                print("Error: Extracted string is not valid JSON.")
+                return None
+        else:
+            # Fallback if no JSON structure was found at all
+            print("Error: No JSON object found in AI response.")
+            return None
+
+        summary = data["extension_summary"]
+        behavior = data["file_behavior_summary"]
+
     report = {
         "score": score,
         "verdict": verdict,
-        "description": description,
-        "permissions": permissions,
-        "risks": risks,
-        "malware_types": malware_types,
-        "extension_id": extension_id,
-        "file_hash": file_hash,
-        "behaviour": behaviour_summary
+        "findings":result.findings, # A list of Findings
+        "summary": summary, # text
+        "behaviour": behavior, # text
+        "permissions": result.permissions,
+        "extension_id": result.extension_id,
+        "file_hash": result.file_hash
     }
 
-    logger.info("Generated report succesfully!")
-
+    logger.info("Generated report successfully!")
+    print(report)
     return report
 
 
@@ -73,25 +122,41 @@ def label_from_score(s):
     if s<=80: return "Malicious"
     return "Highly malicious"
 
-def calculate_final_score(scores: list[int]) -> int:
+def avg(lst):
+    return sum(lst) / len(lst) if lst else None
 
-    sum = 0
-    count = 0
-    logger.info("Calculating score...")
-    for s in scores:
-        if s == None:
-            s = -1 #Treat none as missing data
-        if isinstance(s,float): 
-            s = round(s,0)  
+def calculate_final_score(findings: list[Finding]) -> int:
+    sa_scores = []
+    vt_scores = []
+    op_scores = []
+    # create three sublist based on the findings
+    for finding in findings:        
+        if finding.score is not -1:
+            if finding.api == FINDINGS_API_NAMES["SA"]:
+                sa_scores.append(finding.score)
+            elif finding.api == FINDINGS_API_NAMES["VT"]:
+                #print("FOUND VT! ", finding.api)
+                vt_scores.append(finding.score)
+            elif finding.api == FINDINGS_API_NAMES["OP"]:
+                op_scores.append(finding.score)
+        
+    logging.info("Organizing score based on findings input")
+    
+    sa_total = avg(sa_scores)
+    vt_total = avg(vt_scores)
+    op_total = avg(op_scores)
 
-        if s != -1: 
-            sum += s
-            count += 1 #only count valid values
+    
 
-    if count == 0:
-        return 0
+    logging.info(f"Organization result VT: {vt_total} SA: {sa_total} OP: {op_total}")
 
-    average = sum / count
-    logger.info("Calculated score %d from the scores: %s", average, scores)
+    totals = [sa_total, vt_total, op_total]
 
-    return round(average)
+    valid_totals = [x for x in totals if x is not None]
+
+    if not valid_totals:
+        return -1
+
+    final_score = sum(valid_totals) / len(valid_totals)
+
+    return round(final_score)

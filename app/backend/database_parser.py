@@ -2,73 +2,102 @@ import json
 import sqlite3
 import datetime
 import logging
+from app.backend.utils.classlibrary import Finding
 
 try:
     from app.backend.db_initializer import ensure_tables, DB_PATH
 except ImportError:
-    # Support running as a script from the backend directory
     from db_initializer import ensure_tables, DB_PATH
 
 logger = logging.getLogger(__name__)
 
-def add_report(conn, report):
-    # insert table statement
-    insert = f"""
-    INSERT INTO reports
-    (file_hash, score, verdict, description, permissions, risks, malware_types, extention_id, behaviour ,date)
-    VALUES
-    (?,?,?,?,?,?,?,?,?,?);
+def normalize_backend_report(raw: dict) -> dict:
     """
-    report_hash = report.get("file_hash")
-    report_score = report.get("score")
-    report_verdict = report.get("verdict")
-    report_description = report.get("description")
-    report_permissions = report.get("permissions")
-    report_risks = report.get("risks")
-    report_malware_types = report.get("malware_types")
-    report_ExtentionID = report.get("extension_id")
-    report_behaviour = report.get("behaviour")
-    report_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Create  a cursor
+    Cleans and normalizes backend report data so that it matches the
+    database schema and internal structure.
+    """
+
+    summary = raw.get("Summary") or ""
+    behaviour = raw.get("behaviour") or ""
+    permissions = raw.get("Permissions") or []
+    extention_id = raw.get("extension_id") or None
+    findings = raw.get("Findings") or []
+
+    return {
+        "file_hash": raw.get("file_hash"),
+        "score": raw.get("score", -1),
+        "verdict": raw.get("verdict", "Unknown"),
+        "summary": summary,
+        "behaviour": behaviour,
+        "permissions": permissions,
+        "extention_id": extention_id,
+        "findings": findings
+    }
+
+
+def add_report(conn, report):
+    insert_sql = """
+    INSERT INTO reports
+    (file_hash, score, verdict, summary, behaviour, permission, extention_id, date)
+    VALUES (?,?,?,?,?,?,?,?);
+    """
+
     cur = conn.cursor()
+    cur.execute(insert_sql, (
+        report["file_hash"],
+        report["score"],
+        report["verdict"],
+        report["summary"],
+        report["behaviour"],
+        json.dumps(report["permissions"]),
+        report["extension_id"],
+        datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    ))
 
-    # execute the INSERT statement
-    cur.execute(insert, (report_hash, report_score, report_verdict, json.dumps(report_description), json.dumps(report_permissions), json.dumps(report_risks), json.dumps(report_malware_types), report_ExtentionID, report_behaviour ,report_date))
-
-    # commit the changes
     conn.commit()
-
-    # get the id of the last inserted row
     return True
 
-def ParseReport(report :dict):
-    logger.info("Writing report to database")
-    
+
+def add_findings(conn, file_hash, findings):
+    insert_sql = """
+    INSERT INTO findings
+    (file_hash, tag, type, category, score, family, api)
+    VALUES (?,?,?,?,?,?,?);
+    """
+
+    cur = conn.cursor()
+
+    for f in findings:
+        cur.execute(insert_sql, (
+            file_hash,
+            f.tag,
+            f.type,
+            f.category,
+            f.score,
+            f.family,
+            f.api
+        ))
+
+    conn.commit()
+    return True
+
+
+def ParseReport(report: dict):
+    logger.info("Normalizing incoming backend report")
+
+    #report = normalize_backend_report(raw_report)
+    findings = report["findings"]
+    file_hash = report["file_hash"]
+
     try:
         ensure_tables()
         with sqlite3.connect(DB_PATH) as conn:
-            success = add_report(conn, report)
-            if success:
-                logger.info("Report added successfully.")
-    except sqlite3.Error:
-        logger.exception("Failed to write report to database")
+            add_report(conn, report)
 
+            if findings:
+                add_findings(conn, file_hash, findings)
 
-dummyreport = {
-        "score": 85,
-        "verdict": "malicious",
-        "description": ["Blabla", "Albalb", "hhhhhhh"],
-        "permissions": ["read_contacts", "send_sms", "etc."],
-        "risks": ["data_leak", "financial_loss", "etc."],
-        "malware_types": ["trojan", "ransomware", "etc."],
-        "extension_id": "ext123",
-        "file_hash": "abc123",
-        "behaviour": "bad stuff"
-        }
+        logger.info("Report + Findings inserted successfully.")
 
-"""
-if __name__ == "__main__":
-    
-    ParseReport()
-"""
+    except Exception:
+        logger.exception("Failed to write report or findings to database")

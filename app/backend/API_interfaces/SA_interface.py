@@ -5,11 +5,12 @@ import logging
 import json
 import os
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
 from app.backend.utils.ExtensionIDConverter import ExtensionIDConverter
+from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,25 @@ class Interface_Secure_Annex:
         tmp = path.with_suffix(path.suffix + ".tmp")
         tmp.write_text(json.dumps(raw_report, indent=2), encoding="utf-8")
         tmp.replace(path)
+
+    def perform_scan_and_interpret(
+        self,
+        extension: str,
+        path: Optional[Path] = None,
+    ) -> List[Any]:
+        """
+        Convenience wrapper: perform SA scan and immediately interpret the output.
+        """
+        out_path = path or Path(constants.SA_OUTPUT_FILE)
+        self.perform_scan(extension, out_path)
+        interpreter = SecureAnnex_interpretator()
+        findings = interpreter.interpret_output()
+        logger.info(
+            "SA scan+interpret completed; extension=%s findings=%d",
+            extension,
+            len(findings) if findings is not None else 0,
+        )
+        return findings
 
     # < --- private functions -- >
 

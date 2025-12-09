@@ -12,92 +12,73 @@ from pathlib import Path
 import re
 import os
 import logging
-
+from app.backend.utils.classlibrary import FileFormat, ApiResult
 logger = logging.getLogger(__name__)
 
-#function that gather both inputs ID and filepath in one object
-class FileFormat:
-    def __init__(self):
-        filePath = None
-        ID = None
+
+
+
 
 def apiCaller(value,submission_type):
-    
-    # In case it's missing an ID SA won't be called but the result strucuture still needs to be there
-    result={
-        "SA": {"score": -1, "descriptions": [], "risk_types": []},
-        "VT": {"malware_types": [], "score": -1, "raw": {}},
-        "OWASP": {"score": -1, "malware_type": []},
-    }
+    api_result = ApiResult()
 
-    #instanstiate a FileFormat object to store both path and ID
-    fileFormat = FileFormat()
-
-
+    #Check submission type
     if submission_type == "file":
         logger.info("Received a file, retreiving the Id ouf of the file")
-        fileFormat.filePath = value
+        api_result.file_format.filePath = value
         try:
-            fileFormat.ID = ExtensionIDConverter().convert_file_to_id(value)
+            api_result.file_format.ID = ExtensionIDConverter().convert_file_to_id(value)
         except ValueError:
-            # Converter now returns None for unsupported inputs (e.g., raw ZIP without key);
-            # keep ID empty and continue with file-based scanners.
-            fileFormat.ID = None
+            api_result.file_format.ID = None
             logger.warning("Unable to derive extension ID from file %s; continuing without ID", value)
-    if submission_type == "id":
+    elif submission_type == "id":
         logger.info("Received a ID, Downloading the file...")
-        fileFormat.ID = value
-        fileFormat.filePath = download_crx(value)
-
-    if fileFormat.filePath == -1:
+        api_result.file_format.ID = value
+        api_result.file_format.filePath = download_crx(value)
+        if api_result.file_format.filePath == None:
+            return -1
+    else:
         return -1
 
-    filehash = compute_file_hash(fileFormat.filePath)
+    api_result.file_hash = compute_file_hash(api_result.file_format.filePath)
 
-    if(fileFormat.ID is not None):
-        logger.info("Calling Secure-Annex")
-        SA = preform_secure_annex_scan(fileFormat.ID)
-        if SA is not None :
-            result["SA"] = SA   
+    if(api_result.file_format.ID is not None):
+        api_result.extension_id = api_result.file_format.ID
+        logger.info("Calling Secure-Annex", extra={"extension_id": api_result.file_format.ID})
+        sa_client = Interface_Secure_Annex()
+        sa_findings = sa_client.perform_scan_and_interpret(api_result.file_format.ID)
+        if sa_findings:
+            api_result.findings.extend(sa_findings)
+        else:
+            logger.warning("Secure-Annex returned no findings", extra={"extension_id": api_result.file_format.ID})
     else:
-        logger.warning("Skipping Secure-Annex")
+        logger.warning("Skipping Secure-Annex couldn't retrieve ID")
   
-    #VT returns {"malware_types:[], score:int,"raw":{}"}
-    if fileFormat.filePath != None:
+    if api_result.file_format.filePath != None:
         logger.info("Calling VirusTotal")
-        result["VT"] = vt.scan_file(fileFormat.filePath,filehash)
+        vt_findings= vt.scan_file(api_result.file_format.filePath,api_result.file_hash)
+        api_result.behavior = vt.get_vt_behaviour_summary(api_result.file_hash)
+        api_result.findings.extend(vt_findings)
         logger.info("Calling OWASP")
-        result["OWASP"]=opswat_scan_file(fileFormat.filePath)
+        api_result.findings.extend(opswat_scan_file(api_result.file_format.filePath))
 
-    logger.info("Retreiving permissions")
-    result["permissions"] = extension_retriver(fileFormat.filePath)
-    result["extension_id"] = fileFormat.ID
-    if fileFormat.ID is None:
-        logger.warning("Extension ID is empty")
+    logger.info("Getting file behaviour report from virustotal")
 
-    result["file_path"] = fileFormat.filePath
-    result["file_hash"] = filehash
+    api_result.behaviour_summary = vt.get_vt_behaviour_summary(api_result.file_hash)
+
+    logger.info("Retrieving permissions")
+    api_result.permissions = extension_retriver(api_result.file_format.filePath)
+
+    #FIXME: uncomment and refactore report generator and parser
     logger.info("Generating report")
-    report = generate_report(result)
+    
+    report = generate_report(api_result)
+    print(report)
     logger.info("Saving the report")
+    
     ParseReport(report)
 
     return 0
-
-
-def preform_secure_annex_scan(input):
-    #Helper function to query SA and build json file
-    client = Interface_Secure_Annex()
-    interpreter = SecureAnnex_interpretator()
-    path = Path(constants.SA_OUTPUT_FILE)
-
-    client.perform_scan(input,path)
-
-    #Parse the output
-    parsed = interpreter.interpret_output()
-
-    #Deliver verdict from SA also returns findings for later use
-    return parsed
 
 def compute_file_hash(file_path, algorithm='sha256'):
     hash_func = hashlib.new(algorithm)

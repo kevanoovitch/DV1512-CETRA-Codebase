@@ -9,3 +9,8 @@ SUMMARY_JSON = "app/backend/API_interfaces/output_files/scan_summary.json"
 UPLOADED_PATH = "../uploaded/"
 
 
+FINDINGS_API_NAMES = {
+    "VT" : "VirusTotal",
+    "SA": "Secure Annex",
+    "OP" : "Opswat"
+}

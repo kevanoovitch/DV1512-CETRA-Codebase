@@ -2,112 +2,97 @@
 {% block title %}Report – CETRA{% endblock %}
 
 {% block content %}
-<h1>Report</h1>
+<h1>Extension Report</h1>
 
 <div class="card report-card">
 
+  <!-- HEADER -->
   <div class="report-header">
-    <div class="report-main">
-      <h2 class="report-title">{{ report.file_hash|default:"Unknown Extension" }}</h2>
-      <div class="report-meta">
-        <span class="mono">ID: {{ report.extention_id|default:"—" }}</span>
-        <span>{{ report.created_at }}</span>
-      </div>
+    <div>
+      <h2 class="report-title">{{ report.file_hash }}</h2>
+      <p class="mono">Extension ID: {{ report.extention_id }}</p>
     </div>
+
     <div class="report-score">
       <div class="score-circle">
         <span class="score-value">{{ report.score }}</span>
       </div>
-      <div class="verdict {{ report.verdict|default:'unknown'|lower }}">
-        {{ report.verdict|default:"Unknown" }}
+      <div class="verdict {{ report.verdict|lower }}">
+        {{ report.verdict }}
       </div>
     </div>
   </div>
 
   <hr>
 
+  <!-- SUMMARY -->
   <div class="report-section">
     <h3>Summary</h3>
-    <p>{{ report.description|default:"No summary available yet." }}</p>
+    <p>{{ report.summary|default:"No summary provided." }}</p>
   </div>
 
+  <!-- BEHAVIOUR -->
+  <div class="report-section">
+    <h3>Behaviour</h3>
+    <p>{{ report.behaviour|default:"Unavailable" }}</p>
+  </div>
+
+  <hr>
+
+  <!-- PERMISSIONS -->
   <div class="report-section">
     <h3>Permissions</h3>
-    
-    <!--
-    {% if report.permissions %}
-      <ul class="report-list">
-        {% for perm in report.permissions %}
-          <li>{{ perm }}</li>
+    {% if permissions %}
+      <div class="badge-container">
+        {% for p in permissions %}
+          <span class="badge-permission">{{ p }}</span>
         {% endfor %}
-      </ul>
-    -->
-      <p>{{ report.permissions|default:"No permissions found." }}</p>
-    <!--
+      </div>
     {% else %}
-      <p class="muted">No permissions listed.</p>
-    {% endif %} -->
+      <p class="muted">No permissions found.</p>
+    {% endif %}
   </div>
 
+  <hr>
+
+  <!-- FINDINGS -->
   <div class="report-section">
-    <h3>Risks</h3>
-    <!--
-    {% if report.risks %}
-      <table class="table">
+    <h3>Findings</h3>
+
+    {% if findings %}
+      <table class="table clean-table">
         <thead>
-          <tr><th>Category</th><th>Description</th><th>Severity</th></tr>
+          <tr>
+            <th>Source</th>
+            <th>Tag</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th>Family</th>
+            <th>Score</th>
+          </tr>
         </thead>
         <tbody>
-          {% for f in report.risks %}
+          {% for f in findings %}
             <tr>
+              <td>{{ f.api }}</td>
+              <td>{{ f.tag }}</td>
               <td>{{ f.category }}</td>
-              <td>{{ f.description }}</td>
-              <td>{{ f.severity }}</td>
+              <td>{{ f.type }}</td>
+              <td>{{ f.family|default:"—" }}</td>
+              <td>{{ f.score }}</td> <!-- now plain value -->
             </tr>
           {% endfor %}
         </tbody>
       </table>
     {% else %}
-      <p class="muted">No risks detected.</p>
+      <p class="muted">No findings available.</p>
     {% endif %}
-    -->
-    <p>{{ report.risks|default:"No risks detected." }}</p>
   </div>
 
-  <div class="report-section">
-    <h3>Malware_types</h3>
-    <!--
-    {% if report.malware_types %}
-      <ul class="report-list">
-        {% for malware_type in report.malware_types %}
-          <li>{{ malware_type }}</li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p class="muted">No malware types found.</p>
-    {% endif %}
-    -->
-    <p>{{ report.malware_types|default:"No malware types found." }}</p
-  </div>
-
-   <div class="report-section">
-    <h3>Behaviour</h3>
-    <!--  
-      <ul class="report-list">
-          <li>{{ report.behaviour }}</li>
-      </ul>
-    -->
-    <p>{{ report.behaviour }}</p
-  </div>
-
-  <hr>
-
+  <!-- BACK BUTTON INSIDE THE CARD -->
   <div class="report-footer">
-    <!--
-    <div class="left muted">SHA256: {{ report.sha256|default:"–" }}</div>
-  -->
-    <div class="right">
-    </div>
+    <a href="/history/" class="btn-pill btn-accent back-button">Back</a>
   </div>
+
 </div>
 {% endblock %}

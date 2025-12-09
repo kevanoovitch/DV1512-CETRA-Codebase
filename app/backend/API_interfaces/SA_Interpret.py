@@ -1,9 +1,8 @@
-from app import config
 from app import constants
+from app.backend.utils.tag_matcher import analyze_label, Finding
 
 import logging
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 import json
 
@@ -14,42 +13,26 @@ class SecureAnnex_interpretator:
 
     def __init__(self):
         self.report_path = constants.SA_OUTPUT_FILE
-        self.combined_score = 0
-        self.returnDict = {
-            "urls": [],
-            "descriptions": [],
-            "risk_types" : [],
-            "score":-1,
-        }
-
-        self.section_points = {"manifest": 0, "signatures": 0, "urls": 0, "analysis": 0}
-
-    SECTION_CAPS = {
-    "manifest": 60,
-    "signatures": 20,
-    "urls": 15,
-    "analysis": 20,
-    }
-
-    RISK_WEIGHTS_MANIFEST = {
-    # Strong capabilities
-    "SCRIPTING_PERMISSION": 0,
-    "WEBREQUEST": 0,
-
-    # Broad scope alone is a weak signal
-    "ALL_URLS_ACCESS": 0,
-    "CONTENT_SCRIPT_ALL_URLS": 0,
-
-    
-    }
+        self.findings: List[Finding] = []
+        self._dedupe_cache: Dict[
+            Tuple[Optional[str], Optional[str], Optional[str], Optional[str]], Finding
+        ] = {}
+        self._deduped_count = 0
+        self.failed = False
+        self.failure_reason: Optional[str] = None
 
 
-    # --- Exposed functions --- #
-
-    def interpret_output(self) -> dict:
+    def interpret_output(self) -> List[Dict[str, Any]]:
         """
-        Load SA output JSON file from constants.SA_OUTPUT_FILE and parse.
+        Load SA output JSON file from constants.SA_OUTPUT_FILE and parse into a list of findings.
         """
+
+        self.findings = []
+        self._dedupe_cache.clear()
+        self._deduped_count = 0
+        self.failed = False
+        self.failure_reason = None
+
         logger.info("SA interpret_output: starting parse of %s", constants.SA_OUTPUT_FILE)
         path = Path(constants.SA_OUTPUT_FILE)
 
@@ -57,10 +40,14 @@ class SecureAnnex_interpretator:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError:
             logger.exception("SA output file not found: %s", path)
-            return self.returnDict
+            self.failed = True
+            self.failure_reason = "sa_output_missing"
+            return [self._failure_finding()]
         except json.JSONDecodeError:
             logger.exception("Malformed SA JSON in %s: %s", path)
-            return self.returnDict
+            self.failed = True
+            self.failure_reason = "sa_output_malformed"
+            return [self._failure_finding()]
 
 
 
@@ -68,80 +55,129 @@ class SecureAnnex_interpretator:
             if isinstance(data, dict):
                 err = str(data.get("error", ""))
                 if "401" in err:
-                    self.returnDict["score"] = -1
-                    self.returnDict["descriptions"].append("Secure Annex API unauthorized (401).")
-
                     logger.warning("SA unauthorized (401) in section '%s': %s", section, data.get("error"))
-                    return self.returnDict
+                    self.failed = True
+                    self.failure_reason = "sa_unauthorized"
+                    return [self._failure_finding()]
 
         manifest_items = (payload.get("manifest") or {}).get("result") or []
         signature_items  = (payload.get("signatures") or {}).get("result") or []
         url_items = (payload.get("urls") or {}).get("result") or []
         analysis_items   = (payload.get("analysis") or {}).get("result") or []
-        
+
         if not (manifest_items or signature_items or url_items or analysis_items):
             logger.warning("SA payload contained no actionable results (all sections empty).")
-            self.returnDict["score"] = -1
-            return self.returnDict
+            return []
 
         self._interpret_manifest(manifest_items)
         self._interpret_signatures(signature_items)
         self._interpret_urls(url_items)
         self._interpret_analysis(analysis_items)
 
-        self.returnDict["score"] = self._final_score()
-        return self.returnDict
+        logger.info(
+            "SA interpret_output: produced %d findings after dedupe (suppressed=%d; manifest=%d, signatures=%d, urls=%d, analysis=%d)",
+            len(self.findings),
+            self._deduped_count,
+            len(manifest_items),
+            len(signature_items),
+            len(url_items),
+            len(analysis_items),
+        )
+        return self.findings
 
+    def _make_finding(
+            self,
+            source: str,
+            label: str,
+            detail: str,
+            severity: Optional[int] = None,
+            family: Optional[str] = None,
+            api: str = constants.FINDINGS_API_NAMES["SA"],
+        ) -> Finding:
 
-    # --- private functions and modules ---
+        risk = analyze_label(label, api=constants.FINDINGS_API_NAMES["SA"])
 
-    def _add_points(self, section: str, pts: int) -> None:
-        if pts and section in self.section_points:
-            self.section_points[section] += int(pts)
+        context_parts = []
+        if source:
+            context_parts.append(f"source={source}")
+        if severity is not None:
+            context_parts.append(f"sev={severity}")
+        if detail:
 
-    def _severity_points(self,sev: Optional[int], factor:int = 5) -> int:
-        """Convert SA severity score to a points within the defined caps"""
+            short_detail = detail.replace("\n", " ")
+            if len(short_detail) > 160:
+                short_detail = short_detail[:157] + "...."
+            context_parts.append(f"detail={short_detail}")
 
-        if sev is None:
-            return 0
-        try:
-            s = int(sev)
-        except (TypeError, ValueError):
-            return 0
-        s = max(0, min(10,s))
-        return s * factor
+        context = " | ".join(context_parts) if context_parts else "no context"
+        logger.debug(
+            "SA finding generated: label=%s tag=%s type=%s category=%s score=%s (%s)",
+            label,
+            risk.tag,
+            risk.type,
+            risk.category,
+            risk.score,
+            context,
+        )
 
-    def _cap_section(self, section: str) -> int:
-        cap = self.SECTION_CAPS[section]
-        subtotal = self.section_points.get(section, 0)
-        return subtotal if subtotal <= cap else cap
+        return Finding(
+            tag=risk.tag,
+            type=risk.type,
+            category=risk.category,
+            score=risk.score,
+            family=None,
+            api=constants.FINDINGS_API_NAMES["SA"]
+        )
 
-    def _final_score(self) -> int:
-        total = 0
-        total += self._cap_section("manifest")
-        total += self._cap_section("signatures")
-        total += self._cap_section("urls")
-        total += self._cap_section("analysis")
+    def _add_finding(self, finding: Finding) -> None:
+        """Append finding only when it has a meaningful score and is not a duplicate."""
+        if finding.score == -1:
+            logger.debug(
+                "SA finding skipped (score -1): tag=%s type=%s category=%s",
+                finding.tag,
+                finding.type,
+                finding.category,
+            )
+            return
+        key = (finding.tag, finding.type, finding.category, finding.api)
+        existing = self._dedupe_cache.get(key)
+        if existing:
+            self._deduped_count += 1
+            if finding.score > existing.score:
+                logger.debug(
+                    "SA finding dedupe: upgrading score for %s from %s to %s",
+                    key,
+                    existing.score,
+                    finding.score,
+                )
+                existing.score = finding.score
+                existing.family = finding.family
+            else:
+                logger.debug(
+                    "SA finding dedupe: skipping duplicate %s (score=%s)",
+                    key,
+                    finding.score,
+                )
+            return
 
-        logger.info(f"SA final score was {max(0, min(100, total))}")
-        return max(0, min(100, total))
-
-
-
+        self._dedupe_cache[key] = finding
+        self.findings.append(finding)
+    #TODO: this is wrong it should return a default finding no?
+    def _failure_finding(self) -> dict:
+        """Sentinel finding to mark SA failure; allows downstream code to distinguish errors."""
+        return Finding(
+            tag=None,
+            type=None,
+            category=None,
+            score=-1,
+            family=None,
+            api=constants.FINDINGS_API_NAMES["SA"]
+        )
 
     def _interpret_manifest(self, items: List[Dict[str, Any]]) -> None:
         """
-        Add 'description in <snippet>' lines to returnDict['descriptions'],
-        collect unique risk types into returnDict['risk_types'],
-        and accumulate manifest points.
+        Create findings from manifest results and add synergy findings where applicable.
         """
-        # use the plural key consistently
-        descs = self.returnDict.setdefault("descriptions", [])
-        seen_descs = set(descs)
-
-        risk_types = self.returnDict.setdefault("risk_types", [])
-        seen_risks = set(risk_types)
-
         def _short(snippet: str, limit: int = 180) -> str:
             s = (snippet or "").replace("\n", " ").strip()
             return s if len(s) <= limit else s[:limit] + "..."
@@ -152,144 +188,92 @@ class SecureAnnex_interpretator:
         has_webrequest = False
 
         for it in items:
-            rtype = (it.get("risk_type") or "").strip().upper()
+
             description = (it.get("description") or "").strip()
             snip = _short(it.get("snippet") or "")
+
+            label = (it.get("risk_type") or "").strip()
+            detail = f"{description} in {snip or '<no snippet provided>'}" if description else (snip or "<no snippet provided>")
             sev = it.get("severity")
-            
+            self._add_finding(self._make_finding("manifest", label, detail, severity=sev))
+            logger.debug("SA manifest finding added: label=%s detail=%s", label, detail)
 
-            base = self.RISK_WEIGHTS_MANIFEST.get(rtype, 0)
-            sev_pts = self._severity_points(sev, factor=2) if base > 0 else 0
-            pts = base + sev_pts
-            if pts: 
-                self._add_points("manifest", pts)
-                logger.debug("Manifest scoring: rtype=%s base=%d sev=%s sev_pts=%d total=%d",
-                rtype, base, sev, sev_pts, pts)
+            rtype_upper = label.upper()
+            if rtype_upper == "ALL_URLS_ACCESS":
+                has_all_urls = True
+            if rtype_upper == "CONTENT_SCRIPT_ALL_URLS":
+                has_cs_all_urls = True
+            if rtype_upper == "SCRIPTING_PERMISSION":
+                has_scripting = True
+            if rtype_upper == "WEBREQUEST":
+                has_webrequest = True
 
-            if rtype == "ALL_URLS_ACCESS": has_all_urls = True
-            if rtype == "CONTENT_SCRIPT_ALL_URLS": has_cs_all_urls = True
-            if rtype == "SCRIPTING_PERMISSION": has_scripting = True
-            if rtype == "WEBREQUEST": has_webrequest = True
-
-            # collect unique risk types
-            if rtype and rtype not in seen_risks:
-                risk_types.append(rtype)
-                seen_risks.add(rtype)
-
-            # collect description lines
-            if description:
-                msg = f"{description} in {snip or '<no snippet provided>'}"
-                if msg not in seen_descs:
-                    descs.append(msg)
-                    seen_descs.add(msg)
-
-        # Synergy notes + points
         if has_all_urls and has_scripting:
-            msg = "Scripting + <all_urls> significantly increases risk. in manifest"
-            if msg not in seen_descs:
-                descs.append(msg); seen_descs.add(msg)
-            self._add_points("manifest", 10)
+            self._add_finding(self._make_finding("manifest", "all_urls_access", "Scripting + <all_urls> significantly increases risk.", severity=None))
+            logger.info("SA manifest synergy finding added: scripting + all_urls_access")
 
         if has_webrequest and (has_all_urls or has_cs_all_urls):
-            msg = "webRequest + broad URL scope enables wide observation. in manifest"
-            if msg not in seen_descs:
-                descs.append(msg); seen_descs.add(msg)
-            self._add_points("manifest", 10)
-
-
-        subtotal = self.section_points.get("manifest", 0)
-        cap = self.SECTION_CAPS["manifest"]
-        capped = subtotal if subtotal <= cap else cap
-
-        is_mv3 = any('"manifest_version": 3' in (it.get("snippet") or "") for it in items)
-        if is_mv3:
-            before = self.section_points["manifest"]
-            self.section_points["manifest"] = int(before * 0.8)
-            logger.debug("MV3 discount applied to manifest: %d -> %d", before, self.section_points["manifest"])
-
-
-
-        logger.info(
-            "Manifest points computed (pre-cap): subtotal=%s, cap=%s, final=%s",
-            subtotal, cap, capped
-        )
-
+            self._add_finding(self._make_finding("manifest", "webrequest_surveillance", "webRequest + broad URL scope enables wide observation.", severity=None))
+            logger.info("SA manifest synergy finding added: webrequest + broad URL")
 
     def _interpret_urls(self, urls: List[Dict[str, Any]]):
-
-
-        seen = set(self.returnDict.get("urls", []))
-
-
         for u in urls:
             url = (u.get("url") or "").strip()
             file_path = (u.get("file_path") or "").strip()
             domain = (u.get("domain") or "").strip()
 
-
             bad = False
-            url_pts = 0
+            url_label = None
+            severity: Optional[int] = None
 
-            # Rule 1: Plain HTTP endpoint
             if url.startswith("http://"):
                 bad = True
-                url_pts = max(url_pts, self._severity_points(4, factor=2))
+                url_label = "http_usage"
+                severity = 4
 
-            # Rule 2: Background script referencing external (non-Google) domain
-            if (
-                ("background" in file_path.lower() or "static/background" in file_path.lower()) and domain
-                and not domain.endswith(("google.com", "chrome.google.com"))
-
-            ):
-
+            if ("background" in file_path.lower() or "static/background" in file_path.lower()) and domain and not domain.endswith(("google.com", "chrome.google.com")):
                 bad = True
-                url_pts = max(url_pts, self._severity_points(6, factor=2))
-
+                url_label = url_label or "suspicious_network_request"
+                severity = 6
                 if not url:
                     url = domain
 
-            if bad and url:
-                msg = f"malicious url: {url} from this file {file_path}"
-                if msg not in seen:
-                    self.returnDict["urls"].append(msg)
-                    seen.add(msg)
-                self._add_points("urls", url_pts)
+            if bad and (url or domain):
+                detail = f"malicious url: {url or domain} from this file {file_path}"
+                label_for_tag = url_label or (url or domain)
+                self._add_finding(self._make_finding("urls", label_for_tag, detail, severity=severity))
+                logger.info("SA url finding added: label=%s detail=%s sev=%s", label_for_tag, detail, severity)
 
     def _interpret_analysis(self, rows: List[Dict[str, Any]]) -> None:
         for r in rows:
+
             text = (r.get("analysis") or "")
             text_l = text.lower()
-            sev = 0
-            notes = []
 
             if "content security policy" in text_l or "csp" in text_l:
-                sev = max(sev, 8); notes.append("CSP Risk")
-            if "remote config" in text_l:
-                sev = max(sev, 6); notes.append("Remote configuration")
-            if "xss" in text_l:
-                sev = max(sev, 6); notes.append("XSS risk")
-            if "data theft" in text_l or "exfil" in text_l:
-                sev = max(sev, 6); notes.append("Data exfil risk")
+                self._add_finding(self._make_finding("analysis", "csp_disabled", "CSP Risk", severity=8))
+                logger.info("SA analysis finding added: csp_disabled")
 
-            if sev > 0:
-                pts = self._severity_points(sev, factor=2)
-                self._add_points("analysis", pts)
-                line = "; ".join(notes) if notes else "AI analysis flagged issues"
-                if line not in self.returnDict["descriptions"]:
-                    self.returnDict["descriptions"].append(line)
+            if "remote config" in text_l:
+                self._add_finding(self._make_finding("analysis", "remote_script_dependency", "Remote configuration", severity=6))
+                logger.info("SA analysis finding added: remote_script_dependency")
+
+            if "xss" in text_l:
+                self._add_finding(self._make_finding("analysis", "xss", "XSS risk", severity=6))
+                logger.info("SA analysis finding added: xss")
+
+            if "data theft" in text_l or "exfil" in text_l:
+                self._add_finding(self._make_finding("analysis", "data_exfiltration", "Data exfil risk", severity=6))
+                logger.info("SA analysis finding added: data_exfiltration")
 
     def _interpret_signatures(self, sigs: List[Dict[str, Any]]) -> None:
 
-        sev_map = {"critical": 9, "high": 8, "medium": 6, "low": 3}
-
         for s in sigs:
+            sev_map = {"critical": 9, "high": 8, "medium": 6, "low": 3}
             meta = s.get("meta") or {}
             sev_text = (meta.get("severity") or "").lower()
-            sev = sev_map.get(sev_text, 4)
-            pts = self._severity_points(sev, factor=2)
-            self._add_points("signatures", pts)
-
-            # optional: human-readable line
-            desc = f"Signature matched: {s.get('name') or s.get('rule')}"
-            if desc and desc not in self.returnDict["descriptions"]:
-                self.returnDict["descriptions"].append(desc)
+            sev_num = sev_map.get(sev_text, 4)
+            label = s.get("name") or s.get("rule") or sev_text
+            detail = f"Signature matched: {label}"
+            self._add_finding(self._make_finding("signatures", label, detail, severity=sev_num))
+            logger.info("SA signature finding added: label=%s sev=%s", label, sev_num)
