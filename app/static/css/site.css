@@ -638,7 +638,7 @@ input[type="text"]:focus {
 
 .report-footer {
     display: flex;
-    justify-content: flex-start;  /* <-- flytta till vänster */
+    justify-content: flex-start;
     padding-left: 10px;
     margin-top: 25px;
 }
@@ -647,4 +647,25 @@ input[type="text"]:focus {
 .back-button {
     padding: 10px 26px;
     font-size: 0.9rem;
+}
+
+.score-footnote {
+    margin-top: 16px;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+
+    font-size: 0.92rem; 
+    line-height: 1.35;
+    color: #d6d6d6;
+
+    width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.footnote-indent {
+    margin-left: 8px;
+    display: inline-block;
 }
