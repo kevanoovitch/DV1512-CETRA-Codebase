@@ -18,6 +18,14 @@ def generate_report(result: ApiResult) -> dict:
 
     summery = None
     behavior = None
+    data = offline_analysis_from_components(
+        findings=result.findings,
+        behaviour=result.behavior,
+        score=score,
+        verdict=verdict,
+        permissions=result.permissions,
+        extension_id=result.extension_id
+    )
 
     summery_and_behaviour_prompt = {
         "request": (
@@ -82,22 +90,15 @@ def generate_report(result: ApiResult) -> dict:
                 clean_json = match.group(0)
                 try:
                     data = json.loads(clean_json)
-                    behavior = data["file_behavior_summary"]
+                    behavior = data.get("file_behavior_summary")
                 except json.JSONDecodeError:
                     calling_AI = None
             else:
                 calling_AI = None
-        else:
-            data = offline_analysis_from_components(
-                findings=result.findings,
-                behaviour=result.behavior,
-                score=score,
-                verdict=verdict,
-                permissions=result.permissions,
-                extension_id=result.extension_id
-            )
-            
-    summary = data["extension_summary"]
+
+    summary = data.get("extension_summary")
+    if behavior is None:
+        behavior = data.get("file_behavior_summary")
 
     report = {
         "score": score,
@@ -135,7 +136,6 @@ def calculate_final_score(findings: list[Finding]) -> int:
             if finding.api == FINDINGS_API_NAMES["SA"]:
                 sa_scores.append(finding.score)
             elif finding.api == FINDINGS_API_NAMES["VT"]:
-                #print("FOUND VT! ", finding.api)
                 vt_scores.append(finding.score)
             elif finding.api == FINDINGS_API_NAMES["OP"]:
                 op_scores.append(finding.score)

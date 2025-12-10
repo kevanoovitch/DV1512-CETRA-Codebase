@@ -1,32 +1,37 @@
 
 import unittest
 import os
-from app.backend.report_generator import calculate_final_score, generate_report, label_from_score
 import tempfile
 import hashlib
 
+from app.backend.report_generator import calculate_final_score, generate_report, label_from_score
+from app.backend.utils.classlibrary import ApiResult, Finding
+from app.constants import FINDINGS_API_NAMES
 
 
-BASE_ARG = {
-    "SA": {"score": 30, "descriptions": ["desc1"], "risk_types": ["risk1"]},
-    "VT": {"score": 20, "malware_types": ["type1"]},
-    "OWASP": {"score": 10, "malware_type": ["type2"]},
-    "permissions": ["tabs", "cookies"],
-    "file_path": "",  # will set in test
-    "extension_id": "abcd1234",
-}
+def make_finding(score: int, api: str, tag: str = "t", type_: str = "type", category: str = "cat") -> Finding:
+    return Finding(tag=tag, type=type_, category=category, score=score, api=api)
 
 class TestReportGenerator(unittest.TestCase):
 
     # Test Final score method
     def test_final_score_normal(self):
-        self.assertEqual(calculate_final_score([98, 9, 2]), 36)
+        findings = [
+            make_finding(98, FINDINGS_API_NAMES["SA"]),
+            make_finding(9, FINDINGS_API_NAMES["VT"]),
+            make_finding(2, FINDINGS_API_NAMES["OP"]),
+        ]
+        self.assertEqual(calculate_final_score(findings), 36)
 
     def test_final_score_missing_some_args(self):
-        self.assertEqual(calculate_final_score([97,3,None]), 50)
+        findings = [
+            make_finding(97, FINDINGS_API_NAMES["SA"]),
+            make_finding(3, FINDINGS_API_NAMES["VT"]),
+        ]
+        self.assertEqual(calculate_final_score(findings), 50)
     
     def test_final_score_empty_list(self):
-        self.assertEqual(calculate_final_score([]), 0)
+        self.assertEqual(calculate_final_score([]), -1)
 
     #Test label from score 
 
@@ -52,29 +57,34 @@ class TestReportGenerator(unittest.TestCase):
     # Larger test using a mock response to generate a report
 
     def test_report_generator_with_mock(self):
-            # create real temp file
-            with tempfile.NamedTemporaryFile(delete=False) as tf:
-                tf.write(b"dummy-bytes")
-                temp_path = tf.name
-            self.addCleanup(lambda: os.path.exists(temp_path) and os.unlink(temp_path))
+        # create real temp file
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(b"dummy-bytes")
+            temp_path = tf.name
+        self.addCleanup(lambda: os.path.exists(temp_path) and os.unlink(temp_path))
 
-            arg = dict(BASE_ARG)
-            arg["file_path"] = temp_path
+        api_result = ApiResult()
+        api_result.findings = [
+            make_finding(30, FINDINGS_API_NAMES["SA"]),
+            make_finding(20, FINDINGS_API_NAMES["VT"]),
+            make_finding(10, FINDINGS_API_NAMES["OP"]),
+        ]
+        api_result.permissions = ["tabs", "cookies"]
+        api_result.extension_id = "abcd1234"
+        api_result.file_hash = hashlib.sha256(b"dummy-bytes").hexdigest()
+        api_result.file_format.filePath = temp_path  # keep similar semantics to production
 
-            report = generate_report(arg)
+        report = generate_report(api_result)
 
-            # expected SHA-256 of b"dummy-bytes"
-            expected_hash = hashlib.sha256(b"dummy-bytes").hexdigest()
-
-            self.assertEqual(report["score"], 20)
-            # NOTE: adjust to match your production key: "description" vs "descriptions"
-            self.assertEqual(report["description"], arg["SA"]["descriptions"])
-            self.assertEqual(report["permissions"], arg["permissions"])
-            self.assertEqual(report["risks"], arg["SA"]["risk_types"])
-            self.assertEqual(report["malware_types"], arg["OWASP"]["malware_type"] + arg["VT"]["malware_types"])
-            self.assertEqual(report["file_hash"], expected_hash)
-            self.assertEqual(report["extension_id"], arg["extension_id"])
-            self.assertEqual(report["verdict"], "OK / Clean")
+        self.assertEqual(report["score"], 20)
+        self.assertEqual(report["verdict"], "OK / Clean")
+        self.assertEqual(report["permissions"], api_result.permissions)
+        self.assertEqual(report["extension_id"], api_result.extension_id)
+        self.assertEqual(report["file_hash"], api_result.file_hash)
+        self.assertEqual(report["findings"], api_result.findings)
+        self.assertIn("summary", report)
+        self.assertIsInstance(report["summary"], str)
+        self.assertIn("behaviour", report)
 
         
 
@@ -83,4 +93,3 @@ class TestReportGenerator(unittest.TestCase):
 
 
         
-

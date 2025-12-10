@@ -71,7 +71,6 @@ def apiCaller(value,submission_type):
 
     api_result.permissions = api_result.extensionData["permissions"]
 
-    #FIXME: uncomment and refactore report generator and parser
     logger.info("Generating report")
     
     report = generate_report(api_result)
