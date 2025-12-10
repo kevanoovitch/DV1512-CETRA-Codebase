@@ -50,42 +50,35 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
         self.outfile.write_text(json.dumps(data), encoding="utf-8")
 
     def test_parsing_smoke_and_expected_findings(self):
-        """basic end-to-end parse: returns score+findings, and flags and right things"""
+        """basic end-to-end parse: returns findings with normalized tags"""
         self.write_payload(sample_payload())
 
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
 
-        # Structure
+        self.assertIsInstance(res, list)
+        self.assertGreater(len(res), 0)
+        self.assertTrue(all(isinstance(f, mod_interp.Finding) for f in res))
 
-        for key in ("score","urls", "descriptions", "risk_types"):
-            self.assertIn(key,res)
-        self.assertIsInstance(res["urls"], list)
-        self.assertIsInstance(res["descriptions"], list)
-        self.assertIsInstance(res["risk_types"], list)
-        self.assertIsInstance(res["score"], int)
-        self.assertIsInstance(res["score"],int)
+        tags = {f.tag for f in res}
+        self.assertEqual(len(res), len(tags))
+        self.assertSetEqual(
+            tags,
+            {
+                "all_urls_access",
+                "scripting_permission",
+                "webrequest",
+                "http_usage",
+                "csp_disabled",
+                "data_exfiltration",
+            },
+        )
 
-        rtypes = set(res["risk_types"])
-        self.assertIn("ALL_URLS_ACCESS", rtypes)
-        self.assertIn("SCRIPTING_PERMISSION", rtypes)
-        self.assertIn("WEBREQUEST", rtypes)
-
-        descs = res["descriptions"]
-        self.assertTrue(any("Scripting + <all_urls>" in d for d in descs))
-        self.assertTrue(any("webRequest + broad URL scope" in d for d in descs))
-
-        self.assertTrue(any("Signature matched:" in d for d in descs))
-
-        self.assertTrue(any("Signature matched:" in d for d in descs))
-
-        self.assertTrue(any(("CSP Risk" in d) or ("exfil" in d.lower()) for d in descs))
-
-        self.assertTrue(res["urls"])
-        self.assertTrue(any("http://example.com/api" in u for u in res["urls"]))
-        self.assertTrue(any("static/background/index.js" in u for u in res["urls"]))
-
-        self.assertEqual(res["score"],68)
+        # Spot-check a few scores/categories so the mapping remains stable.
+        tag_to_score = {f.tag: f.score for f in res}
+        self.assertEqual(tag_to_score["all_urls_access"], 50)
+        self.assertEqual(tag_to_score["data_exfiltration"], 90)
+        self.assertEqual(tag_to_score["http_usage"], 20)
 
 
     def test_empty_sections_safe_defaults(self):
@@ -98,13 +91,10 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
 
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
-        self.assertEqual(res["score"],-1)
-        self.assertEqual(res.get("descriptions"), [])
-        self.assertEqual(res.get("urls"), [])
-        self.assertEqual(res.get("risk_types"), [])
+        self.assertEqual(res, [])
 
-    def test_scoring_caps_manifest(self):
-        """Make manifest alone huge and verify the per-section cap (60) is applied."""
+    def test_manifest_dedupes_identical_risks(self):
+        """Repeated manifest items should collapse into one finding instead of inflating score."""
 
         big_manifest = {"result": [
             {"risk_type": "ALL_URLS_ACCESS", "description": "x", "severity": 10}
@@ -120,6 +110,6 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
 
         interp = SecureAnnex_interpretator()
         res = interp.interpret_output()
-        # New logic where each factor is 0 since SA can't evaluate manifest accuratly it should only view it not give a verdict on it
-        self.assertEqual(res["score"], 0)
-
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0].tag, "all_urls_access")
+        self.assertEqual(res[0].score, 50)
