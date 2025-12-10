@@ -22,18 +22,15 @@ def scan_file(file_path):
     
     logger.info("OPSWAT: function scan_file called")
 
-    summary = {
-        "malware_types": [],
-        "analyzed_threats": []
-        }
+    emptyList = []
 
     if not API_KEY:
         logger.error("OPSWAT_API_KEY saknas i .env/environment")
-        return summary
+        return emptyList
 
     if not os.path.exists(file_path):
         logger.error(f"[ErrorOPSWAT] File '{file_path}' could not be found.")
-        return summary
+        return emptyList
 
     try:
         # 1. Ladda upp fil
@@ -53,7 +50,7 @@ def scan_file(file_path):
         file_id = response_data.get("data_id") or response_data.get("file_id")
         if not file_id:
             logger.error("OPSWAT: couldn't find file_id from MetaDefender response.")
-            return summary
+            return emptyList
 
         # 2. Poll resultat
         logger.info("OPSWAT: retrieving scan results...")
@@ -79,25 +76,20 @@ def scan_file(file_path):
             if result.get("threat_found")
         ]
         raw_threats = list(set(raw_threats))
-        summary["raw_threats"] = raw_threats
+        
         
         # analyse threats
         analyzed_threats = []
         for label in raw_threats:
-            #print(label)
+            logger.info("Mapping raw_threats to findings list")
             finding = analyze_label(label, constants.FINDINGS_API_NAMES["OP"] )
             analyzed_threats.append(finding)
 
-            #print("Någon sträng: ", finding)
+           
 
         logger.info(f"OPSWAT: summary: {analyzed_threats}")
         return analyzed_threats
-
+    
     except Exception as e:
         logger.exception(f"OPSWAT: Something went wrong during the scanning: {e}")
-        return summary
-
-
-#if __name__ == "__main__":
-    #result = scan_file("app/tests/test_crx/mil.crx")
-    #print("Scan result:", result)
+        return emptyList
