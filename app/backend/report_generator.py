@@ -68,8 +68,6 @@ def generate_report(result: ApiResult) -> dict:
             "Return NOTHING else."
         ),
         "prompt_data": {
-            "score": score,
-            "verdict": verdict,
             "Findings": result.findings,
             "behaviour": result.behavior,
             "Permissions": result.permissions,
