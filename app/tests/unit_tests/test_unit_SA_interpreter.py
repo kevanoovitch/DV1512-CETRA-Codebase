@@ -76,7 +76,7 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
 
         # Spot-check a few scores/categories so the mapping remains stable.
         tag_to_score = {f.tag: f.score for f in res}
-        self.assertEqual(tag_to_score["all_urls_access"], 70)
+        self.assertEqual(tag_to_score["all_urls_access"], 50)
         self.assertEqual(tag_to_score["data_exfiltration"], 90)
         self.assertEqual(tag_to_score["http_usage"], 20)
 
@@ -112,4 +112,4 @@ class TestSecureAnnexInterpretor(unittest.TestCase):
         res = interp.interpret_output()
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0].tag, "all_urls_access")
-        self.assertEqual(res[0].score, 70)
+        self.assertEqual(res[0].score, 50)
