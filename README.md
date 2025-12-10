@@ -27,6 +27,11 @@ Threat modeling made in ThreatDragon for the system:
 pip install -r requirements.txt
 ```
 
+#### Migrate changes to database:
+``` bash
+python manage.py migrate
+```
+
 #### To run the tests, in terminal:
 ``` bash
 python manage.py test
