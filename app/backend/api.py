@@ -3,7 +3,7 @@ from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex
 from app.backend.API_interfaces.SA_Interpret import SecureAnnex_interpretator
 import app.backend.API_interfaces.VirusTotalInterface as vt
 from app.backend.API_interfaces.OPSWAT2 import scan_file as opswat_scan_file
-from app.backend.utils import ExtensionIDConverter, download_crx,manifest_extractor
+from app.backend.utils import ExtensionIDConverter, download_crx,extract_extension_manifest
 from app.backend.report_generator import generate_report
 from app.backend.database_parser import ParseReport
 import hashlib
@@ -67,7 +67,7 @@ def apiCaller(value,submission_type):
     api_result.behaviour_summary = vt.get_vt_behaviour_summary(api_result.file_hash)
 
     logger.info("Retrieving extension manifest")
-    api_result.extensionData = manifest_extractor(api_result.file_format.filePath)
+    api_result.extensionData = extract_extension_manifest(api_result.file_format.filePath)
 
     api_result.permissions = api_result.extensionData["permissions"]
 
