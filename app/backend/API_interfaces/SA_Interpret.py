@@ -2,7 +2,7 @@ from app import constants
 from app.backend.utils.tag_matcher import analyze_label, Finding
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
 import json
 
@@ -14,6 +14,10 @@ class SecureAnnex_interpretator:
     def __init__(self):
         self.report_path = constants.SA_OUTPUT_FILE
         self.findings: List[Finding] = []
+        self._dedupe_cache: Dict[
+            Tuple[Optional[str], Optional[str], Optional[str], Optional[str]], Finding
+        ] = {}
+        self._deduped_count = 0
         self.failed = False
         self.failure_reason: Optional[str] = None
 
@@ -24,6 +28,8 @@ class SecureAnnex_interpretator:
         """
 
         self.findings = []
+        self._dedupe_cache.clear()
+        self._deduped_count = 0
         self.failed = False
         self.failure_reason = None
 
@@ -68,8 +74,15 @@ class SecureAnnex_interpretator:
         self._interpret_urls(url_items)
         self._interpret_analysis(analysis_items)
 
-        logger.info("SA interpret_output: produced %d findings (manifest=%d, signatures=%d, urls=%d, analysis=%d)",
-                    len(self.findings), len(manifest_items), len(signature_items), len(url_items), len(analysis_items))
+        logger.info(
+            "SA interpret_output: produced %d findings after dedupe (suppressed=%d; manifest=%d, signatures=%d, urls=%d, analysis=%d)",
+            len(self.findings),
+            self._deduped_count,
+            len(manifest_items),
+            len(signature_items),
+            len(url_items),
+            len(analysis_items),
+        )
         return self.findings
 
     def _make_finding(
@@ -117,7 +130,7 @@ class SecureAnnex_interpretator:
         )
 
     def _add_finding(self, finding: Finding) -> None:
-        """Append finding only when it has a meaningful score."""
+        """Append finding only when it has a meaningful score and is not a duplicate."""
         if finding.score == -1:
             logger.debug(
                 "SA finding skipped (score -1): tag=%s type=%s category=%s",
@@ -126,6 +139,28 @@ class SecureAnnex_interpretator:
                 finding.category,
             )
             return
+        key = (finding.tag, finding.type, finding.category, finding.api)
+        existing = self._dedupe_cache.get(key)
+        if existing:
+            self._deduped_count += 1
+            if finding.score > existing.score:
+                logger.debug(
+                    "SA finding dedupe: upgrading score for %s from %s to %s",
+                    key,
+                    existing.score,
+                    finding.score,
+                )
+                existing.score = finding.score
+                existing.family = finding.family
+            else:
+                logger.debug(
+                    "SA finding dedupe: skipping duplicate %s (score=%s)",
+                    key,
+                    finding.score,
+                )
+            return
+
+        self._dedupe_cache[key] = finding
         self.findings.append(finding)
     #TODO: this is wrong it should return a default finding no?
     def _failure_finding(self) -> dict:

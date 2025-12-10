@@ -32,10 +32,13 @@
   </div>
 
   <!-- BEHAVIOUR -->
+  {% if report.behaviour %}
   <div class="report-section">
-    <h3>Behaviour</h3>
-    <p>{{ report.behaviour|default:"Unavailable" }}</p>
+      <h3>Behaviour</h3>
+      <p>{{ report.behaviour }}</p>
   </div>
+  {% endif %}
+
 
   <hr>
 
