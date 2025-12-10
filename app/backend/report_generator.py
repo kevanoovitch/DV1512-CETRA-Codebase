@@ -68,20 +68,20 @@ def generate_report(result: ApiResult) -> dict:
             "Findings": result.findings,
             "behaviour": result.behavior,
             "Permissions": result.permissions,
-            "extension_id": result.extension_id
+            "extension_id": result.extension_id,
+            "manifest_file": result.extensionData
         }
     }
 
 
 
     if result.behavior is not None or summery:
-        """
+        
         calling_AI = Ai_Helper(
             request=summery_and_behaviour_prompt["request"],
             response=summery_and_behaviour_prompt["response"],
             data=summery_and_behaviour_prompt["prompt_data"]
-        )"""
-        calling_AI = None
+        )
 
         if(calling_AI is not None):
             match = re.search(r'\{.*\}', calling_AI, re.DOTALL)
