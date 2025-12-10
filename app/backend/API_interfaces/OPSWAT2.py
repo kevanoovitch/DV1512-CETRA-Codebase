@@ -22,15 +22,15 @@ def scan_file(file_path):
     
     logger.info("OPSWAT: function scan_file called")
 
-    emptyList = []
+    analyzed_threats = []
 
     if not API_KEY:
-        logger.error("OPSWAT_API_KEY saknas i .env/environment")
-        return emptyList
+        logger.error("OPSWAT_API_KEY missing in .env/environment")
+        return analyzed_threats
 
     if not os.path.exists(file_path):
         logger.error(f"[ErrorOPSWAT] File '{file_path}' could not be found.")
-        return emptyList
+        return analyzed_threats
 
     try:
         # 1. Ladda upp fil
@@ -50,7 +50,7 @@ def scan_file(file_path):
         file_id = response_data.get("data_id") or response_data.get("file_id")
         if not file_id:
             logger.error("OPSWAT: couldn't find file_id from MetaDefender response.")
-            return emptyList
+            return analyzed_threats
 
         # 2. Poll resultat
         logger.info("OPSWAT: retrieving scan results...")
@@ -92,4 +92,4 @@ def scan_file(file_path):
     
     except Exception as e:
         logger.exception(f"OPSWAT: Something went wrong during the scanning: {e}")
-        return emptyList
+        return analyzed_threats
