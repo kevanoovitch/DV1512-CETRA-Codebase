@@ -12,15 +12,12 @@ logger = logging.getLogger(__name__)
 
 def generate_report(result: ApiResult) -> dict:
     logger.info("Generating Report...")
-    
-
-
     score = calculate_final_score(result.findings)
     verdict = label_from_score(score)
     file_hash = result.file_hash
 
     summery = None
-    behaviour = None
+    behavior = None
 
     summery_and_behaviour_prompt = {
         "request": (
@@ -73,8 +70,6 @@ def generate_report(result: ApiResult) -> dict:
         }
     }
 
-
-
     if result.behavior is not None or summery is not None:
         calling_AI = Ai_Helper(
             request=summery_and_behaviour_prompt["request"],
@@ -92,19 +87,16 @@ def generate_report(result: ApiResult) -> dict:
                     calling_AI = None
             else:
                 calling_AI = None
-
-
-    if(calling_AI is None):
-        data = offline_analysis_from_components(
-            findings=result.findings,
-            behaviour=result.behavior,
-            score=score,
-            verdict=verdict,
-            permissions=result.permissions,
-            extension_id=result.extension_id
-        )
+        else:
+            data = offline_analysis_from_components(
+                findings=result.findings,
+                behaviour=result.behavior,
+                score=score,
+                verdict=verdict,
+                permissions=result.permissions,
+                extension_id=result.extension_id
+            )
             
-
     summary = data["extension_summary"]
 
     report = {
