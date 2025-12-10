@@ -75,48 +75,37 @@ def generate_report(result: ApiResult) -> dict:
 
 
 
-    if result.behavior is not None or summery:
-        
+    if result.behavior is not None or summery is not None:
         calling_AI = Ai_Helper(
             request=summery_and_behaviour_prompt["request"],
             response=summery_and_behaviour_prompt["response"],
             data=summery_and_behaviour_prompt["prompt_data"]
         )
-
         if(calling_AI is not None):
             match = re.search(r'\{.*\}', calling_AI, re.DOTALL)
-
             if match:
                 clean_json = match.group(0)
                 try:
                     data = json.loads(clean_json)
+                    behavior = data["file_behavior_summary"]
                 except json.JSONDecodeError:
-                    offline_analysis_from_components(result = offline_analysis_from_components(
-                        findings=result.findings,
-                        behaviour=result.behavior,
-                        score=score,
-                        verdict=verdict,
-                        permissions=result.permissions,
-                        extension_id=result.extension_id
-                    ))
                     calling_AI = None
             else:
                 calling_AI = None
 
 
     if(calling_AI is None):
-        data = offline_analysis_from_components(result = offline_analysis_from_components(
+        data = offline_analysis_from_components(
             findings=result.findings,
             behaviour=result.behavior,
             score=score,
             verdict=verdict,
             permissions=result.permissions,
             extension_id=result.extension_id
-        ))
+        )
             
 
     summary = data["extension_summary"]
-    behavior = data["file_behavior_summary"]
 
     report = {
         "score": score,
