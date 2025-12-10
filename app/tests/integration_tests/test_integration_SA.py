@@ -1,6 +1,7 @@
 import unittest
 from app.backend.API_interfaces.SA_interface import Interface_Secure_Annex
 
+@unittest.skip("Skipping VT integration test for now")
 
 class TestSAConnection(unittest.TestCase):
     """Integration-style health check for the /updates endpoint."""

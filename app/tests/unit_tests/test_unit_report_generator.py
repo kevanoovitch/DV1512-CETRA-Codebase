@@ -6,7 +6,6 @@ import tempfile
 import hashlib
 
 
-
 BASE_ARG = {
     "SA": {"score": 30, "descriptions": ["desc1"], "risk_types": ["risk1"]},
     "VT": {"score": 20, "malware_types": ["type1"]},
