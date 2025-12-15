@@ -6,6 +6,9 @@ skinparam componentStyle uml2
 
 rectangle "Frontend Container\n(Web UI)" as frontend #LightBlue {
   component "Upload + Results UI" as ui
+  component "Sign in" as sign
+  component "MITRE Dashboard" as mitre
+  component "History View" as history
 }
 
 rectangle "Backend Container\n(Django API)" as backend #LightCoral {
@@ -15,33 +18,39 @@ rectangle "Backend Container\n(Django API)" as backend #LightCoral {
   component "VT Interface" as vt
   component "SecureAnnex Interface" as sa
   component "OPSWAT Interface" as opswat
-  component "database parser" as db_mod
+  component "Database Parser" as db_mod
+  component "AI Module" as ai
   database "SQLite DB" as db
 }
 
 rectangle "External Systems" as externals #CornflowerBlue {
-  component "\nVirusTotal" as vt_ext
+  component "VirusTotal" as vt_ext
   component "SecureAnnex API" as sa_ext
   component "OPSWAT MetaDefender" as ops_ext
 }
 
-' Relationships (C4 semantics)
-ui --> api : POST / scan request
+' Frontend -> Backend
+ui --> api : Submit scan request
+history --> db : Fetch reports
+mitre --> api : Start MITRE analysis
 
-api --> converter : derive extension ID
-api --> vt : file scan
-api --> sa : ID-based scan
-api --> opswat : file scan
-api --> report : assemble scores, risks, permissions
+' Backend internal flow
+api --> converter : Get extension ID
+api --> vt : Request scan
+api --> sa : Request scan
+api --> opswat : Request scan
 
-vt --> vt_ext : Analyze extension
-sa --> sa_ext : Analyze extension
-opswat --> ops_ext : Analyze extension
+vt --> vt_ext : External scan & Sandboxing 
+sa --> sa_ext : External scan
+opswat --> ops_ext : External scan
 
-report --> db_mod : Convert dict to json
-db_mod --> db : persist results
+api --> report : Aggregate results
+report --> ai : Pass extracted data
+ai --> db_mod : Store in DB format
+db_mod --> db : Persist results
 
-ui <-- db : Fetches reports
-
+' MITRE special handling
+api --> vt_ext : MITRE lookup
+api --> db : Save MITRE data
 
 @enduml
