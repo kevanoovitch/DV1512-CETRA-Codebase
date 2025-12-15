@@ -52,6 +52,10 @@ python manage.py test
 ``` bash
 python manage.py createsuperuser --username=joe --email=joe@example.com
 ```
+#### In order to look at the tables in the sqlite3 database you may need to download sqlite3 seperately:
+``` bash
+pip install db-sqlite3
+```
 
 #### To run the program, in terminal:
 ```
