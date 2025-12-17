@@ -125,36 +125,11 @@ def avg(lst):
     return sum(lst) / len(lst) if lst else None
 
 def calculate_final_score(findings: list[Finding]) -> int:
-    sa_scores = []
-    vt_scores = []
-    op_scores = []
+    findins_score = []
     # create three sublist based on the findings
     for finding in findings:        
         if finding.score is not -1:
-            if finding.api == FINDINGS_API_NAMES["SA"]:
-                sa_scores.append(finding.score)
-            elif finding.api == FINDINGS_API_NAMES["VT"]:
-                vt_scores.append(finding.score)
-            elif finding.api == FINDINGS_API_NAMES["OP"]:
-                op_scores.append(finding.score)
-        
-    logging.info("Organizing score based on findings input")
-    
-    sa_total = avg(sa_scores)
-    vt_total = avg(vt_scores)
-    op_total = avg(op_scores)
+            findins_score.append(finding.score)
 
-    
 
-    logging.info(f"Organization result VT: {vt_total} SA: {sa_total} OP: {op_total}")
-
-    totals = [sa_total, vt_total, op_total]
-
-    valid_totals = [x for x in totals if x is not None]
-
-    if not valid_totals:
-        return -1
-
-    final_score = sum(valid_totals) / len(valid_totals)
-
-    return round(final_score)
+    return max(findins_score)
