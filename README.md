@@ -58,6 +58,7 @@ The **Home** page serves as the primary analysis hub.
 * **Duplicate Detection**: If a report for the extension already exists from the last 30 days, the system will allow you to either **Open the Existing Report** or **Run a New Analysis**.
 * **Analysis Time**: After clicking **Submit**, a loading spinner will appear. The process typically takes around three minutes.
 * **Results**: The homepage also displays the **Top 5 Highest Scores** found in the system.
+* **Prerequisite for MITRE**: You must first submit an extension via the **Home** page (using ID or file upload) for a standard analysis before you can perform a MITRE analysis.
 
 ### 4. Reviewing Reports & Analytics
 * **Detailed Reports**: Click on a result to see the **Verdict**, **Threat Score**, requested **Permissions**, and a breakdown of **Findings** by malware family and category.
