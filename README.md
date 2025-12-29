@@ -4,6 +4,18 @@ The fullstack code base for the software security project in DV1512.
 
 The goal of this project is to develop an app that analyzes Chrome extensions, to detect potential malicious behavior.
 
+## Repository Layout
+Top-level folders/files and what they contain:
+
+- `app/` Django application code (views, templates, static assets, backend logic, tests).
+- `extention_analyser/` Django project configuration (settings, URLs, ASGI/WSGI).
+- `docs/` Documentation assets and diagrams used in the report.
+- `manage.py` Django management entry point.
+- `requirements.txt` Python dependencies.
+- `resetdb.py` Helper to reset the database during development (drops all table contents).
+- `db.sqlite` / `db.sqlite3` Local SQLite databases (db.sqlite3 stores user data and report data).
+- `uploaded/` Local upload storage for analyzed files (development).
+
 ## System Architecture
 High-level view of the system components and their interactions:
 
