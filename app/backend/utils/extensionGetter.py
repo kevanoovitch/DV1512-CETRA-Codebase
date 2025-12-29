@@ -7,11 +7,10 @@ logger = logging.getLogger(__name__)
 def download_crx(extension_id):
     try:
         # Build folder + file path
-        upload_dir = os.path.join("..", "uploaded")
-        output_file = os.path.join(upload_dir, extension_id + ".crx")
+        output_file = os.path.join("uploaded", extension_id + ".crx")
 
         # Ensure folder exists
-        os.makedirs(upload_dir, exist_ok=True)
+        os.makedirs("uploaded", exist_ok=True)
 
         # CRX download URL
         url = (

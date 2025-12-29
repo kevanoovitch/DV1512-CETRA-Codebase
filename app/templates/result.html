@@ -15,7 +15,7 @@
 
     <div class="report-score">
       <div class="score-circle">
-        <span class="score-value">{{ report.score }}<sup>*</sup></span>
+        <span class="score-value">{{ report.score }}</span>
       </div>
       <div class="verdict {{ report.verdict|lower }}">
         {{ report.verdict }}
@@ -92,14 +92,6 @@
     {% endif %}
   </div>
 
-  <div class="score-footnote">
-    <p>
-      <sup>*</sup> Score = (VT_avg + SA_avg + OPSWAT_avg) / N<br>
-      <span class="footnote-indent">
-          Where N is the number of sources that returned non-zero data.
-      </span>
-    </p>
-  </div>
 
   <!-- BACK BUTTON INSIDE THE CARD -->
   <div class="report-footer">
