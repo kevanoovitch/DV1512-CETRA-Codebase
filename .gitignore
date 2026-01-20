@@ -218,3 +218,10 @@ app/backend/API_interfaces/output_files/*
 
 app/uploaded
 /uploaded
+
+#Latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
